@@ -1,28 +1,32 @@
 <!DOCTYPE html>
-<html lang="ko" data-theme="light">
+<html lang="ko" data-theme="light" data-font="sans">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>세션 리더 · CCFOLIA 아카이브</title>
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;700&display=swap">
 <style>
   :root{
     --paper:#FFFFFF; --surface:#FFFFFF; --subtle:#F4F4F5; --subtle-2:#EDEDF0;
     --ink:#18181B; --ink-2:#27272A; --muted:#71717A; --faint:#A1A1AA;
     --line:#E4E4E7; --line-2:#D4D4D8;
     --accent:#18181B; --on-accent:#FFFFFF; --accent-soft:#F4F4F5;
-    --hit:#E4E4E7; --hit-cur:#C7C7CC;
-    --fs:15px; --lh:1.66; --wrap:730px; --radius:0px;
+    --hit:#E4E4E7; --hit-cur:#C7C7CC; --narr-bg:#F3F3F5;
+    --fs:15px; --lh:1.66; --wrap:730px; --radius:0px; --av:55px; --gap:16px;
     --sans:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
     --serif:var(--sans);
+    --read-font:var(--sans);
   }
   html[data-theme="dark"]{
     --paper:#0E0E10; --surface:#161618; --subtle:#1C1C1F; --subtle-2:#242427;
     --ink:#F4F4F5; --ink-2:#D4D4D8; --muted:#A1A1AA; --faint:#71717A;
     --line:#27272A; --line-2:#3F3F46;
     --accent:#F4F4F5; --on-accent:#18181B; --accent-soft:#1C1C1F;
-    --hit:#3F3F46; --hit-cur:#52525B;
+    --hit:#3F3F46; --hit-cur:#52525B; --narr-bg:#18181C;
   }
+  html[data-font="serif"]{--read-font:"본명조","Noto Serif KR","AppleMyungjo","Batang",serif;}
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
   body{
@@ -106,6 +110,12 @@
   details.adv[open] > summary::before{transform:rotate(90deg);}
   .adv .field{display:flex;align-items:center;gap:.5rem;margin:.7rem 0;flex-wrap:wrap;}
   .adv input[type=text]{font-family:ui-monospace,monospace;font-size:12.5px;padding:.4rem .55rem;border:1px solid var(--line);border-radius:0;background:var(--surface);color:var(--ink);}
+  .jalign{display:flex;flex-direction:column;gap:8px;width:100%;margin-top:6px;}
+  .jrow{display:flex;align-items:center;gap:10px;}
+  .jname{flex:1;min-width:0;font-weight:600;color:var(--ink-2);font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .jseg{flex:0 0 auto;}
+  .jseg button{font-size:12px;padding:5px 11px;}
+  .jhint{font-weight:400;color:var(--faint);font-size:11.5px;letter-spacing:0;text-transform:none;}
   textarea{width:100%;min-height:120px;margin-top:.7rem;padding:.75rem .85rem;font-family:ui-monospace,Menlo,monospace;font-size:12.5px;line-height:1.5;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:0;resize:vertical;}
   textarea:focus{outline:none;border-color:var(--ink);}
   .row{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-top:.85rem;}
@@ -119,22 +129,24 @@
   .resume .rtxt{margin-right:auto;color:var(--ink-2);} .resume .rtxt b{color:var(--ink);}
 
   /* ── 출력: 마스트헤드 ── */
-  #output{max-width:var(--wrap);margin:0 auto;padding:0 clamp(16px,5vw,24px) 110px;}
+  #output{max-width:var(--wrap);margin:0 auto;padding:0 clamp(16px,5vw,24px) 110px;font-family:var(--read-font);}
   .masthead{padding:52px 0 28px;border-bottom:1px solid var(--line);margin-bottom:24px;}
   .eyebrow{font-size:11px;font-weight:700;letter-spacing:.22em;color:var(--muted);text-transform:uppercase;}
   #docTitle{font-size:clamp(28px,5.4vw,42px);font-weight:700;letter-spacing:-.025em;line-height:1.2;margin:12px 0 0;color:var(--ink);outline:none;border-radius:0;}
   #docTitle:focus{box-shadow:inset 0 -2px 0 var(--ink);}
   #docTitle:empty:before{content:"제목을 입력하세요";color:var(--faint);}
   .masthead-meta{color:var(--faint);font-size:13.5px;margin-top:14px;letter-spacing:.01em;}
+  .masthead-meta:empty{display:none;}
 
   .is-hidden{display:none !important;}
 
   /* ── 피드 ── */
   #book{display:flex;flex-direction:column;}
-  .turn{display:flex;gap:16px;padding:15px 0;}
+  .turn{display:flex;gap:var(--gap);padding:15px 0;}
   .turn.cont{padding-top:2px;}
-  .av{width:55px;height:55px;flex:0 0 55px;border-radius:0;object-fit:cover;background:var(--subtle);box-shadow:0 0 0 1px var(--line);}
-  .av-space{width:55px;flex:0 0 55px;}
+  .turn:has(+ .turn.cont){padding-bottom:3px;}
+  .av{width:var(--av);height:var(--av);flex:0 0 var(--av);border-radius:0;object-fit:cover;background:var(--subtle);box-shadow:0 0 0 1px var(--line);}
+  .av-space{width:var(--av);flex:0 0 var(--av);}
   .content{flex:1;min-width:0;padding-top:2px;}
   .head{display:flex;align-items:baseline;gap:9px;margin-bottom:5px;}
   .who{font-weight:700;font-size:15px;letter-spacing:-.01em;color:var(--speaker,var(--ink));}
@@ -143,9 +155,15 @@
   .body p{margin:0 0 10px;} .body p:last-child{margin-bottom:0;}
 
   /* GM = 내레이션 */
-  .narr{margin:20px 0;padding:2px 0 2px 18px;border-left:2px solid var(--line-2);}
+  .narr{margin:16px 0 16px calc(var(--av) + var(--gap));padding:13px 16px;background:var(--narr-bg);}
   .narr .body{color:var(--ink-2);}
   .narr .body p{margin:0 0 10px;} .narr .body p:last-child{margin-bottom:0;}
+
+  /* 저널 정렬: 중앙 */
+  .turn.center{flex-direction:column;align-items:center;text-align:center;gap:8px;}
+  .turn.center .content{width:100%;padding-top:0;flex:none;}
+  .turn.center .head{justify-content:center;}
+  .narr.center{margin-left:0;text-align:center;}
 
   /* 시스템 메시지 → 조용한 에디토리얼 노트 */
   .sysmsg{max-width:460px;margin:28px auto;text-align:center;color:var(--muted);padding:15px 0;
@@ -207,8 +225,7 @@
   #toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
 
   @media (max-width:640px){
-    :root{--fs:15.5px;}
-    .turn{gap:12px;} .av,.av-space{width:52px;flex-basis:52px;} .av{height:52px;}
+    :root{--fs:15.5px; --av:52px; --gap:12px;}
     .brand .brandmain{max-width:52vw;}
     .brand small{display:none;}
     .find{order:10;flex-basis:100%;max-width:none;margin:0;}
@@ -241,6 +258,10 @@
     <button id="fsDown" title="작게">A−</button>
     <button id="fsUp" title="크게">A＋</button>
   </span>
+  <span class="seg" role="group" aria-label="글씨체">
+    <button data-font-set="sans" aria-pressed="true">Pretendard</button>
+    <button data-font-set="serif">본명조</button>
+  </span>
   <span class="seg" role="group" aria-label="테마">
     <button data-theme-set="light" aria-pressed="true">밝게</button>
     <button data-theme-set="dark">어둡게</button>
@@ -248,14 +269,13 @@
   <button class="btn app-only hidden" id="editBtn" title="원본 다시 넣기">편집</button>
   <button class="btn app-only hidden" id="saveBtn" title="아카이브 HTML로 저장">저장</button>
   <button class="btn app-only hidden" id="exportBtn" title="티스토리·게시판에 붙여넣을 HTML로 추출">게시용</button>
-  <button class="btn" id="printBtn" title="인쇄 / PDF">인쇄</button>
 </header>
 
 <!-- 붙여넣기 패널 -->
 <section class="panel app-only" id="pastePanel">
   <div id="resumeSlot"></div>
 
-  <h1>세션을 읽기 좋은 아카이브로</h1>
+  <h1>세션 로그 백업</h1>
   <p class="lead">코코포리아 룸 채팅 ‘메인’ 탭을 그대로 옮겨, 읽기 좋은 반응형 페이지로 저장합니다. 아바타·이름·색상을 살리고, GM은 내레이션으로 흘려 씁니다. 코코포리아 채팅은 가상 스크롤이라, 아래 <b>‘룸 로그 수집’</b>으로 전체 로그를 먼저 모읍니다.</p>
 
   <!-- STEP 1 · 북마클릿 -->
@@ -289,17 +309,21 @@
     <div class="row">
       <input type="file" id="fileInput" accept=".html,.htm,text/html" class="hidden">
       <button class="btn btn-primary" id="fileBtn">HTML 파일 열기</button>
-      <button class="btn" id="demoBtn">예시 보기</button>
     </div>
     <div id="urlhint" class="urlhint hidden"></div>
     <textarea id="src" placeholder="또는 수집한 HTML / 룸 링크를 여기에 붙여넣기…"></textarea>
-    <div class="row"><button class="btn" id="convertBtn">붙여넣은 내용 변환</button></div>
+    <div class="row"><button class="btn" id="convertBtn">변환 · 다시 적용</button></div>
 
     <details class="adv">
       <summary>고급 설정</summary>
-      <div class="field"><label>아바타 인식 키워드</label><input type="text" id="avatarKey" value="avatar"></div>
+      <div class="field"><label>내레이션으로 쓸 캐릭터 이름 <span class="jhint">— 쉼표로 여러 명 지정 가능 (예: GM, 사회자)</span></label><input type="text" id="narrNames" value="GM" placeholder="예: GM, 사회자"></div>
       <div class="field"><label><input type="checkbox" id="optMerge" checked> 같은 화자 연속 발화 합치기</label></div>
-      <div class="field"><label><input type="checkbox" id="optNoise"> 주사위·전투·HP 로그도 포함</label></div>
+      <div class="field"><label><input type="checkbox" id="optNoise"> 주사위·판정 로그도 포함</label></div>
+      <div class="field"><label><input type="checkbox" id="optStatus"> HP·MP·이성 등 스테이터스 변화를 시스템 로그로 포함</label></div>
+      <div class="field jalign-wrap hidden" id="jalignWrap">
+        <label style="display:block;margin-bottom:2px">저널 정렬 <span class="jhint">— 변환 후 캐릭터별 좌측/중앙 지정 · 변경 뒤 ‘변환 · 다시 적용’으로 반영</span></label>
+        <div id="journalAlign" class="jalign"></div>
+      </div>
       <div id="msg"></div>
     </details>
   </div>
@@ -353,11 +377,15 @@
       document.querySelectorAll('[data-theme-set]').forEach(x => x.setAttribute('aria-pressed', x === b));
     }));
 
+    document.querySelectorAll('[data-font-set]').forEach(b => b.addEventListener('click', () => {
+      root.setAttribute('data-font', b.dataset.fontSet);
+      document.querySelectorAll('[data-font-set]').forEach(x => x.setAttribute('aria-pressed', x === b));
+    }));
+
     let fs = parseFloat(getComputedStyle(root).getPropertyValue('--fs')) || 16.5;
     const setFs = v => { fs = Math.max(13, Math.min(22, v)); root.style.setProperty('--fs', fs + 'px'); };
     $('#fsUp') && $('#fsUp').addEventListener('click', () => setFs(fs + 1));
     $('#fsDown') && $('#fsDown').addEventListener('click', () => setFs(fs - 1));
-    $('#printBtn') && $('#printBtn').addEventListener('click', () => window.print());
 
     const title = $('#docTitle'), brandMain = document.querySelector('#brandTitle .brandmain');
     if(title){
@@ -561,6 +589,19 @@
   }
   const paragraphsFrom = t => clean(t).split(/\n+/).map(l => l.trim()).filter(Boolean);
 
+  // HP·MP·이성·侵蝕率 등 스테이터스 변화 감지
+  //  1) 코코포리아 명령  :라벨±숫자  (라벨은 임의: HP, 이성, 侵蝕率 …)
+  //  2) 숫자 → 숫자  결과 표기
+  //  3) 스탯 키워드 + 부호숫자 (짧은 로그)
+  const STAT_KW = /(\bHP\b|\bMP\b|\bSAN\b|\bLP\b|\bFP\b|\bDB\b|이성|정신|광기|공포|체력|생명|마력|기력|근성|내구|침식|침식률|잔기|피해|데미지|damage|상태|스테이터스|스탯|status|正気度|正気|理性|生命力|魔力|耐久|侵蝕|侵蝕率|狂気|ダメージ|SAN値)/i;
+  const detectStatus = flat => {
+    const s = (flat || '').trim();
+    if(/^[:：]\s*[^\s:：]{1,16}\s*[＋+\-ー－=＝]\s*-?\d+/.test(s)) return true;
+    if(/-?\d+\s*(?:→|->|—>|⇒|⟶|⇨|=>|~>|▶|➔|➜)\s*-?\d+/.test(s)) return STAT_KW.test(s) || s.length <= 48;
+    if(STAT_KW.test(s) && /[＋+\-ー－±][0-9]/.test(s) && s.length <= 48) return true;
+    return false;
+  };
+
   /* ── 파싱 ── */
   function parse(html, opts){
     const doc = new DOMParser().parseFromString(html, 'text/html');
@@ -586,7 +627,8 @@
       const mm = raw.match(/^\s*([^\n:：]{1,24})[:：]\s*([\s\S]*)$/);
       if(colored && clean(colored.textContent).length <= 24){ name = clean(colored.textContent); body = raw.replace(colored.textContent,''); }
       else if(mm){ name = clean(mm[1]); body = mm[2]; }
-      return { avatar:'', name, color:'', paras:paragraphsFrom(body), shots:[], system:!name, dice:false };
+      const pp = paragraphsFrom(body);
+      return { avatar:'', name, color:'', paras:pp, shots:[], system:!name, dice:false, status:detectStatus(pp.join(' ')) };
     }).filter(x => x && (x.paras.length || x.name));
   }
   function extractCcfolia(row){
@@ -609,7 +651,8 @@
     const rollSpan = p && p.querySelector('span[class*="ucj"]');
     const system = !avatar && !name;
     const dice = !!rollSpan || (/＞|＝/.test(flat) && /\d*[dD]\d+/.test(flat.replace(/\s/g,'')));
-    return { avatar, name, color, paras, shots, system, dice };
+    const status = detectStatus(flat);
+    return { avatar, name, color, paras, shots, system, dice, status };
   }
   function extractGeneric(root, avatarImg){
     const avatar = avatarImg.getAttribute('src') || avatarImg.src || '';
@@ -623,26 +666,27 @@
     if(name){ const idx=bodyText.indexOf(name); if(idx!==-1) bodyText=bodyText.slice(0,idx)+bodyText.slice(idx+name.length); }
     let paras = paragraphsFrom(bodyText);
     if(paras[0]===name) paras.shift();
-    return { avatar, name:name||'', color, paras, shots, system:!avatar&&!name, dice:false };
+    return { avatar, name:name||'', color, paras, shots, system:!avatar&&!name, dice:false, status:detectStatus(paras.join(' ')) };
   }
 
   /* ── 렌더 ── */
-  const isGM = m => (m.name||'').trim().toUpperCase() === 'GM';
+  const normName = s => (s||'').trim().toLowerCase();
+  const narratorSet = opts => new Set(((opts && Array.isArray(opts.narrators)) ? opts.narrators : ['GM']).map(normName).filter(Boolean));
   const stripEdit = s => s.replace(/\s*\[편집 완료\]/g, '').trim();
   const cleanParas = arr => arr.map(stripEdit).filter(Boolean);
   const isSys = m => m.paras.length && m.paras[0].trimStart().startsWith('✦');
   const sysLines = arr => arr.map(p => p.replace(/^\s*✦\s*/, '').trim()).filter(Boolean);
   function figure(src){ const f=document.createElement('figure'); f.className='shot'; const i=document.createElement('img'); i.src=src; i.alt='삽입 이미지'; i.loading='lazy'; f.appendChild(i); const c=document.createElement('figcaption'); c.textContent='이미지'; f.appendChild(c); return f; }
   function paras(el, arr){ arr.forEach(p => { const x=document.createElement('p'); x.textContent=p; el.appendChild(x); }); }
-  function sysNote(lines){
+  function sysNote(lines, label){
     const w = document.createElement('div'); w.className = 'sysmsg';
-    const l = document.createElement('span'); l.className = 'lbl'; l.textContent = '시스템';
+    const l = document.createElement('span'); l.className = 'lbl'; l.textContent = label || '시스템';
     const b = document.createElement('div'); b.className = 'txt'; paras(b, lines);
     w.appendChild(l); w.appendChild(b); return w;
   }
   const luma = hex => { const m=/^#?([0-9a-f]{6})$/i.exec((hex||'').trim()); if(!m) return null; const n=parseInt(m[1],16); const r=(n>>16)&255,g=(n>>8)&255,b=n&255; return (0.2126*r+0.7152*g+0.0587*b)/255; };
 
-  let lastMessages = null, lastOpts = null;
+  let lastMessages = null, lastOpts = null, alignState = {};
 
   function render(messages, opts){
     lastMessages = messages; lastOpts = opts;
@@ -652,26 +696,37 @@
     const bm = document.querySelector('#brandTitle .brandmain'); if(bm) bm.textContent = title;
     document.title = title + ' · 세션 리더';
 
-    const shown = messages.filter(m => !(opts.hideNoise && (m.system || m.dice)));
-    document.getElementById('metaLine').textContent = shown.length + '개의 기록 · 문장을 드래그해 이미지로 발췌';
+    const shown = messages.filter(m => {
+      if(m.status) return !!opts.showStatus;
+      if(m.system || m.dice) return !opts.hideNoise;
+      return true;
+    });
 
     const book = document.getElementById('book'); book.innerHTML = '';
     let prevName = null, curNarr = null;
+    const alignOf = name => (name && opts.align && opts.align[name] === 'center') ? 'center' : 'left';
+    const narrators = narratorSet(opts); const isNarr = m => narrators.has(normName(m.name));
 
     shown.forEach(m => {
       const noise = m.system || m.dice;
       const P = cleanParas(m.paras);
       if(!P.length && !m.shots.length && !m.name) return;
 
+      if(m.status){
+        prevName = null; curNarr = null;
+        let lines = P; if(m.name && !P.some(t => t.includes(m.name))) lines = [m.name].concat(P);
+        book.appendChild(sysNote(lines, '스테이터스'));
+        return;
+      }
       if(isSys(m) && !noise){
         prevName = null; curNarr = null;
         book.appendChild(sysNote(sysLines(P)));
         return;
       }
-      if(isGM(m) && !noise){
+      if(isNarr(m) && !noise){
         prevName = null;
         if(!curNarr){
-          curNarr = document.createElement('div'); curNarr.className = 'narr'; curNarr.dataset.who = m.name || 'GM';
+          curNarr = document.createElement('div'); curNarr.className = 'narr' + (alignOf(m.name)==='center' ? ' center' : ''); curNarr.dataset.who = m.name || 'GM';
           const b = document.createElement('div'); b.className = 'body'; curNarr.appendChild(b); book.appendChild(curNarr);
         }
         const b = curNarr.querySelector('.body');
@@ -681,12 +736,15 @@
       curNarr = null;
 
       const same = opts.merge && m.name && m.name === prevName && !noise;
+      const center = alignOf(m.name) === 'center';
       const turn = document.createElement('article');
-      turn.className = 'turn' + (same ? ' cont' : '') + (noise ? ' muted' : '');
+      turn.className = 'turn' + (same ? ' cont' : '') + (noise ? ' muted' : '') + (center ? ' center' : '');
       turn.dataset.who = m.name || (m.system ? '시스템' : '');
       if(m.color) turn.style.setProperty('--speaker', m.color);
 
-      if(same || (!m.avatar)){ const sp = document.createElement('div'); sp.className = 'av-space'; turn.appendChild(sp); }
+      if(center){
+        if(!same && m.avatar){ const img = document.createElement('img'); img.className = 'av'; img.src = m.avatar; img.alt = (m.name||'') + ' 아바타'; img.loading = 'lazy'; turn.appendChild(img); }
+      } else if(same || (!m.avatar)){ const sp = document.createElement('div'); sp.className = 'av-space'; turn.appendChild(sp); }
       else { const img = document.createElement('img'); img.className = 'av'; img.src = m.avatar; img.alt = (m.name||'') + ' 아바타'; img.loading = 'lazy'; turn.appendChild(img); }
 
       const content = document.createElement('div'); content.className = 'content';
@@ -698,6 +756,7 @@
       if(m.name) prevName = m.name;
     });
 
+    populateJournalAlign(messages);
     if(window.__resetSearch) window.__resetSearch();
 
     $('#findWidget').classList.remove('hidden');
@@ -713,7 +772,7 @@
   /* ── 자동 보관 ── */
   const KEY = 'ccfolia:v2:last';
   function saveDraft(messages, opts, title){
-    try{ localStorage.setItem(KEY, JSON.stringify({ t:title, o:{merge:opts.merge, hideNoise:opts.hideNoise, avatarKey:opts.avatarKey}, m:messages, at:Date.now() })); }
+    try{ localStorage.setItem(KEY, JSON.stringify({ t:title, o:{merge:opts.merge, hideNoise:opts.hideNoise, avatarKey:opts.avatarKey, showStatus:opts.showStatus, align:opts.align, narrators:opts.narrators}, m:messages, at:Date.now() })); }
     catch(e){ /* 용량 초과 등은 조용히 무시 */ }
   }
   function showResume(){
@@ -730,13 +789,49 @@
     txt.innerHTML = '이어보기 · <b>'+ (d.t||'기록된 세션').replace(/</g,'&lt;') +'</b> <span style="color:var(--faint)">('+ d.m.length +'개 · '+ ago +')</span>';
     const open = document.createElement('button'); open.className='btn btn-primary'; open.textContent='열기';
     const del = document.createElement('button'); del.className='btn'; del.textContent='지우기';
-    open.onclick = () => { const o = Object.assign({merge:true,hideNoise:true,avatarKey:'avatar',title:d.t}, d.o||{}, {_restore:true}); render(d.m, o); };
+    open.onclick = () => {
+      if(d.o && d.o.align) alignState = Object.assign({}, d.o.align);
+      if($('#optStatus')) $('#optStatus').checked = !!(d.o && d.o.showStatus);
+      if(d.o && d.o.narrators && $('#narrNames')) $('#narrNames').value = d.o.narrators.join(', ');
+      const o = Object.assign({merge:true,hideNoise:true,avatarKey:'avatar',title:d.t}, d.o||{}, {_restore:true, align:alignState});
+      render(d.m, o);
+    };
     del.onclick = () => { try{ localStorage.removeItem(KEY); }catch(e){} slot.innerHTML=''; toast('보관된 세션을 지웠습니다'); };
     box.append(txt, open, del); slot.appendChild(box);
   }
 
+  /* ── 저널 정렬 목록 (고급 설정) ── */
+  function populateJournalAlign(messages){
+    const wrap = $('#jalignWrap'), box = $('#journalAlign'); if(!box) return;
+    const names = [], seen = new Set();
+    messages.forEach(m => { if(m.status || m.system || isSys(m) || !m.name) return; if(seen.has(m.name)) return; seen.add(m.name); names.push(m.name); });
+    if(!names.length){ if(wrap) wrap.classList.add('hidden'); box.innerHTML = ''; return; }
+    if(wrap) wrap.classList.remove('hidden');
+    box.innerHTML = '';
+    names.forEach(name => {
+      const cur = alignState[name] === 'center' ? 'center' : 'left';
+      const row = document.createElement('div'); row.className = 'jrow'; row.dataset.name = name;
+      const nm = document.createElement('span'); nm.className = 'jname'; nm.textContent = name;
+      const seg = document.createElement('span'); seg.className = 'seg jseg';
+      [['left','좌측'],['center','중앙']].forEach(([al, lab]) => {
+        const b = document.createElement('button'); b.type = 'button'; b.dataset.align = al; b.textContent = lab;
+        b.setAttribute('aria-pressed', cur === al ? 'true' : 'false');
+        seg.appendChild(b);
+      });
+      row.append(nm, seg); box.appendChild(row);
+    });
+  }
+  $('#journalAlign') && $('#journalAlign').addEventListener('click', e => {
+    const b = e.target.closest('button[data-align]'); if(!b) return;
+    const row = b.closest('.jrow'); if(!row) return;
+    const name = row.dataset.name, al = b.dataset.align;
+    if(al === 'center') alignState[name] = 'center'; else delete alignState[name];
+    row.querySelectorAll('button[data-align]').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));
+  });
+
   /* ── 이벤트 ── */
-  const currentOpts = () => ({ avatarKey: $('#avatarKey').value, merge: $('#optMerge').checked, hideNoise: !$('#optNoise').checked, title: '' });
+  const parseNarr = s => (s||'').split(/[,，\n]/).map(x => x.trim()).filter(Boolean);
+  const currentOpts = () => ({ avatarKey: 'avatar', merge: $('#optMerge').checked, hideNoise: !$('#optNoise').checked, showStatus: $('#optStatus') ? $('#optStatus').checked : false, align: alignState, narrators: parseNarr($('#narrNames') ? $('#narrNames').value : 'GM'), title: '' });
   function run(html){
     const msg = $('#msg');
     try{
@@ -746,7 +841,7 @@
     }catch(e){ msg.innerHTML = '<span class="err">오류: ' + e.message + '</span>'; }
   }
 
-  $('#convertBtn').onclick = () => run($('#src').value);
+  $('#convertBtn').onclick = () => { const s = $('#src').value; if(s && s.trim()) run(s); else if(lastMessages) render(lastMessages, currentOpts()); else run(s); };
   $('#editBtn').onclick = () => { $('#output').classList.add('hidden'); $('#pastePanel').classList.remove('hidden'); $('#saveBtn').classList.add('hidden'); $('#exportBtn').classList.add('hidden'); $('#editBtn').classList.add('hidden'); $('#findWidget').classList.add('hidden'); if(window.__resetSearch) window.__resetSearch(); showResume(); window.scrollTo(0,0); };
   $('#fileBtn').onclick = () => $('#fileInput').click();
   $('#fileInput').onchange = e => { const f = e.target.files[0]; if(!f) return; loadFile(f); };
@@ -791,40 +886,63 @@
   const figHTML = src => '<figure style="margin:11px 0;"><img src="'+esc(src)+'" alt="" style="max-width:100%;height:auto;border-radius:0;border:1px solid '+CX.line+';display:block;"></figure>';
 
   function buildPostHTML(messages, opts, cfg){
-    const shown = messages.filter(m => !(opts.hideNoise && (m.system || m.dice)));
-    const parts = []; let prevName = null, narr = null;
+    const shown = messages.filter(m => {
+      if(m.status) return !!opts.showStatus;
+      if(m.system || m.dice) return !opts.hideNoise;
+      return true;
+    });
+    const alignOf = name => (name && opts.align && opts.align[name] === 'center') ? 'center' : 'left';
+    const sysBlock = (lines, label) => '<div style="max-width:460px;margin:26px auto;text-align:center;color:'+CX.muted+';padding:14px 0;border-top:1px solid '+CX.line+';border-bottom:1px solid '+CX.line+';"><div style="font-size:11px;letter-spacing:.26em;color:'+CX.faint+';margin-bottom:6px;">'+esc(label)+'</div><div style="font-size:14px;line-height:1.6;">'+lines+'</div></div>';
+    const parts = []; let prevName = null, narr = null, narrCenter = false;
+    const narrators = narratorSet(opts); const isNarr = m => narrators.has(normName(m.name));
     const flush = () => {
       if(narr && narr.length){
         const inner = narr.map(it => it.img ? figHTML(it.img) : '<p style="margin:0 0 9px;">'+esc(it.p)+'</p>').join('');
-        parts.push('<div style="margin:18px 0;padding:2px 0 2px 16px;border-left:2px solid #D4D4D8;color:'+CX.ink2+';line-height:1.85;">'+inner+'</div>');
+        const style = narrCenter
+          ? 'margin:18px 0;text-align:center;color:'+CX.ink2+';line-height:1.85;'
+          : 'margin:18px 0 18px 69px;color:'+CX.ink2+';line-height:1.85;';
+        parts.push('<div style="'+style+'">'+inner+'</div>');
       }
-      narr = null;
+      narr = null; narrCenter = false;
     };
     shown.forEach(m => {
       const noise = m.system || m.dice;
       const P = cleanParas(m.paras);
       if(!P.length && !m.shots.length && !m.name) return;
+      if(m.status){
+        flush(); prevName = null;
+        let arr = P; if(m.name && !P.some(t => t.includes(m.name))) arr = [m.name].concat(P);
+        const lines = arr.map(t => '<p style="margin:0 0 4px;">'+esc(t)+'</p>').join('');
+        parts.push(sysBlock(lines, '스테이터스'));
+        return;
+      }
       if(isSys(m) && !noise){
         flush(); prevName = null;
         const lines = sysLines(P).map(t => '<p style="margin:0 0 4px;">'+esc(t)+'</p>').join('');
-        parts.push('<div style="max-width:460px;margin:26px auto;text-align:center;color:'+CX.muted+';padding:14px 0;border-top:1px solid '+CX.line+';border-bottom:1px solid '+CX.line+';"><div style="font-size:11px;letter-spacing:.26em;color:'+CX.faint+';margin-bottom:6px;">시스템</div><div style="font-size:14px;line-height:1.6;">'+lines+'</div></div>');
+        parts.push(sysBlock(lines, '시스템'));
         return;
       }
-      if(isGM(m) && !noise){
-        prevName = null; if(!narr) narr = [];
+      if(isNarr(m) && !noise){
+        prevName = null; if(!narr){ narr = []; narrCenter = alignOf(m.name) === 'center'; }
         P.forEach(p => narr.push({p})); m.shots.forEach(s => narr.push({img:s}));
         return;
       }
       flush();
       const same = opts.merge && m.name && m.name === prevName && !noise;
+      const center = alignOf(m.name) === 'center';
       const color = m.color || CX.ink;
-      const av = (same || !m.avatar)
-        ? '<div style="width:55px;flex:0 0 55px;"></div>'
-        : '<img src="'+esc(m.avatar)+'" alt="" style="width:55px;height:55px;flex:0 0 55px;border-radius:0;object-fit:cover;box-shadow:0 0 0 1px '+CX.line+';">';
       const head = (!same && m.name) ? '<div style="font-weight:700;font-size:15px;color:'+color+';margin-bottom:4px;">'+esc(m.name)+'</div>' : '';
       const body = P.length ? '<div style="color:'+CX.ink2+';line-height:1.8;">'+pHTML(P)+'</div>' : '';
       const shots = m.shots.map(figHTML).join('');
-      parts.push('<div style="display:flex;gap:14px;padding:'+(same?'2px':'13px')+' 0;">'+av+'<div style="flex:1;min-width:0;">'+head+body+shots+'</div></div>');
+      if(center){
+        const avc = (!same && m.avatar) ? '<div style="width:55px;height:55px;overflow:hidden;box-shadow:0 0 0 1px '+CX.line+';margin:0 auto 8px;"><img src="'+esc(m.avatar)+'" alt="" style="width:55px;height:55px;object-fit:cover;display:block;"></div>' : '';
+        parts.push('<div style="text-align:center;padding:'+(same?'2px':'13px')+' 0;">'+avc+head+body+shots+'</div>');
+      } else {
+        const av = (same || !m.avatar)
+          ? '<div style="width:55px;flex:0 0 55px;"></div>'
+          : '<div style="width:55px;height:55px;flex:0 0 55px;overflow:hidden;box-shadow:0 0 0 1px '+CX.line+';"><img src="'+esc(m.avatar)+'" alt="" style="width:55px;height:55px;object-fit:cover;display:block;"></div>';
+        parts.push('<div style="display:flex;align-items:flex-start;gap:14px;padding:'+(same?'2px':'13px')+' 0;">'+av+'<div style="flex:1;min-width:0;">'+head+body+shots+'</div></div>');
+      }
       if(m.name) prevName = m.name;
     });
     flush();
@@ -944,23 +1062,6 @@
   const BMK = 'javascript:' + encodeURIComponent('(function(){' + HARVEST + '})();');
   const bmk = $('#bmk'); if(bmk) bmk.setAttribute('href', BMK);
   if(bmk) bmk.addEventListener('click', e => { e.preventDefault(); toast('이 버튼은 북마크바로 드래그하세요'); });
-
-  /* ── 예시 ── */
-  function svgAvatar(bg, ch){
-    const s = '<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96"><rect width="96" height="96" rx="0" fill="'+bg+'"/><text x="50%" y="55%" font-family="sans-serif" font-size="42" fill="#fff" text-anchor="middle" dominant-baseline="middle">'+ch+'</text></svg>';
-    return 'data:image/svg+xml;utf8,' + encodeURIComponent(s);
-  }
-  $('#demoBtn').onclick = () => {
-    const demo = [
-      { name:'GM', color:'#b8b1a2', paras:['낡은 여관의 문이 삐걱이며 열렸다. 바깥에는 그칠 기미 없는 비가 쏟아지고 있었다.'], shots:[] },
-      { avatar:svgAvatar('#5b7cc9','서'), name:'서리', color:'#5b7cc9', paras:['“…하룻밤 신세 좀 질게요.” 젖은 외투를 털며 안으로 들어섰다.'], shots:[] },
-      { avatar:svgAvatar('#8a5a3c','노'), name:'노인', color:'#b07a4a', paras:['벽난로 앞의 노인이 천천히 고개를 들었다.','“이런 밤에 산을 넘는 이는 드문데.”'], shots:[] },
-      { paras:['✦ 서리 님이 파티에 합류했습니다.'], shots:[], system:false, name:'', color:'' },
-      { name:'GM', color:'#b8b1a2', paras:['탁자 위에 낡은 지도가 펼쳐졌다. 빗물에 번진 잉크가 별자리처럼 흩어져 있었다.'], shots:[] },
-      { avatar:svgAvatar('#5b7cc9','서'), name:'서리', color:'#5b7cc9', paras:['지도의 한 귀퉁이를 손끝으로 짚었다. “여기… 봉화대 아닌가요?”'], shots:[] },
-    ];
-    render(demo, { merge:true, hideNoise:true, title:'비 내리는 여관에서', _demo:true });
-  };
 
   showResume();
 })();
