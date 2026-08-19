@@ -14,7 +14,7 @@
     --line:#E4E4E7; --line-2:#D4D4D8;
     --accent:#18181B; --on-accent:#FFFFFF; --accent-soft:#F4F4F5;
     --hit:#E4E4E7; --hit-cur:#C7C7CC; --narr-bg:#F3F3F5;
-    --fs:15px; --lh:1.66; --wrap:730px; --radius:0px; --av:55px; --av-radius:0px; --gap:16px;
+    --fs:15px; --lh:1.66; --wrap:730px; --radius:0px; --av:55px; --av-radius:0px; --av-zoom:1; --av-focus:top; --gap:16px;
     --ok:#2F7D5B; --ng:#B04A42;
     --sans:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
     --serif:var(--sans);
@@ -105,6 +105,9 @@
   .bmk .ic{font-size:16px;}
   .bmk-hint{font-size:13px;color:var(--muted);}
   .bmk-hint b{color:var(--ink);}
+  /* 재등록 안내는 놓치면 옛 버전으로 수집하게 되므로, 판정 실패에 쓰는 빨강으로 눈에 띄게 둔다 */
+  .bmk-sub{display:block;font-size:12px;font-weight:600;color:var(--ng);margin-top:3px;}
+  .stamp{font-size:12px;color:var(--faint);font-variant-numeric:tabular-nums;margin-bottom:14px;}
   .steps{counter-reset:s;list-style:none;padding:0;margin:16px 0 0;display:grid;gap:8px;}
   .steps li{position:relative;padding-left:30px;font-size:13.5px;line-height:1.6;color:var(--muted);}
   .steps li b{color:var(--ink);}
@@ -149,6 +152,15 @@
   .irow.gone .ipos{opacity:.45;}
   .jname{flex:1;min-width:0;font-weight:600;color:var(--ink-2);font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .jseg{flex:0 0 auto;}
+  .avrow{display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
+  .avrow .jname{flex:0 1 auto;min-width:56px;max-width:150px;}
+  .avrow .seg button{font-size:12px;padding:5px 9px;}
+  .avrow input[type=range]{flex:1 1 110px;min-width:88px;max-width:180px;}
+  .avrow .val{min-width:44px;}
+  .avrow.own .jname{color:var(--ink);}
+  .avrow .rst{flex:0 0 auto;border:1px solid var(--line);background:var(--surface);color:var(--muted);
+    font:inherit;font-size:11.5px;line-height:1;padding:6px 8px;cursor:pointer;}
+  .avrow .rst:hover{color:var(--ink);background:var(--subtle);}
   .jseg button{font-size:12px;padding:5px 11px;}
   .jhint{font-weight:400;color:var(--faint);font-size:11.5px;letter-spacing:0;text-transform:none;}
   textarea{width:100%;min-height:120px;margin-top:.7rem;padding:.75rem .85rem;font-family:ui-monospace,Menlo,monospace;font-size:12.5px;line-height:1.5;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:0;resize:vertical;}
@@ -157,6 +169,17 @@
   .urlhint{margin-top:.7rem;padding:.7rem .85rem;border:1px solid var(--line);border-left:3px solid var(--ink);background:var(--subtle);border-radius:0;font-size:13px;line-height:1.55;color:var(--ink-2);}
   .note{margin-top:18px;padding:.75rem .9rem;border:1px solid var(--line);border-left:3px solid var(--line-2);background:var(--surface);border-radius:0;font-size:12.5px;line-height:1.6;color:var(--muted);}
   .err{color:var(--ink);font-weight:700;} html[data-theme="dark"] .err{color:var(--ink);}
+
+  /* 판올림 안내 — 이어보기 배너와 같은 틀에, 강조만 빨강으로 */
+  .alert{display:flex;align-items:flex-start;gap:11px;margin-bottom:22px;padding:13px 16px;
+    border:1px solid var(--line);border-left:3px solid var(--ng);
+    background:color-mix(in srgb,var(--ng) 5%,var(--surface));border-radius:0;
+    font-size:13.5px;line-height:1.62;color:var(--ink-2);}
+  .alert .mk{flex:0 0 19px;display:inline-grid;place-items:center;width:19px;height:19px;margin-top:1px;
+    background:var(--ng);color:var(--paper);border-radius:0;font-size:12px;font-weight:700;line-height:1;}
+  .alert p{margin:0;}
+  /* .panel p b 가 먹색으로 눌러 버리므로 같은 무게로 맞춘다 */
+  .alert p b{color:var(--ng);font-weight:700;}
 
   /* 이어보기 배너 */
   .resume{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:22px;padding:13px 16px;
@@ -176,7 +199,8 @@
   .turn{display:flex;gap:var(--gap);padding:15px 0;}
   .turn.cont{padding-top:2px;}
   .turn:has(+ .turn.cont){padding-bottom:3px;}
-  .av{width:var(--av);height:var(--av);flex:0 0 var(--av);border-radius:var(--av-radius);object-fit:cover;object-position:top;background:var(--subtle);box-shadow:0 0 0 1px var(--line);}
+  .av{width:var(--av);height:var(--av);flex:0 0 var(--av);border-radius:var(--av-radius);overflow:hidden;background:var(--subtle);box-shadow:0 0 0 1px var(--line);}
+  .av img{width:100%;height:100%;display:block;object-fit:cover;object-position:var(--av-focus);transform:scale(var(--av-zoom));transform-origin:var(--av-focus);}
   .av-space{width:var(--av);flex:0 0 var(--av);}
   .content{flex:1;min-width:0;padding-top:2px;}
   .head{display:flex;align-items:baseline;gap:9px;margin-bottom:5px;}
@@ -227,6 +251,11 @@
   html[data-roll="on"] .turn.roll-ng .body,html[data-roll="on"] .turn.roll-ng .who{color:var(--ng);}
   /* 강조를 켜면 주사위·판정 로그도 본문과 같은 크기로 읽는다 */
   html[data-roll="on"] .turn.muted .body,html[data-roll="on"] .narr.muted .body{font-size:var(--fs);line-height:var(--lh);}
+
+  /* 이미지를 뺐을 때: 아바타 자리를 접어 왼쪽 선을 맞추고, 올렸던 이미지는 조용한 자리 표시만 남긴다 */
+  html[data-img="off"] .narr{margin-left:0;}
+  html[data-img="off"] .infocard{margin-left:0;}
+  .noshot{font-size:12px;color:var(--faint);letter-spacing:.06em;margin:9px 0;}
 
   figure.shot{margin:11px 0;}
   figure.shot img{max-width:100%;height:auto;border-radius:0;border:1px solid var(--line);display:block;}
@@ -331,6 +360,12 @@
 
 <!-- 붙여넣기 패널 -->
 <section class="panel app-only" id="pastePanel">
+  <!-- 파일을 고칠 때마다 이 날짜를 함께 바꾼다. 빌드 과정이 없는 단일 HTML이라 손으로 적어 둔다. -->
+  <div class="stamp collect-only">업데이트 2026-08-19 18:40</div>
+  <div class="alert collect-only" role="status">
+    <span class="mk" aria-hidden="true">!</span>
+    <p>이번 업데이트 기점으로 수집 관련 부분을 크게 수정했습니다! <b>꼭 북마크를 재등록해 주세요.</b></p>
+  </div>
   <div id="resumeSlot" class="collect-only"></div>
 
   <h1 class="collect-only">코코포리아 로그 백업</h1>
@@ -346,12 +381,16 @@
     <p class="sub">북마크바에 <b>한 번만</b> 등록해 두면, 다음부터는 룸에서 클릭 한 번으로 <b>모든 탭의</b> 전체 로그가 <code>ccfolia-log.html</code>로 저장됩니다. F12·콘솔이 필요 없습니다.</p>
     <div class="bmk-row">
       <a class="bmk" id="bmk" href="#" title="북마크바로 드래그하세요" draggable="true"><span class="ic">⬇</span> 룸 로그 수집</a>
-      <span class="bmk-hint">← 이 버튼을 브라우저 <b>북마크바</b>로 드래그</span>
+      <span class="bmk-hint">← 이 버튼을 브라우저 <b>북마크바</b>로 드래그
+        <span class="bmk-sub">버전에 따라 북마크를 지우고 다시 등록</span></span>
     </div>
     <ol class="steps">
       <li>위 버튼을 북마크바로 <b>드래그</b>하세요. (막히면 아래 콘솔 스크립트를 사용하세요.)</li>
       <li>코코포리아 룸에서 <b>채팅창</b>을 열어 둡니다. 탭은 아무거나 상관없습니다.</li>
-      <li>북마크의 <b>‘룸 로그 수집’</b>을 클릭 → <b>메인·정보 등 탭을 하나씩 눌러 가며</b> 위로 끝까지 훑어 파일 하나로 저장합니다. 끝나면 원래 보던 탭으로 되돌려 놓습니다.</li>
+      <li>북마크의 <b>‘룸 로그 수집’</b>을 클릭하면 <b>찾은 탭 목록</b>이 먼저 뜹니다. <b>기본은 ‘메인’과 ‘정보’만</b> 켜져 있고, ‘잡담’ 같은 나머지 탭은 꺼진 채로 뜹니다. 끈 탭은 열지도 않고 건너뜁니다. <span class="jhint">— 고른 내용은 다음 실행 때도 그대로 뜹니다.</span></li>
+      <li><b>‘수집 시작’</b>을 누르면 고른 탭을 하나씩 눌러 가며 위로 끝까지 훑어 파일 하나로 저장합니다. <b>마지막 탭에서 그대로 끝납니다</b> — 탭을 되돌리지 않으니, 보던 탭으로 가려면 직접 눌러 주세요.</li>
+      <li>도는 동안 화면 오른쪽 아래에 <b>진행 배지</b>가 뜹니다. <b>ESC</b>나 배지의 <b>‘중단’</b>으로 언제든 멈출 수 있고, 그때까지 모은 로그는 그대로 저장됩니다. <span class="jhint">— 다른 브라우저 탭으로 가 있는 동안은 잠시 멈췄다가, 돌아오면 이어서 훑습니다.</span></li>
+      <li><b>로그가 많으면 시간이 걸립니다.</b> 1000줄이면 30초 안팎, 10000줄이면 2~5분, 30000줄이면 6~15분쯤 걸립니다. 회선이 느리거나 방이 무거우면 더 걸릴 수 있습니다. <span class="jhint">— 배지의 줄 수가 계속 올라가는 동안은 정상입니다. 그대로 두세요.</span></li>
       <li>저장된 파일을 <b>이 페이지로 끌어다 놓으면</b> 곧바로 변환됩니다.</li>
     </ol>
     <details class="adv">
@@ -379,9 +418,12 @@
       <div class="field"><label>내레이션으로 쓸 캐릭터 이름 <span class="jhint">— 쉼표로 여러 명 지정 가능 (예: GM, 사회자)</span></label><input type="text" id="narrNames" value="GM" placeholder="예: GM, 사회자"></div>
       <div class="field"><label><input type="checkbox" id="optSysNarr"> /system 메시지를 내레이션에 포함하기 <span class="jhint">— 가운데 시스템 블록 대신 내레이션 문단으로 흘려 씁니다</span></label></div>
       <div class="field"><label><input type="checkbox" id="optMerge" checked> 같은 화자 연속 발화 합치기</label></div>
+      <div class="field"><label><input type="checkbox" id="optAvChange"> 아바타가 바뀌면 다시 보여 주기 <span class="jhint">— 합쳐 놓았더라도 서 있는 그림이 바뀐 자리에서는 아바타를 한 번 더 냅니다</span></label></div>
       <div class="field"><label><input type="checkbox" id="optNoise"> 주사위·판정 로그도 포함</label></div>
       <div class="field"><label><input type="checkbox" id="optRoll"> 주사위·판정 로그도 강조 <span class="jhint">— 성공은 초록, 실패는 빨강으로</span></label></div>
       <div class="field"><label><input type="checkbox" id="optStatus"> HP·MP·이성 등 스테이터스 변화를 시스템 로그로 포함</label></div>
+
+      <div class="field"><label><input type="checkbox" id="optNoImg"> 이미지 빼고 내보내기 <span class="jhint">— 아바타와 본문에 올린 이미지를 모두 뺍니다</span></label></div>
 
       <div class="field">
         <span class="fname">아바타 모양</span>
@@ -395,6 +437,24 @@
         <label class="fname" for="avSize">아바타 크기</label>
         <input type="range" id="avSize" min="34" max="88" step="1" value="55" aria-describedby="avSizeVal">
         <span class="val" id="avSizeVal">55px</span>
+      </div>
+      <div class="field">
+        <span class="fname">아바타 기준점</span>
+        <span class="seg" role="group" aria-label="아바타 기준점">
+          <button type="button" data-av-focus="top" aria-pressed="true">세로(위)</button>
+          <button type="button" data-av-focus="center" aria-pressed="false">가운데</button>
+        </span>
+        <span class="jhint">— 확대할 때 어디를 남길지 정합니다</span>
+      </div>
+      <div class="field">
+        <label class="fname" for="avZoom">아바타 확대</label>
+        <input type="range" id="avZoom" min="100" max="250" step="5" value="100" aria-describedby="avZoomVal">
+        <span class="val" id="avZoomVal">100%</span>
+      </div>
+
+      <div class="field jalign-wrap hidden" id="avPerWrap">
+        <label style="display:block;margin-bottom:2px">캐릭터별 아바타 <span class="jhint">— 변환 후 캐릭터마다 기준점·확대를 따로 지정합니다 · 손대지 않은 캐릭터는 위 설정을 그대로 따릅니다</span></label>
+        <div id="avPer" class="jalign"></div>
       </div>
 
       <div class="field jalign-wrap hidden" id="jalignWrap">
@@ -439,7 +499,7 @@
 <div class="export-ov app-only" id="exportOv">
   <div class="export-card">
     <div class="export-head"><b>티스토리·게시판용 HTML</b><button class="btn" id="exportClose">닫기</button></div>
-    <p class="export-desc">블로그·게시판 편집기를 <b>HTML 편집 모드</b>로 바꾼 뒤 아래 코드를 붙여넣으세요. · <b>티스토리</b>: 글쓰기 우측 상단 <b>기본모드 → HTML</b> · <b>아보카도에디션·그누보드</b>: 에디터의 <b>‘HTML’ 소스 버튼</b>. 이미지는 코코포리아 영구 URL이라 붙여넣어도 그대로 보입니다. · <b>글씨체·글자 크기·아바타 설정이 그대로 따라가고, 밝은·어두운 테마는 붙여넣는 곳을 따라갑니다.</b></p>
+    <p class="export-desc">블로그·게시판 편집기를 <b>HTML 편집 모드</b>로 바꾼 뒤 아래 코드를 붙여넣으세요. · <b>티스토리</b>: 글쓰기 우측 상단 <b>기본모드 → HTML</b> · <b>아보카도에디션·그누보드</b>: 에디터의 <b>‘HTML’ 소스 버튼</b>. 이미지는 코코포리아 영구 URL이라 붙여넣어도 그대로 보입니다 — 빼고 싶으면 <b>‘편집 → 이미지 빼고 내보내기’</b>를 켜세요. · <b>글씨체·글자 크기·아바타 설정이 그대로 따라가고, 밝은·어두운 테마는 붙여넣는 곳을 따라갑니다.</b></p>
     <div class="export-opts">
       <label><input type="checkbox" id="expTitle" checked> 제목 헤더 포함</label>
       <label><input type="checkbox" id="expBg"> 배경색 넣기</label>
@@ -715,11 +775,15 @@
       const t = m.tab || ''; m.tab = t; n[t] = (n[t] || 0) + 1; m.seq = n[t];
       if(typeof m.at !== 'number') m.at = null;
       if(typeof m.time !== 'string') m.time = '';
+      if(typeof m.stamp !== 'string') m.stamp = '';
     });
     return list;
   }
   function parseRaw(html, opts){
     const doc = new DOMParser().parseFromString(html, 'text/html');
+    /* '今日'·'昨日'은 읽는 날이 아니라 수집한 날을 기준으로 풀어야 한다 */
+    const nw = doc.querySelector('[data-ccf-now]');
+    logNow = nw ? (+nw.getAttribute('data-ccf-now') || 0) : 0;
     const rows = [...doc.querySelectorAll('.MuiListItem-root')];
     if(rows.length) return rows.map(extractCcfolia).filter(Boolean);
     const key = (opts.avatarKey || 'avatar').toLowerCase();
@@ -756,9 +820,13 @@
   /* 시:분 표시(h6 안의 caption)는 지우지 말고 챙긴다. 탭을 합칠 유일한 단서다. */
   const CAP_SEL = '.MuiTypography-caption, span[class*="caption"]';
   const CLOCK = /(\d{1,2})\s*[:：]\s*([0-5]\d)/;
-  function timeOf(row, h6){
+  function capOf(row, h6){
     const cap = (h6 && h6.querySelector(CAP_SEL)) || row.querySelector(CAP_SEL);
-    const m = cap && CLOCK.exec(cap.textContent || '');
+    return cap ? clean(cap.textContent) : '';
+  }
+  /* 시:분만 뽑는다. 날짜 단서는 stamp에 통째로 남겨 병합에서 쓴다. */
+  function timeOf(row, h6){
+    const m = CLOCK.exec(capOf(row, h6));
     return m ? (m[1].length < 2 ? '0' : '') + m[1] + ':' + m[2] : '';
   }
   function extractCcfolia(row){
@@ -783,7 +851,8 @@
     const dice = !!rollSpan || (/＞|＝/.test(flat) && /\d*[dD]\d+/.test(flat.replace(/\s/g,'')));
     const status = detectStatus(flat);
     return { avatar, name, color, paras, shots, system, dice, status,
-             time: timeOf(row, h6), tab: tabOf(row), at: atOf(row), primary: primaryOf(row) };
+             time: timeOf(row, h6), stamp: capOf(row, h6),
+             tab: tabOf(row), at: atOf(row), primary: primaryOf(row) };
   }
   function extractGeneric(root, avatarImg){
     const avatar = avatarImg.getAttribute('src') || avatarImg.src || '';
@@ -801,40 +870,138 @@
   }
 
   /* ── 탭 병합 ──
-     탭 안에서는 이미 시간순이므로, 필요한 것은 정렬이 아니라 '앞으로만 훑는 병합'이다.
-     커서가 되감기지 않으니 자정 넘김(23:58 → 00:03)이 저절로 풀리고,
-     남는 애매함은 '같은 분 안에서 앞이냐 뒤냐' 하나뿐이다. */
+     캡션은 '今日 14:42' / '昨日 23:50' / '10/26' / '14:42' 처럼 여러 꼴로 온다.
+     날짜가 적혀 있으면 두 탭이 같은 기준을 공유하므로 그대로 견줄 수 있고,
+     시:분뿐이면 탭마다 기준이 달라 메인 시계에 맞춰 앞으로만 훑어야 한다.
+     어느 쪽으로도 정하지 못한 칸은 한 점에 뭉치지 말고 앞뒤 사이로 편다. */
   const HHMM = /^(\d{1,2}):([0-5]\d)$/;
   const minOf = t => { const m = HHMM.exec((t || '').trim()); return m ? (+m[1]) * 60 + (+m[2]) : null; };
-  const DAY = 1440, BASE = DAY * 30;   /* 음수 절대분이 나오지 않도록 띄워 둔 기준점 */
+  const DAY = 1440;
 
-  /* 한 탭의 시:분을 단조 증가하는 절대 분으로 편다. 시각이 없는 줄은 직전 값에 붙인다. */
-  function absLine(msgs){
-    const out = []; let day = 0, prev = -1;
+  const D_TODAY = /今日|오늘|today/i, D_YEST = /昨日|어제|yesterday/i, D_BEFORE = /一昨日|그저께|그제/;
+  const D_YMD = /(\d{4})\s*[\/\-.]\s*(\d{1,2})\s*[\/\-.]\s*(\d{1,2})/;
+  const D_MD = /(\d{1,2})\s*[\/\-.]\s*(\d{1,2})/;
+  const CLOCK_G = /\d{1,2}\s*[:：]\s*[0-5]\d/g;
+  let logNow = 0;   /* 수집 시각(ms). 수집기가 data-ccf-now로 실어 준다 */
+
+  /* 정오를 기준으로 일련번호를 매긴다. 서머타임이 있어도 하루가 밀리지 않는다. */
+  const dayNum = (y, mo, d) => Math.round(new Date(y, mo, d, 12, 0, 0, 0).getTime() / 864e5);
+  function dayOf(stamp){
+    const t = String(stamp || ''); if(!t) return null;
+    const now = new Date(logNow || Date.now());
+    const today = dayNum(now.getFullYear(), now.getMonth(), now.getDate());
+    if(D_BEFORE.test(t)) return today - 2;
+    if(D_YEST.test(t)) return today - 1;
+    if(D_TODAY.test(t)) return today;
+    const rest = t.replace(CLOCK_G, ' ');   /* 시각의 숫자를 날짜로 오해하지 않도록 걷어 낸다 */
+    let m = D_YMD.exec(rest);
+    if(m) return dayNum(+m[1], +m[2] - 1, +m[3]);
+    m = D_MD.exec(rest);
+    if(m){
+      const y = now.getFullYear();
+      const d = dayNum(y, +m[1] - 1, +m[2]);
+      return d > today + 1 ? dayNum(y - 1, +m[1] - 1, +m[2]) : d;   /* 해를 넘긴 로그 */
+    }
+    return null;
+  }
+
+  /* 한 탭을 절대 분으로 편다.
+     v[i] = 확정된 절대 분, d[i] = 알아낸 날짜(시각은 모를 때도 있다), 둘 다 모르면 null.
+     dated면 날짜가 실려 있어 다른 탭과 곧바로 견줄 수 있다는 뜻이다. */
+  function absFrame(msgs){
+    const anyDate = msgs.some(m => dayOf(m.stamp) !== null);
+    const v = [], d = [];
+    let day = anyDate ? null : 0, prev = -1, roll = 0;
     msgs.forEach(m => {
-      const v = minOf(m.time);
-      if(v === null){ out.push(null); return; }
-      if(prev >= 0 && v < prev) day++;
-      prev = v; out.push(BASE + day * DAY + v);
+      const t = minOf(m.time), dd = dayOf(m.stamp);
+      if(dd !== null){ day = dd; roll = 0; }
+      else if(day !== null && t !== null && prev >= 0 && t < prev) roll++;   /* 되감기면 다음 날 */
+      if(t !== null) prev = t;
+      const day2 = (day === null) ? null : day + roll;
+      d.push(day2);
+      v.push((day2 !== null && t !== null) ? day2 * DAY + t : null);
     });
-    let last = BASE;
-    for(let i = 0; i < out.length; i++){ if(out[i] === null) out[i] = last; else last = out[i]; }
+    return { v: v, d: d, dated: anyDate };
+  }
+
+  const firstNum = v => { for(let i = 0; i < v.length; i++) if(v[i] !== null) return v[i]; return null; };
+  const lastNum = v => { for(let i = v.length - 1; i >= 0; i--) if(v[i] !== null) return v[i]; return null; };
+
+  /* 날짜는 알지만 시각을 모르는 줄들을 그 날짜 구간 안에 고르게 편다.
+     메인과 정보를 같은 방식으로 펴므로, 같은 날짜라면 자연히 서로 엇갈려 놓인다.
+     앞뒤에 확정된 시각이 있으면 그 사이를 넘지 않는다. */
+  function spreadByDay(v, d){
+    const n = v.length;
+    for(let i = 0; i < n; ){
+      if(v[i] !== null || d[i] === null){ i++; continue; }
+      let j = i; while(j < n && v[j] === null && d[j] === d[i]) j++;
+      const base = d[i] * DAY;
+      const lo = Math.max(base, (i > 0 && v[i - 1] !== null) ? v[i - 1] : base);
+      const hi = Math.min(base + DAY, (j < n && v[j] !== null) ? v[j] : base + DAY);
+      const step = Math.max(hi - lo, 0) / (j - i + 1);
+      for(let k = i; k < j; k++) v[k] = lo + step * (k - i + 1);
+      i = j;
+    }
+    return v;
+  }
+
+  /* 시:분만 있을 때: 사이드 시각을 메인 시계에 맞춰 앞으로만 훑어 절대 분으로 바꾼다 */
+  function scanAlign(ma, side){
+    const out = [];
+    /* 메인보다 이른 정보(세션 전에 깔아 둔 핸드아웃 등)도 앞에 놓이도록 시계를 조금 앞에서 시작한다.
+       다만 되돌아보는 폭은 메인 로그 길이에 맞춘다. 20분짜리 로그에 반나절을 열어 두면
+       저녁에 올린 정보가 '전날 밤'으로 읽혀 맨 앞으로 튄다. */
+    const span = ma[ma.length - 1] - ma[0];
+    let cur = ma[0] - Math.min(DAY / 2 - 1, Math.max(120, span));
+    side.forEach(m => {
+      const t = minOf(m.time);
+      if(t === null){ out.push(null); return; }
+      let a = Math.floor(cur / DAY) * DAY + t;
+      if(a < cur) a += DAY;
+      out.push(a); cur = a;
+    });
     return out;
   }
+
+  /* 남은 빈 칸을 앞뒤 값 사이에 고르게 편다. 한쪽 끝에 몰아넣지 않는 것이 핵심이다. */
+  function fillGaps(v, lo, hi){
+    const n = v.length;
+    for(let i = 0; i < n; ){
+      if(v[i] !== null){ i++; continue; }
+      let j = i; while(j < n && v[j] === null) j++;
+      const a = (i > 0) ? v[i - 1] : lo;
+      const b = (j < n) ? v[j] : hi;
+      const step = Math.max(b - a, 0) / (j - i + 1);
+      for(let k = i; k < j; k++) v[k] = a + step * (k - i + 1);
+      i = j;
+    }
+    return v;
+  }
+
   function mergeStream(main, side, infoFirst){
     if(!side.length) return main;
     if(!main.length) return side.slice();
-    const mAbs = absLine(main), out = []; let i = 0;
-    /* 시계를 반나절 앞에서 시작한다. 메인보다 이른 시각의 정보(세션 전에 깔아 둔 핸드아웃 등)가 맨 앞에 오도록. */
-    let cur = mAbs[0] - (DAY / 2 - 1);
-    side.forEach(s => {
-      const v = minOf(s.time);
-      let a;
-      if(v === null) a = cur;                                   /* 시각을 못 읽으면 커서 자리에 둔다 */
-      else { a = Math.floor(cur / DAY) * DAY + v; if(a < cur) a += DAY; }
-      while(i < main.length && (infoFirst ? mAbs[i] < a : mAbs[i] <= a)) out.push(main[i++]);
-      out.push(s); cur = a;
-    });
+    const M = absFrame(main), S = absFrame(side);
+
+    /* 메인이 시간축이다. 날짜 구간 안에서 펴고, 남은 빈 칸도 메우고,
+       아무 단서도 없으면 순번을 시간 대신 쓴다. */
+    spreadByDay(M.v, M.d);
+    const ma = M.v;
+    if(firstNum(ma) === null){ for(let i = 0; i < ma.length; i++) ma[i] = i; }
+    else fillGaps(ma, firstNum(ma), lastNum(ma));
+
+    /* 두 탭이 같은 날짜 기준을 공유하면 그대로 견주고, 아니면 메인 시계에 맞춰 훑는다 */
+    let sa;
+    if(M.dated && S.dated){ spreadByDay(S.v, S.d); sa = S.v; }
+    else sa = scanAlign(ma, side);
+    fillGaps(sa, ma[0], ma[ma.length - 1]);
+
+    const out = []; let i = 0, k = 0;
+    while(i < main.length && k < side.length){
+      if(infoFirst ? (sa[k] <= ma[i]) : (sa[k] < ma[i])) out.push(side[k++]);
+      else out.push(main[i++]);
+    }
+    while(k < side.length) out.push(side[k++]);
     while(i < main.length) out.push(main[i++]);
     return out;
   }
@@ -907,6 +1074,8 @@
   const cleanParas = arr => arr.map(stripEdit).filter(Boolean);
   const isSys = m => !!m.system || (m.paras.length && m.paras[0].trimStart().startsWith('✦'));
   const sysLines = arr => arr.map(p => p.replace(/^\s*✦\s*/, '').trim()).filter(Boolean);
+  /* 이미지를 뺄 때 대신 남기는 자리. 이미지만 있던 메시지가 통째로 사라지지 않게 한다. */
+  function shotStub(){ const d = document.createElement('div'); d.className = 'noshot'; d.textContent = '[이미지]'; return d; }
   function figure(src){ const f=document.createElement('figure'); f.className='shot'; const i=document.createElement('img'); i.src=src; i.alt='삽입 이미지'; i.loading='lazy'; f.appendChild(i); const c=document.createElement('figcaption'); c.textContent='이미지'; f.appendChild(c); return f; }
   function paras(el, arr){ arr.forEach(p => { const x=document.createElement('p'); x.textContent=p; el.appendChild(x); }); }
   const excerptOf = m => { const t = cleanParas(m.paras).join(' ') || (m.shots.length ? '(이미지)' : ''); return t.length > 42 ? t.slice(0, 42) + '…' : t; };
@@ -922,7 +1091,7 @@
     const tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = m.tab || '정보'; lbl.appendChild(tag);
     w.appendChild(lbl);
     if(P.length){ const b = document.createElement('div'); b.className = 'body'; paras(b, isSys(m) ? sysLines(P) : P); w.appendChild(b); }
-    m.shots.forEach(src => w.appendChild(figure(src)));
+    m.shots.forEach(src => w.appendChild(opts.noImages ? shotStub() : figure(src)));
     /* 자리 옮기기 버튼은 앱 전용이라, 저장 HTML·게시판 HTML에는 실리지 않는다 */
     const mv = document.createElement('div'); mv.className = 'mv app-only';
     [['-1', '↑', '한 칸 위로'], ['1', '↓', '한 칸 아래로']].forEach(([d, t, lab]) => {
@@ -946,6 +1115,8 @@
   const luma = hex => { const m=/^#?([0-9a-f]{6})$/i.exec((hex||'').trim()); if(!m) return null; const n=parseInt(m[1],16); const r=(n>>16)&255,g=(n>>8)&255,b=n&255; return (0.2126*r+0.7152*g+0.0587*b)/255; };
 
   let lastMessages = null, lastOpts = null, alignState = {};
+  /* 캐릭터별 아바타: 이름 → {focus, zoom}. 손댄 캐릭터만 담기고, 나머지는 전체 설정을 따른다. */
+  let avState = {}, avNames = [], avIdx = new Map();
   /* 정보 카드를 옮길 때는 화면을 위로 튕기거나 패널을 접지 않는다 */
   let quietRender = false;
 
@@ -954,11 +1125,53 @@
     const root = document.documentElement;
     root.style.setProperty('--av', (o.avSize || 55) + 'px');
     root.style.setProperty('--av-radius', o.avShape === 'round' ? '50%' : '0px');
+    root.style.setProperty('--av-zoom', String(clampZoom(o.avZoom) / 100));
+    root.style.setProperty('--av-focus', o.avFocus === 'center' ? 'center' : 'top');
     root.setAttribute('data-roll', o.rollHighlight ? 'on' : 'off');
+    root.setAttribute('data-img', o.noImages ? 'off' : 'on');
+    applyAvPer();
+  }
+
+  const clampZoom = z => Math.max(100, Math.min(250, parseInt(z, 10) || 100));
+  /* 지금 이 캐릭터에 실제로 걸리는 값 — 따로 정한 게 없으면 전체 설정 */
+  function avOf(name){
+    const v = name && avState[name];
+    if(v) return { focus: v.focus === 'center' ? 'center' : 'top', zoom: clampZoom(v.zoom) };
+    return { focus: avFocusNow(), zoom: clampZoom($('#avZoom') ? $('#avZoom').value : 100) };
+  }
+  /* 캐릭터별 값은 규칙 한 장으로 얹는다. 말풍선이 몇천 개든 고쳐 쓰는 건 이 <style> 하나뿐이고,
+     head에 얹혀 있으니 아카이브 HTML로 저장해도 그대로 따라간다. */
+  function applyAvPer(){
+    const rules = [];
+    avNames.forEach((nm, i) => {
+      const v = avState[nm]; if(!v) return;
+      rules.push('.av[data-avk="' + i + '"]{--av-zoom:' + (clampZoom(v.zoom) / 100)
+        + ';--av-focus:' + (v.focus === 'center' ? 'center' : 'top') + '}');
+    });
+    let st = document.getElementById('avPerCSS');
+    if(!rules.length){ if(st) st.remove(); }
+    else {
+      if(!st){ st = document.createElement('style'); st.id = 'avPerCSS'; document.head.appendChild(st); }
+      st.textContent = rules.join('\n');
+    }
+    syncAvRows();
+  }
+
+  /* 아바타는 겉틀에 넣어 둔다 — 겉틀이 잘라 주어야 ‘확대’가 먹는다 */
+  function avatarBox(m){
+    const box = document.createElement('span'); box.className = 'av';
+    if(m.name){
+      if(!avIdx.has(m.name)){ avIdx.set(m.name, avNames.length); avNames.push(m.name); }
+      box.dataset.avk = avIdx.get(m.name);
+    }
+    const img = document.createElement('img'); img.src = m.avatar; img.alt = (m.name || '') + ' 아바타'; img.loading = 'lazy';
+    box.appendChild(img); return box;
   }
 
   function render(messages, opts){
     lastMessages = messages; lastOpts = opts;
+    if(opts.avPer && opts.avPer !== avState) avState = Object.assign({}, opts.avPer);
+    avNames = []; avIdx = new Map();
     applyDisplay(opts);
     const dt = document.getElementById('docTitle');
     const title = clean(opts.title) || (dt ? dt.textContent.trim() : '') || '클릭하여 세션 제목을 입력해 주세요.';
@@ -970,9 +1183,10 @@
       if(m.dice) return !opts.hideNoise;
       return true;
     });
+    const shot = src => opts.noImages ? shotStub() : figure(src);
 
     const book = document.getElementById('book'); book.innerHTML = '';
-    let prevName = null, curNarr = null;
+    let prevName = null, prevAv = '', curNarr = null;
     const alignOf = name => (name && opts.align && opts.align[name] === 'center') ? 'center' : 'left';
     const narrators = narratorSet(opts); const isNarr = m => narrators.has(normName(m.name));
     const narrLead = (Array.isArray(opts.narrators) && opts.narrators[0]) || 'GM';
@@ -1007,33 +1221,39 @@
           const b = document.createElement('div'); b.className = 'body'; curNarr.appendChild(b); book.appendChild(curNarr);
         }
         const b = curNarr.querySelector('.body');
-        paras(b, asNarr ? sysLines(P) : P); m.shots.forEach(s => b.appendChild(figure(s)));
+        paras(b, asNarr ? sysLines(P) : P); m.shots.forEach(s => b.appendChild(shot(s)));
         return;
       }
       curNarr = null;
 
       const same = opts.merge && m.name && m.name === prevName;
+      /* 합쳐 놓았더라도 서 있는 그림이 바뀐 자리에서는 아바타를 한 번 더 낸다.
+         이름은 다시 적지 않는다 — 같은 사람이 표정만 바꾼 것이지 새 화자가 아니다. */
+      const avSwap = !!(same && opts.avChange && m.avatar && prevAv && m.avatar !== prevAv);
       const center = alignOf(m.name) === 'center';
       const roll = noise ? rollOutcome(P.join(' ')) : '';
       const turn = document.createElement('article');
-      turn.className = 'turn' + (same ? ' cont' : '') + (noise ? ' muted' : '') + (center ? ' center' : '') + (roll ? ' roll-' + roll : '');
+      turn.className = 'turn' + (same && !avSwap ? ' cont' : '') + (noise ? ' muted' : '') + (center ? ' center' : '') + (roll ? ' roll-' + roll : '');
       turn.dataset.who = m.name || (m.system ? '시스템' : '');
       if(m.color) turn.style.setProperty('--speaker', m.color);
 
-      if(center){
-        if(!same && m.avatar){ const img = document.createElement('img'); img.className = 'av'; img.src = m.avatar; img.alt = (m.name||'') + ' 아바타'; img.loading = 'lazy'; turn.appendChild(img); }
-      } else if(same || (!m.avatar)){ const sp = document.createElement('div'); sp.className = 'av-space'; turn.appendChild(sp); }
-      else { const img = document.createElement('img'); img.className = 'av'; img.src = m.avatar; img.alt = (m.name||'') + ' 아바타'; img.loading = 'lazy'; turn.appendChild(img); }
+      if(opts.noImages){ /* 아바타를 아예 그리지 않고 자리도 접는다 */ }
+      else if(center){
+        if((!same || avSwap) && m.avatar) turn.appendChild(avatarBox(m));
+      } else if((same && !avSwap) || (!m.avatar)){ const sp = document.createElement('div'); sp.className = 'av-space'; turn.appendChild(sp); }
+      else turn.appendChild(avatarBox(m));
 
       const content = document.createElement('div'); content.className = 'content';
       if(!same && m.name){ const head = document.createElement('div'); head.className='head'; const who=document.createElement('span'); who.className='who'; who.textContent=m.name; head.appendChild(who); content.appendChild(head); }
       if(P.length){ const b=document.createElement('div'); b.className='body'; paras(b, P); content.appendChild(b); }
-      m.shots.forEach(s => content.appendChild(figure(s)));
+      m.shots.forEach(s => content.appendChild(shot(s)));
       turn.appendChild(content);
       book.appendChild(turn);
-      if(m.name) prevName = m.name;
+      if(m.name){ prevName = m.name; prevAv = m.avatar || ''; }
     });
 
+    populateAvPer();
+    applyAvPer();
     populateJournalAlign(messages);
     populateInfoTune(rawMessages ? composeAll(rawMessages, opts) : messages);
     if(window.__resetSearch) window.__resetSearch();
@@ -1055,7 +1275,7 @@
   const KEY = 'ccfolia:v2:last';
   function saveDraft(messages, opts, title){
     /* 병합 결과가 아니라 원본을 담는다. 배치 보정(mv)만 따로 얹으면 언제든 되살아난다. */
-    try{ localStorage.setItem(KEY, JSON.stringify({ t:title, o:{merge:opts.merge, hideNoise:opts.hideNoise, avatarKey:opts.avatarKey, showStatus:opts.showStatus, align:opts.align, narrators:opts.narrators, avShape:opts.avShape, avSize:opts.avSize, rollHighlight:opts.rollHighlight, sysNarr:opts.sysNarr, withInfo:opts.withInfo, infoCard:opts.infoCard, infoFirst:opts.infoFirst}, m:(rawMessages && rawMessages.length ? rawMessages : messages), mv:moveState, dl:delState, at:Date.now() })); }
+    try{ localStorage.setItem(KEY, JSON.stringify({ t:title, o:{merge:opts.merge, avChange:opts.avChange, hideNoise:opts.hideNoise, avatarKey:opts.avatarKey, showStatus:opts.showStatus, align:opts.align, narrators:opts.narrators, avShape:opts.avShape, avSize:opts.avSize, avZoom:opts.avZoom, avFocus:opts.avFocus, avPer:avState, rollHighlight:opts.rollHighlight, sysNarr:opts.sysNarr, withInfo:opts.withInfo, infoCard:opts.infoCard, infoFirst:opts.infoFirst, noImages:opts.noImages}, m:(rawMessages && rawMessages.length ? rawMessages : messages), mv:moveState, dl:delState, at:Date.now() })); }
     catch(e){ /* 용량 초과 등은 조용히 무시 */ }
   }
   function showResume(){
@@ -1074,6 +1294,7 @@
     const del = document.createElement('button'); del.className='btn'; del.textContent='지우기';
     open.onclick = () => {
       if(d.o && d.o.align) alignState = Object.assign({}, d.o.align);
+      avState = (d.o && d.o.avPer && typeof d.o.avPer === 'object') ? Object.assign({}, d.o.avPer) : {};
       if($('#optStatus')) $('#optStatus').checked = !!(d.o && d.o.showStatus);
       if(d.o && d.o.narrators && $('#narrNames')) $('#narrNames').value = d.o.narrators.join(', ');
       if(d.o && $('#optNoise')) $('#optNoise').checked = !d.o.hideNoise;
@@ -1082,17 +1303,56 @@
       if($('#optInfo')) $('#optInfo').checked = !(d.o && d.o.withInfo === false);
       if($('#optInfoCard')) $('#optInfoCard').checked = !(d.o && d.o.infoCard === false);
       if($('#optInfoFirst')) $('#optInfoFirst').checked = !(d.o && d.o.infoFirst === false);
+      if($('#optNoImg')) $('#optNoImg').checked = !!(d.o && d.o.noImages);
+      if($('#optAvChange')) $('#optAvChange').checked = !!(d.o && d.o.avChange);
       moveState = (d.mv && typeof d.mv === 'object') ? Object.assign({}, d.mv) : {};
       delState = (d.dl && typeof d.dl === 'object') ? Object.assign({}, d.dl) : {};
       if(d.o && d.o.avSize && $('#avSize')){ $('#avSize').value = d.o.avSize; $('#avSizeVal').textContent = d.o.avSize + 'px'; }
       if(d.o && d.o.avShape) document.querySelectorAll('[data-av-shape]').forEach(x => x.setAttribute('aria-pressed', x.dataset.avShape === d.o.avShape ? 'true' : 'false'));
-      syncRollEnabled();
-      const o = Object.assign({merge:true,hideNoise:true,avatarKey:'avatar',title:d.t}, d.o||{}, {_restore:true, align:alignState});
+      if(d.o && d.o.avZoom && $('#avZoom')){ $('#avZoom').value = d.o.avZoom; $('#avZoomVal').textContent = d.o.avZoom + '%'; }
+      if(d.o && d.o.avFocus) document.querySelectorAll('[data-av-focus]').forEach(x => x.setAttribute('aria-pressed', x.dataset.avFocus === d.o.avFocus ? 'true' : 'false'));
+      syncRollEnabled(); syncImgEnabled(); syncAvChangeEnabled();
+      const o = Object.assign({merge:true,hideNoise:true,avatarKey:'avatar',title:d.t}, d.o||{}, {_restore:true, align:alignState, avPer:avState});
       adoptRaw(stampSeq(d.m));
       render(composeLog(d.m, o), o);
     };
     del.onclick = () => { try{ localStorage.removeItem(KEY); }catch(e){} slot.innerHTML=''; toast('보관된 세션을 지웠습니다'); };
     box.append(txt, open, del); slot.appendChild(box);
+  }
+
+  /* ── 캐릭터별 아바타 목록 (고급 설정) ── */
+  function populateAvPer(){
+    const wrap = $('#avPerWrap'), box = $('#avPer'); if(!box) return;
+    if(!avNames.length){ if(wrap) wrap.classList.add('hidden'); box.innerHTML = ''; return; }
+    if(wrap) wrap.classList.remove('hidden');
+    box.innerHTML = '';
+    avNames.forEach(name => {
+      const row = document.createElement('div'); row.className = 'avrow'; row.dataset.name = name;
+      const nm = document.createElement('span'); nm.className = 'jname'; nm.textContent = name; nm.title = name;
+      const seg = document.createElement('span'); seg.className = 'seg';
+      [['top','위'],['center','가운데']].forEach(([f, lab]) => {
+        const b = document.createElement('button'); b.type = 'button'; b.dataset.pfocus = f; b.textContent = lab;
+        seg.appendChild(b);
+      });
+      const rg = document.createElement('input'); rg.type = 'range'; rg.className = 'pzoom';
+      rg.min = 100; rg.max = 250; rg.step = 5; rg.setAttribute('aria-label', name + ' 아바타 확대');
+      const val = document.createElement('span'); val.className = 'val';
+      const rst = document.createElement('button'); rst.type = 'button'; rst.className = 'rst';
+      rst.textContent = '기본값'; rst.title = '위 아바타 설정을 그대로 따르게 합니다';
+      row.append(nm, seg, rg, val, rst); box.appendChild(row);
+    });
+    syncAvRows();
+  }
+  function syncAvRows(){
+    const box = $('#avPer'); if(!box) return;
+    box.querySelectorAll('.avrow').forEach(row => {
+      const name = row.dataset.name, own = !!avState[name], e = avOf(name);
+      row.querySelectorAll('button[data-pfocus]').forEach(b => b.setAttribute('aria-pressed', b.dataset.pfocus === e.focus ? 'true' : 'false'));
+      const rg = row.querySelector('.pzoom'); if(rg) rg.value = e.zoom;
+      const val = row.querySelector('.val'); if(val) val.textContent = e.zoom + '%';
+      const rst = row.querySelector('.rst'); if(rst) rst.classList.toggle('hidden', !own);
+      row.classList.toggle('own', own);
+    });
   }
 
   /* ── 저널 정렬 목록 (고급 설정) ── */
@@ -1230,6 +1490,23 @@
     const el = $(sel); if(el) el.addEventListener('change', recompose);
   });
 
+  $('#avPer') && $('#avPer').addEventListener('click', e => {
+    const row = e.target.closest('.avrow'); if(!row) return;
+    const name = row.dataset.name;
+    const fb = e.target.closest('button[data-pfocus]');
+    if(fb) avState[name] = { focus: fb.dataset.pfocus, zoom: avOf(name).zoom };
+    else if(e.target.closest('.rst')) delete avState[name];
+    else return;
+    applyDisplay(currentOpts());
+  });
+  $('#avPer') && $('#avPer').addEventListener('input', e => {
+    const rg = e.target.closest('.pzoom'); if(!rg) return;
+    const row = rg.closest('.avrow'); if(!row) return;
+    const name = row.dataset.name;
+    avState[name] = { focus: avOf(name).focus, zoom: clampZoom(rg.value) };
+    applyDisplay(currentOpts());
+  });
+
   $('#journalAlign') && $('#journalAlign').addEventListener('click', e => {
     const b = e.target.closest('button[data-align]'); if(!b) return;
     const row = b.closest('.jrow'); if(!row) return;
@@ -1241,10 +1518,13 @@
   /* ── 이벤트 ── */
   const parseNarr = s => (s||'').split(/[,，\n]/).map(x => x.trim()).filter(Boolean);
   const avShapeNow = () => { const b = document.querySelector('[data-av-shape][aria-pressed="true"]'); return b ? b.dataset.avShape : 'square'; };
+  const avFocusNow = () => { const b = document.querySelector('[data-av-focus][aria-pressed="true"]'); return b ? b.dataset.avFocus : 'top'; };
   const chk = (sel, dflt) => { const e = $(sel); return e ? e.checked : dflt; };
-  const currentOpts = () => ({ avatarKey: 'avatar', merge: $('#optMerge').checked,
-    withInfo: chk('#optInfo', true), infoCard: chk('#optInfoCard', true), infoFirst: chk('#optInfoFirst', true), hideNoise: !$('#optNoise').checked, showStatus: $('#optStatus') ? $('#optStatus').checked : false, align: alignState, narrators: parseNarr($('#narrNames') ? $('#narrNames').value : 'GM'), title: '',
-    avShape: avShapeNow(), avSize: parseInt(($('#avSize') ? $('#avSize').value : 55), 10) || 55, rollHighlight: !!($('#optRoll') && $('#optRoll').checked), sysNarr: !!($('#optSysNarr') && $('#optSysNarr').checked) });
+  const currentOpts = () => ({ avatarKey: 'avatar', merge: $('#optMerge').checked, avChange: chk('#optAvChange', false),
+    withInfo: chk('#optInfo', true), infoCard: chk('#optInfoCard', true), infoFirst: chk('#optInfoFirst', true),
+    noImages: chk('#optNoImg', false), hideNoise: !$('#optNoise').checked, showStatus: $('#optStatus') ? $('#optStatus').checked : false, align: alignState, narrators: parseNarr($('#narrNames') ? $('#narrNames').value : 'GM'), title: '',
+    avShape: avShapeNow(), avSize: parseInt(($('#avSize') ? $('#avSize').value : 55), 10) || 55,
+    avFocus: avFocusNow(), avZoom: parseInt(($('#avZoom') ? $('#avZoom').value : 100), 10) || 100, avPer: avState, rollHighlight: !!($('#optRoll') && $('#optRoll').checked), sysNarr: !!($('#optSysNarr') && $('#optSysNarr').checked) });
 
   /* 아바타·판정 설정은 ‘변환’을 기다리지 않고 곰바로 반영된다 */
   document.querySelectorAll('[data-av-shape]').forEach(b => b.addEventListener('click', () => {
@@ -1252,11 +1532,41 @@
     applyDisplay(currentOpts());
   }));
   $('#avSize') && $('#avSize').addEventListener('input', () => { $('#avSizeVal').textContent = $('#avSize').value + 'px'; applyDisplay(currentOpts()); });
+  document.querySelectorAll('[data-av-focus]').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('[data-av-focus]').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));
+    applyDisplay(currentOpts());
+  }));
+  $('#avZoom') && $('#avZoom').addEventListener('input', () => { $('#avZoomVal').textContent = $('#avZoom').value + '%'; applyDisplay(currentOpts()); });
   $('#optRoll') && $('#optRoll').addEventListener('change', () => applyDisplay(currentOpts()));
   /* 판정 강조는 주사위 로그를 포함해야 보이므로, 꺼져 있으면 비활성으로 알린다 */
   function syncRollEnabled(){ const r = $('#optRoll'); if(!r) return; const on = $('#optNoise').checked; r.disabled = !on; const f = r.closest('.field'); if(f) f.style.opacity = on ? '' : '.45'; }
   $('#optNoise') && $('#optNoise').addEventListener('change', syncRollEnabled);
   syncRollEnabled();
+  /* 합치기를 끄면 어차피 매번 아바타가 나오므로, 이 설정은 잠가 둔다 */
+  function syncAvChangeEnabled(){
+    const a = $('#optAvChange'); if(!a) return;
+    const on = $('#optMerge').checked;
+    a.disabled = !on; const f = a.closest('.field'); if(f) f.style.opacity = on ? '' : '.45';
+  }
+  $('#optMerge') && $('#optMerge').addEventListener('change', syncAvChangeEnabled);
+  $('#optAvChange') && $('#optAvChange').addEventListener('change', recompose);
+  syncAvChangeEnabled();
+  /* 이미지를 빼면 아바타 모양·크기 설정은 의미가 없으므로 함께 잠근다 */
+  function syncImgEnabled(){
+    const off = chk('#optNoImg', false);
+    const marks = ['[data-av-shape]', '#avSize', '#avZoom', '[data-av-focus]'];
+    marks.forEach(sel => document.querySelectorAll(sel).forEach(el => {
+      el.disabled = off;
+      const f = el.closest('.field'); if(f) f.style.opacity = off ? '.45' : '';
+    }));
+  }
+  $('#optNoImg') && $('#optNoImg').addEventListener('change', () => {
+    syncImgEnabled();
+    const o = currentOpts();
+    applyDisplay(o);
+    if(rawMessages){ quietRender = true; try{ render(composeLog(rawMessages, o), o); } finally { quietRender = false; } }
+  });
+  syncImgEnabled();
   function run(html){
     const msg = $('#msg');
     try{
@@ -1377,6 +1687,8 @@
       lh: v('--lh', '1.66'),
       av: parseFloat(v('--av', '55px')) || 55,
       avr: v('--av-radius', '0px'),
+      avz: parseFloat(v('--av-zoom', '1')) || 1,
+      avf: (v('--av-focus', 'top').trim() === 'center' ? 'center' : 'top'),
       gap: parseFloat(v('--gap', '16px')) || 16,
       wrap: parseFloat(v('--wrap', '730px')) || 730
     };
@@ -1384,7 +1696,8 @@
 
   function buildPostHTML(messages, opts, cfg){
     const X = palette();
-    const FS = X.fs, LH = X.lh, AVG = Math.round(X.av + X.gap);
+    const FS = X.fs, LH = X.lh, noImg = !!opts.noImages;
+    const AVG = noImg ? 0 : Math.round(X.av + X.gap);   /* 아바타를 빼면 들여쓰기도 함께 접는다 */
     /* 테마를 타는 색 한 칸 */
     const C = k => 'var(--ccf-' + k + ',light-dark(' + X.light[k] + ',' + X.dark[k] + '))';
     const withBg = !!cfg.withBg;
@@ -1402,9 +1715,19 @@
     const pHTML = (arr, color, fs, lh, tail) => arr.map((t, i) =>
       '<p style="margin:0 0 ' + ((!tail && i === arr.length - 1) ? '0' : '10px') + ';font-size:' + (fs || FS) + 'px;line-height:' + (lh || LH) + ';color:' + color + ';">' + esc(t) + '</p>').join('');
     const figHTML = src => '<figure style="margin:11px 0;"><img src="' + esc(src) + '" alt="" style="max-width:100%;height:auto;border:1px solid ' + C('line') + ';display:block;"></figure>';
-    const avHTML = (src, dim) => '<div style="width:' + X.av + 'px;height:' + X.av + 'px;flex:0 0 ' + X.av + 'px;overflow:hidden;border-radius:' + X.avr
+    const avHTML = (src, dim, name) => {
+      const ov = name && avState[name];
+      const f = ov ? (ov.focus === 'center' ? 'center' : 'top') : X.avf;
+      const z = ov ? (clampZoom(ov.zoom) / 100) : X.avz;
+      return '<div style="width:' + X.av + 'px;height:' + X.av + 'px;flex:0 0 ' + X.av + 'px;overflow:hidden;border-radius:' + X.avr
       + ';box-shadow:0 0 0 1px ' + C('line') + ';' + avBg + (dim ? 'opacity:.5;' : '') + '">'
-      + '<img src="' + esc(src) + '" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top;display:block;"></div>';
+      + '<img src="' + esc(src) + '" alt="" style="width:100%;height:100%;object-fit:cover;object-position:' + f + ';display:block;'
+      + (z !== 1 ? 'transform:scale(' + z + ');transform-origin:' + f + ';' : '') + '"></div>';
+    };
+    /* 이미지를 뺄 때는 <img>를 만들지 않는다. CDN 주소가 결과물에 남지 않아야 한다. */
+    const shotHTML = src => noImg
+      ? '<div style="font-size:12px;color:' + C('faint') + ';letter-spacing:.06em;margin:9px 0;">[이미지]</div>'
+      : figHTML(src);
     const sysP = arr => arr.map((t, i) => '<p style="margin:0 0 ' + (i === arr.length - 1 ? '0' : '4px') + ';">' + esc(t) + '</p>').join('');
     const sysBlock = (lines, label) => '<div style="max-width:460px;margin:28px auto;text-align:center;color:' + C('muted')
       + ';padding:15px 0;border-top:1px solid ' + C('line') + ';border-bottom:1px solid ' + C('line') + ';">'
@@ -1417,13 +1740,13 @@
       return true;
     });
     const alignOf = name => (name && opts.align && opts.align[name] === 'center') ? 'center' : 'left';
-    const parts = []; let prevName = null, narr = null, narrCenter = false;
+    const parts = []; let prevName = null, prevAv = '', narr = null, narrCenter = false;
     const narrators = narratorSet(opts); const isNarr = m => narrators.has(normName(m.name));
     const narrLead = (Array.isArray(opts.narrators) && opts.narrators[0]) || 'GM';
 
     const flush = () => {
       if(narr && narr.length){
-        const inner = narr.map((it, i) => it.img ? figHTML(it.img)
+        const inner = narr.map((it, i) => it.img ? shotHTML(it.img)
           : '<p style="margin:0 0 ' + (i === narr.length - 1 ? '0' : '10px') + ';font-size:' + FS + 'px;line-height:' + LH
             + ';color:' + C('ink2') + ';">' + esc(it.p) + '</p>').join('');
         const style = 'margin:16px 0' + (narrCenter ? '' : ' 16px ' + AVG + 'px') + ';padding:13px 16px;background:' + narrBg + ';'
@@ -1440,7 +1763,7 @@
       const body = P.length ? pHTML(isSys(m) ? sysLines(P) : P, C('ink2'), FS, LH, m.shots.length > 0) : '';
       return '<div style="margin:18px 0 18px ' + (center ? '0' : AVG + 'px') + ';padding:12px 15px;border:1px solid ' + C('line')
         + ';border-left:2px solid ' + (m.color || C('line')) + ';' + (center ? 'text-align:center;' : '') + '">'
-        + head + body + m.shots.map(figHTML).join('') + '</div>';
+        + head + body + m.shots.map(shotHTML).join('') + '</div>';
     };
 
     shown.forEach(m => {
@@ -1475,6 +1798,7 @@
       flush();
 
       const same = opts.merge && m.name && m.name === prevName;
+      const avSwap = !!(same && opts.avChange && m.avatar && prevAv && m.avatar !== prevAv);
       const center = alignOf(m.name) === 'center';
       const roll = noise ? rollOutcome(P.join(' ')) : '';
       const rollC = (opts.rollHighlight && roll) ? (roll === 'ok' ? C('ok') : C('ng')) : '';
@@ -1485,21 +1809,21 @@
       const head = (!same && m.name)
         ? '<div style="font-weight:700;font-size:15px;letter-spacing:-.01em;color:' + nameC + ';margin-bottom:5px;">' + esc(m.name) + '</div>' : '';
       const body = P.length ? pHTML(P, bodyC, bFs, bLh, m.shots.length > 0) : '';
-      const shots = m.shots.map(figHTML).join('');
-      const pad = same ? '2px' : '15px';
+      const shots = m.shots.map(shotHTML).join('');
+      const pad = (same && !avSwap) ? '2px' : '15px';
 
       if(center){
-        const avc = (!same && m.avatar)
-          ? '<div style="display:flex;justify-content:center;margin-bottom:8px;">' + avHTML(m.avatar, noise) + '</div>' : '';
+        const avc = (!noImg && (!same || avSwap) && m.avatar)
+          ? '<div style="display:flex;justify-content:center;margin-bottom:8px;">' + avHTML(m.avatar, noise, m.name) + '</div>' : '';
         parts.push('<div style="text-align:center;padding:' + pad + ' 0;">' + avc + head + body + shots + '</div>');
       } else {
-        const av = (same || !m.avatar)
-          ? '<div style="width:' + X.av + 'px;flex:0 0 ' + X.av + 'px;"></div>'
-          : avHTML(m.avatar, noise);
+        const av = noImg ? ''
+          : ((same && !avSwap) || !m.avatar) ? '<div style="width:' + X.av + 'px;flex:0 0 ' + X.av + 'px;"></div>'
+          : avHTML(m.avatar, noise, m.name);
         parts.push('<div style="display:flex;align-items:flex-start;gap:' + X.gap + 'px;padding:' + pad + ' 0;">'
           + av + '<div style="flex:1;min-width:0;padding-top:2px;">' + head + body + shots + '</div></div>');
       }
-      if(m.name) prevName = m.name;
+      if(m.name){ prevName = m.name; prevAv = m.avatar || ''; }
     });
     flush();
 
@@ -1567,15 +1891,91 @@
     || document.querySelector('ul[aria-label="ルームチャット"]')
     || document.querySelector('[role="log"]');
   const findScroller = list => {
-    let sc = list;
-    while (sc && sc !== document.body) {
-      const oy = getComputedStyle(sc).overflowY;
-      if ((oy === 'auto' || oy === 'scroll') && sc.scrollHeight > sc.clientHeight + 4) break;
-      sc = sc.parentElement;
-    }
-    return (!sc || sc === document.body) ? list : sc;
+    const pick = strict => {
+      let sc = list;
+      while (sc && sc !== document.body) {
+        const oy = getComputedStyle(sc).overflowY;
+        if ((oy === 'auto' || oy === 'scroll') && (!strict || sc.scrollHeight > sc.clientHeight + 4)) return sc;
+        sc = sc.parentElement;
+      }
+      return null;
+    };
+    /* 지금 넘칠 만큼 길지 않아도 스크롤 상자는 스크롤 상자다. 한창 그리는 중이라 잠깐 짧아 보이는
+       순간에 목록 자체를 붙잡아 버리면, 그 뒤로 아무리 밀어도 화면이 움직이지 않는다. */
+    return pick(true) || pick(false) || list;
   };
   if (!findList()) { alert('룸 채팅 목록을 못 찾음. 룸 채팅창이 열려 있는지 확인하세요.'); return; }
+
+  /* ── 멈춤 장치 ──
+     두 번 실행하면 두 벌이 같은 스크롤바를 서로 밀어 대서 어느 쪽도 '다 읽었다'에 닿지 못한다.
+     겉으로는 끝나지 않는 스크롤로 보인다. 한 번에 한 벌만 돌게 잠근다. */
+  if (window.__ccfoliaHarvest) {
+    if (confirm('이미 로그를 모으는 중입니다.\\n\\n멈출까요?')) window.__ccfoliaHarvest.stop();
+    return;
+  }
+  let ABORT = false;
+  const stop = () => { ABORT = true; };
+  window.__ccfoliaHarvest = { stop: stop };
+
+  /* 다른 브라우저 탭에 가 있는 동안 브라우저는 타이머를 초당 한 번까지 늦춘다.
+     그 시간을 제한 시간에 넣으면 돌아왔을 때 한 일도 없이 시간만 다 써 버린다. 아예 세워 둔다. */
+  let hiddenMs = 0;
+  const idleWhileHidden = async () => {
+    if (!document.hidden) return;
+    const h0 = Date.now();
+    while (document.hidden && !ABORT) await wait(400);
+    hiddenMs += Date.now() - h0;
+  };
+  /* 화면에 떠 있던 시간만 세는 시계 */
+  const clock = () => { const t0 = Date.now(), h0 = hiddenMs; return () => Date.now() - t0 - (hiddenMs - h0); };
+
+  /* ── 우리가 룸 화면에 얹는 것들의 결 ──
+     배지와 대화상자는 리더와 한 몸으로 보여야 한다. 모서리는 각을 세우고(반경 0),
+     글자는 Pretendard, 색은 리더가 쓰는 zinc 계열 그대로 쓴다. */
+  const UI = {
+    paper: '#FFFFFF', subtle: '#F4F4F5', ink: '#18181B', ink2: '#27272A',
+    muted: '#71717A', faint: '#A1A1AA', line: '#E4E4E7', line2: '#D4D4D8', ng: '#B04A42',
+    font: '"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,system-ui,'
+      + '"Apple SD Gothic Neo","Malgun Gothic",sans-serif'
+  };
+  /* 룸 화면에는 Pretendard가 없다. 리더와 같은 CDN에서 한 번만 끌어온다.
+     사이트가 외부 스타일을 막으면 시스템 글꼴로 조용히 떨어질 뿐, 화면이 깨지지는 않는다. */
+  const FONT_ID = 'ccfolia-harvest-font';
+  if (!document.getElementById(FONT_ID)) {
+    const fl = document.createElement('link');
+    fl.id = FONT_ID; fl.rel = 'stylesheet'; fl.crossOrigin = 'anonymous';
+    fl.href = 'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css';
+    (document.head || document.documentElement).appendChild(fl);
+  }
+  /* 인라인 스타일로는 :hover를 적을 수 없다. 사이트에 규칙을 심는 대신 손으로 칠한다. */
+  const hover = (el, prop, on, off) => {
+    el.addEventListener('mouseenter', () => { el.style[prop] = on; });
+    el.addEventListener('mouseleave', () => { el.style[prop] = off; });
+  };
+
+  /* 진행 상황을 화면에 띄운다. 어디까지 됐는지 보이고, 언제든 세울 수 있어야 한다. */
+  const badge = document.createElement('div');
+  badge.style.cssText = 'position:fixed;z-index:2147483647;right:16px;bottom:16px;display:flex;gap:12px;align-items:center;'
+    + 'font:600 13px/1.45 ' + UI.font + ';letter-spacing:-.01em;word-break:keep-all;'
+    + 'background:' + UI.ink + ';color:' + UI.paper + ';padding:9px 10px 9px 13px;'
+    + 'border:1px solid ' + UI.ink + ';border-radius:0;box-shadow:0 10px 30px rgba(0,0,0,.35);'
+    + 'max-width:70vw;-webkit-font-smoothing:antialiased';
+  const badgeMsg = document.createElement('span');
+  badgeMsg.textContent = '로그 수집 준비 중…';
+  const badgeBtn = document.createElement('button');
+  badgeBtn.type = 'button'; badgeBtn.textContent = '중단 (ESC)';
+  badgeBtn.style.cssText = 'font:inherit;font-weight:700;cursor:pointer;border:0;border-radius:0;'
+    + 'padding:6px 10px;background:' + UI.ng + ';color:#fff';
+  hover(badgeBtn, 'opacity', '.86', '1');
+  badgeBtn.onclick = stop;
+  badge.appendChild(badgeMsg); badge.appendChild(badgeBtn);
+  /* 대화상자를 닫으려고 우리가 쏘는 Escape까지 중단으로 읽으면 안 된다. 사람이 누른 것만 본다. */
+  const onKey = e => { if (e.key === 'Escape' && e.isTrusted) stop(); };
+  document.body.appendChild(badge);
+  addEventListener('keydown', onKey, true);
+  const say = t => { badgeMsg.textContent = t; };
+
+  const main = async () => {
 
   /* ── 시각: 화면에 적힌 날짜 단서를 실제 시각으로 푼다 ──
      코코포리아는 '- 今日 14:42', '昨日 23:50', '10/26 21:00'처럼 날짜를 함께 적는다.
@@ -1658,56 +2058,202 @@
   };
   const settle = async () => {
     let prev = '', same = 0;
-    for (let i = 0; i < 45; i++) {
+    for (let i = 0; i < 45 && !ABORT; i++) {
       await wait(120);
       const sg = listSig();
       if (sg === prev) { if (++same >= 5) return; } else { same = 0; prev = sg; }
     }
   };
 
-  /* 지금 열려 있는 탭 하나를 위로 끝까지 훑어 모은다 */
+  /* ── 지금 열려 있는 탭 하나를 위로 끝까지 훑어 모은다 ──
+     끝을 '높이가 안 변한다'로 재면 안 된다. 코코포리아 채팅은 가상 스크롤 목록이라
+     줄을 새로 그릴 때마다 전체 높이가 '추정치'로 몇 픽셀씩 흔들린다. 다 읽고 난 뒤에도
+     그 흔들림이 세던 수를 계속 0으로 되돌려, 제한 시간까지 맨 위에서 헛돌았다.
+     그래서 진짜로 늘어나는 것 — 맨 윗줄 번호와 모은 줄 수 — 만 끝의 신호로 삼는다. */
+  /* 제한 시간은 '보통 이만큼 걸린다'가 아니라 '이보다 오래 걸리면 뭔가 잘못됐다'는 빗장이다.
+     끝은 아래의 '더 안 늘어난다' 판정이 낸다. 10000줄 넘는 방도 한 번에 끝나야 하므로 넉넉히 잡는다. */
+  const UP_MS = 45 * 60 * 1000, DOWN_MS = 45 * 60 * 1000;
+  /* 방이 얼마나 무거운지는 탭이 바뀌어도 그대로다. 메인에서 익힌 걸음 간격을 정보탭도 이어받는다. */
+  let lastDwell = 110;
+  /* 진짜 빗장은 이쪽이다 — 이만큼 아무 진전이 없으면 뭔가 잘못된 것이다.
+     반대로 조금씩이라도 나아가는 중이면 위의 총 시간까지는 끝까지 기다린다. */
+  const STALL_MS = 60 * 1000;
   const harvest = async (name) => {
-    const list = findList(); if (!list) return [];
-    const sc = findScroller(list);
-    const store = new Map(), meta = new Map();
-    const grab = () => list.querySelectorAll('[data-index]').forEach(el => {
+    let list = findList(); if (!list) return [];
+    let sc = findScroller(list);
+    const store = new Map();
+    let minIdx = Infinity;
+    const grab = () => all(list, '[data-index]').forEach(el => {
       const i = Number(el.getAttribute('data-index'));
       if (Number.isNaN(i)) return;
-      if (!meta.has(i)) meta.set(i, { c: stampToMs(capOf(el)) });   /* 한 줄에 한 번이면 족하다 */
-      store.set(i, el.outerHTML);
+      if (i < minIdx) minIdx = i;
+      /* 시각은 반드시 HTML과 같은 요소에서, 같은 순간에 읽는다.
+         예전에는 '한 줄에 한 번이면 족하다'며 그 번호에서 처음 본 값을 붙들어 뒀다.
+         그런데 코코포리아는 옛 글을 불러올 때 data-index를 다시 매긴다. 번호는 그대로인데
+         가리키는 글만 바뀌니, 맨 앞줄에 맨 뒷줄의 시각이 남아 로그가 통째로 뒤엉켰다. */
+      store.set(i, { html: el.outerHTML, c: stampToMs(capOf(el)) });
     });
     const fire = () => sc.dispatchEvent(new Event('scroll'));
-    const t0 = Date.now(), TIMEOUT = 10 * 60 * 1000;
-    sc.scrollTop = sc.scrollHeight; fire(); await wait(500);
-    let idle = 0, prevH = -1, g = 0;
-    while (g++ < 200000 && Date.now() - t0 < TIMEOUT) {
-      const atTop = sc.scrollTop <= 1, h = sc.scrollHeight;
-      if (atTop) {
-        if (h !== prevH) idle = 0; else idle++;
-        if (idle >= 30) break;
-        sc.scrollTop = 0; fire(); await wait(180);
-        sc.scrollTop = 60; fire(); await wait(90); sc.scrollTop = 0; fire();
+    /* 목록이 통째로 갈아 끼워지는 일은 아주 흔하다 — 앱이 옛 글을 끼워 넣을 때마다 React가 다시 그린다.
+       예전에는 이걸 '탭이 바뀌었다'로 보고 훑기를 끝내 버렸다. 그래서 메인을 끝까지 올라가지도 못한 채
+       다음 탭으로 넘어갔다. 탭은 이 함수가 끝난 뒤에만 눌리므로, 여기서는 새 목록을 다시 잡고 계속 간다. */
+    const sync = () => {
+      const l = findList();
+      if (!l) return false;
+      if (l !== list) { list = l; sc = findScroller(l); swaps++; }
+      return true;
+    };
+    let swaps = 0;
+    const step = async ms => { await wait(ms); await idleWhileHidden(); return !ABORT && sync(); };
+
+    /* ── 위로 ── */
+    sc.scrollTop = sc.scrollHeight; fire(); await step(500);
+    /* 맨 윗줄이 무엇인지를 글자로 기억해 둔다. 앱이 옛 글을 끼워 넣으면서 번호를 밀어 버리는 판이면
+       data-index도 모은 줄 수도 안 늘어난다. 그때 '위로 나아갔다'를 알아볼 수 있는 유일한 단서다.
+       '처음 보는 맨 윗줄'만 진전으로 치므로, 오르내리는 동안 값이 왔다 갔다 해도 헛세지 않는다. */
+    const topSig = () => {
+      const r = list.querySelector('[data-index]');
+      return r ? (r.getAttribute('data-index') + '|' + (r.textContent || '').slice(0, 80)) : '';
+    };
+    const seenTop = new Set();
+    let idle = 0, prevMin = Infinity, prevN = -1, maxH = -1, g = 0, why = '더 없음';
+    const up = clock();
+    let lastGain = up();
+    while (g++ < 200000) {
+      if (up() >= UP_MS) { why = '총 제한 시간'; break; }
+      if (up() - lastGain >= STALL_MS) { why = '오래 멈춤'; break; }
+      grab();   /* 올라가며 지나친 줄도 그때그때 챙긴다. 도중에 멈춰도 빈손이 되지 않게. */
+      const h = Number(sc.scrollHeight) || 0;
+      const sig = sc.scrollTop <= 1 ? topSig() : '';
+      const fresh = !!sig && !seenTop.has(sig);
+      if (fresh) seenTop.add(sig);
+      if (minIdx < prevMin || store.size > prevN || h > maxH + 4 || fresh) { idle = 0; lastGain = up(); } else idle++;
+      prevMin = minIdx; prevN = store.size; if (h > maxH) maxH = h;
+      /* 느린 회선은 한 번 불러오는 데 몇 초씩 걸린다. 횟수만 세면 그 사이에 다 읽었다고 착각한다.
+         '몇 번 헛돌았나'와 '몇 초째 안 늘었나'를 함께 봐야 안전하다. */
+      if (idle >= 30 && up() - lastGain > 10000 && sc.scrollTop <= 1) { why = '더 없음'; break; }
+      if (sc.scrollTop <= 1) {
+        /* 맨 위에 붙여만 두면 앱이 '더 불러오기'를 다시 안 건다.
+           48px로는 못 깨우는 판이 있어, 반 화면쯤 내렸다 올려 확실히 다시 걸리게 한다. */
+        sc.scrollTop = Math.max(80, Math.round(Number(sc.clientHeight) * 0.5) || 200);
+        fire(); if (!(await step(110))) { why = '중단'; break; }
+        sc.scrollTop = 0; fire(); if (!(await step(220))) { why = '중단'; break; }
       } else {
-        idle = 0;
-        sc.scrollTop = Math.max(0, sc.scrollTop - Math.max(150, sc.clientHeight * 0.7));
-        fire(); await wait(120);
+        /* 10000줄짜리 방을 한 화면씩 기어 올라가면 몇 천 번을 돌아야 한다.
+           곧장 맨 위로 던진다. 지나친 줄은 어차피 내려오면서 줍는다. */
+        sc.scrollTop = 0; fire(); if (!(await step(140))) { why = '중단'; break; }
       }
-      if (g % 40 === 0) console.log('[ccfolia] ' + name + ' · 과거 로그 로딩... 높이', sc.scrollHeight);
-      prevH = h;
+      if (g % 8 === 0) say(name + ' · 과거 로그 여는 중 · ' + store.size + '줄');
     }
-    sc.scrollTop = 0; fire(); await wait(400); grab();
-    let last = -1, stable = 0; g = 0;
-    while (g++ < 200000 && Date.now() - t0 < TIMEOUT) {
+    /* 왜 멈췄는지는 항상 남긴다. 이 한 줄이면 '덜 올라갔다'의 원인을 바로 짚을 수 있다. */
+    console.log('[ccfolia] ' + name + ' · 위로 훑기 끝(' + why + ') · 맨윗번호 '
+      + (minIdx === Infinity ? '-' : minIdx) + ' · 모은 ' + store.size + '줄 · 높이 '
+      + Math.round(Number(sc.scrollHeight) || 0) + ' · 위치 ' + Math.round(Number(sc.scrollTop) || 0)
+      + ' · 목록 갈아끼움 ' + swaps + '회 · ' + Math.round(up() / 1000) + '초 · ' + g + '회전');
+    if (why !== '더 없음') console.warn('[ccfolia] ' + name + ' · 끝까지 못 올라갔을 수 있습니다 (' + why + ')');
+
+    /* ── 아래로 ──
+       위로 훑는 데 시간을 다 써도 아래로 훑기는 반드시 돌아야 한다. 그래서 시계를 따로 잰다. */
+    sc.scrollTop = 0; fire(); await step(400); grab();
+    /* 지금 화면에 그려져 있는 줄 번호의 범위. 이게 뚝 건너뛰면 그 사이를 놓친 것이다. */
+    const shownRange = () => {
+      let lo = Infinity, hi = -Infinity;
+      all(list, '[data-index]').forEach(el => {
+        const i = Number(el.getAttribute('data-index'));
+        if (Number.isNaN(i)) return;
+        if (i < lo) lo = i; if (i > hi) hi = i;
+      });
+      return { lo: lo, hi: hi };
+    };
+    /* 한 걸음의 대기 시간은 고정하면 안 된다. 방이 무거우면 그리는 속도를 앞질러 줄을 건너뛰고,
+       가벼우면 쓸데없이 느려진다. 건너뛴 게 보이면 늘리고, 잘 따라오면 조금씩 줄인다. */
+    let dwell = lastDwell, last = -1, stable = 0, prevHi = -Infinity, jumped = 0; g = 0;
+    const down = clock();
+    let lastMove = down();
+    while (g++ < 200000 && down() < DOWN_MS && down() - lastMove < STALL_MS) {
       grab();
-      const atBottom = sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 2;
+      const r = shownRange();
+      if (prevHi > -Infinity && r.lo > prevHi + 1) {
+        /* 앞질렀다. 대기를 늘리고, 건너뛴 자리를 덮도록 되돌아가서 다시 내려온다. */
+        jumped++;
+        dwell = Math.min(900, Math.round(dwell * 1.6) + 20);
+        sc.scrollTop = Math.max(0, sc.scrollTop - sc.clientHeight * 1.1);
+        fire(); if (!(await step(dwell))) break;
+        grab(); prevHi = shownRange().hi;
+        continue;
+      }
+      if (r.hi > prevHi) { dwell = Math.max(70, dwell - 6); lastMove = down(); }
+      prevHi = r.hi;
+      /* 스크롤할 것이 없는 상자(=로그가 한 화면에 다 들어옴)는 처음부터 '맨 아래'로 친다.
+         높이를 못 읽는 경우도 마찬가지다. 안 그러면 끝을 영영 못 보고 빗장이 풀릴 때까지 돈다. */
+      const H = Number(sc.scrollHeight), C = Number(sc.clientHeight);
+      const canScroll = isFinite(H) && isFinite(C) && H > C + 4;
+      const atBottom = !canScroll || sc.scrollTop + C >= H - 2;
       if (atBottom) { if (store.size === last) { if (++stable >= 6) break; } else stable = 0; last = store.size; }
-      sc.scrollTop += Math.max(120, sc.clientHeight * 0.6);
-      fire(); await wait(90);
-      if (g % 40 === 0) console.log('[ccfolia] ' + name + ' · 수집 중...', store.size);
+      else stable = 0;
+      /* 한 걸음은 절대 한 화면을 넘어서면 안 된다. 창을 작게 줄이면 채팅창이 120px보다도
+         낮아질 수 있는데, 그때 예전의 '최소 120px' 바닥이 오히려 한 화면을 통째로 건너뛰게 했다. */
+      sc.scrollTop += C > 0 ? Math.max(24, Math.min(Math.round(C * 0.6), C - 24)) : 120;
+      fire(); if (!(await step(dwell))) break;
+      if (g % 8 === 0) say(name + ' · 모으는 중 · ' + store.size + '줄');
     }
     grab();
+    lastDwell = Math.max(110, dwell);
+    if (jumped) console.log('[ccfolia] ' + name + ' · 그리기를 앞지른 횟수 ' + jumped + ' · 대기 ' + dwell + 'ms로 맞춤');
+
+    /* ── 빠진 줄 메우기 ──
+       반 화면씩 내려가도 그리는 속도가 못 따라오면 중간 줄을 놓칠 때가 있다. 줄이 많을수록 잦다.
+       번호가 이어지지 않는 자리를 찾아, 그 위치만 다시 들러 줍는다. */
+    const holes = () => {
+      let lo = Infinity, hi = -Infinity;
+      store.forEach((v, k) => { if (k < lo) lo = k; if (k > hi) hi = k; });
+      const out = [];
+      for (let i = lo; i <= hi; i++) if (!store.has(i)) out.push(i);
+      return { lo: lo, hi: hi, miss: out };
+    };
+    for (let round = 0; round < 40 && !ABORT && down() < DOWN_MS; round++) {
+      const H = holes();
+      if (!H.miss.length) break;
+      console.warn('[ccfolia] ' + name + ' · 빠진 줄 ' + H.miss.length + '개 · ' + (round + 1) + '차 보충');
+      say(name + ' · 빠진 줄 ' + H.miss.length + '개 메우는 중');
+      const per = sc.scrollHeight / Math.max(1, H.hi - H.lo + 1), before = store.size;
+      const C = Number(sc.clientHeight) || 300;
+      const slow = Math.max(300, dwell * 2);   /* 보충은 서두르지 않는다. 여기서 또 앞지르면 헛일이다. */
+      /* 빠진 번호를 이어진 덩어리로 묶는다. 덩어리 하나를 '구간'으로 보고 그 앞에 서서 천천히 지나간다.
+         점 하나를 정확히 맞히려 들면 안 된다 — per는 줄 하나당 '평균' 높이일 뿐이라, 긴 글이 섞이거나
+         창이 작으면 어림이 크게 빗나가고, 그때마다 엉뚱한 곳을 헤매다 마지막 몇 줄을 끝내 못 찾는다. */
+      const runs = [];
+      for (let m = 0; m < H.miss.length; m++) {
+        const a = H.miss[m];
+        while (m + 1 < H.miss.length && H.miss[m + 1] === H.miss[m] + 1) m++;
+        runs.push([a, H.miss[m]]);
+      }
+      for (let q = 0; q < runs.length; q++) {
+        const a = runs[q][0], b = runs[q][1];
+        if (store.has(a) && store.has(b)) continue;
+        sc.scrollTop = Math.max(0, (a - H.lo) * per - C * 1.5);   /* 구간보다 넉넉히 앞에서 출발 */
+        fire(); if (!(await step(slow))) break;
+        grab();
+        for (let k = 0; k < 16; k++) {
+          if (store.has(a) && store.has(b)) break;
+          const r = shownRange();
+          /* 이미 지나쳐 버렸으면 되돌아가고, 아직 못 미쳤으면 반 화면씩 내려간다 */
+          if (isFinite(r.lo) && r.lo > b + 1) sc.scrollTop = Math.max(0, sc.scrollTop - C * 0.9);
+          else sc.scrollTop += Math.max(24, Math.round(C * 0.45));
+          fire(); if (!(await step(slow))) break;
+          grab();
+          if (ABORT || down() >= DOWN_MS) break;
+        }
+        if (ABORT || down() >= DOWN_MS) break;
+      }
+      if (store.size === before) break;   /* 더 안 메워지면 그만 — 원래 없는 번호일 수 있다 */
+    }
+
+    /* 맨 위에 세워 둔 채 끝내면 앱이 옛 로그를 계속 불러온다. 반드시 아래로 돌려놓는다. */
+    sc.scrollTop = sc.scrollHeight; fire(); await wait(150);
+    console.log('[ccfolia] ' + name + ' · ' + store.size + '줄 모음');
     return Array.from(store.keys()).sort((a, b) => a - b)
-      .map(i => ({ html: store.get(i), c: meta.get(i).c }));
+      .map(i => ({ html: store.get(i).html, c: store.get(i).c }));
   };
 
   /* ── 탭 순회 ──
@@ -1744,14 +2290,15 @@
 
   /* 탭 줄에서 후보를 집는다. role=tab만 믿으면 안 된다 —
      실제 룸에서 기본 '메인'과 '+'에만 role=tab이 붙고, 사용자가 만든 탭(정보·잡담)은 그냥 button이었다. */
-  const pickFrom = box => box ? all(box, CLICKABLE).filter(el => !el.querySelector(CLICKABLE)) : [];
+  /* 우리가 띄운 배지의 버튼도 button이다. 후보에 섞이면 스스로 '중단'을 눌러 버린다. */
+  const pickFrom = box => box ? all(box, CLICKABLE).filter(el => !el.querySelector(CLICKABLE) && !badge.contains(el)) : [];
   const chatBar = findTabBar();
   const usable = ts => ts.filter(t => !isAdder(t)).length;
 
   let cands = pickFrom(chatBar);
   if (usable(cands) < 2) {
     /* '+' 버튼을 닻으로 삼아 같은 줄을 다시 찾는다. 탭 줄에는 반드시 '+'가 있다. */
-    const plus = all(document, CLICKABLE).filter(isAdder)[0];
+    const plus = all(document, CLICKABLE).filter(t => !badge.contains(t)).filter(isAdder)[0];
     let box = plus ? plus.parentElement : null;
     for (let k = 0; k < 4 && box; k++) {
       const here = pickFrom(box);
@@ -1764,6 +2311,7 @@
   }
   const skipped = cands.filter(isAdder);
   cands = cands.filter(t => !isAdder(t));
+  cands = cands.filter((t, i) => cands.indexOf(t) === i);   /* 같은 버튼이 두 번 들어오면 같은 탭을 두 번 긁는다 */
 
   /* 진단은 항상 남긴다. 탭을 못 찾았을 때 이 줄들만 있으면 원인을 짚을 수 있다. */
   const desc = t => JSON.stringify(clean(t.textContent).slice(0, 24)) + '/' + JSON.stringify(t.getAttribute('aria-label'))
@@ -1775,10 +2323,164 @@
     + ' → ' + all(b, '[role="tab"]').map(desc).join(' , ')));
   console.log('[ccfolia] 진단 · 후보 → ' + (cands.map(desc).join(' , ') || '(없음)'));
 
-  /* 후보를 넓히면 채팅과 무관한 막대까지 누르게 된다. 막대마다 원래 눌려 있던 탭을 적어 두고 끝나면 되돌린다. */
-  const prevSel = [];
-  bars.forEach(b => { const sel = all(b, '[role="tab"]').filter(t => t.getAttribute('aria-selected') === 'true')[0]; if (sel) prevSel.push(sel); });
-  cands.forEach(t => { if (t.getAttribute('aria-selected') === 'true' && prevSel.indexOf(t) === -1) prevSel.push(t); });
+  /* ── 수집할 탭 고르기 ──
+     '잡담'처럼 본편과 상관없는 탭까지 긁으면 시간도 오래 걸리고 결과도 지저분해진다.
+     어느 탭이 잡담인지는 방마다 다르니 규칙으로 정하지 않는다. 찾은 이름을 그대로 보여 주고 고르게 한다.
+     끈 탭은 아예 눌러 보지도 않는다. 고른 내용은 이 방에서 다음에도 그대로 뜬다. */
+  const SKIP_KEY = 'ccfolia:harvest:skip';
+  /* 저장된 적이 없으면 null. '아무것도 안 뺐다'와 '아직 고른 적 없다'를 구별해야 기본값을 쓸 수 있다. */
+  const readSkip = () => { try { const v = localStorage.getItem(SKIP_KEY); return v ? JSON.parse(v) : null; } catch (e) { return null; } };
+  /* 기본은 '메인·정보만'. 잡담 같은 곁가지 탭은 꺼진 채로 뜬다.
+     이름을 하나도 못 알아본 방이라면 아무것도 안 켜져 빈손이 되니, 그때만 전부 켠다. */
+  const CORE = ['메인', '정보'];
+  const askTabs = names => new Promise(resolve => {
+    const off = readSkip();
+    const anyCore = names.some(n => CORE.indexOf(n) >= 0);
+    const dflt = n => off ? off.indexOf(n) < 0 : (anyCore ? CORE.indexOf(n) >= 0 : true);
+
+    const ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;z-index:2147483646;display:flex;align-items:center;justify-content:center;'
+      + 'padding:20px;background:rgba(10,11,14,.55);'
+      + 'font:15px/1.6 ' + UI.font + ';letter-spacing:-.01em;word-break:keep-all;'
+      + '-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility';
+    const card = document.createElement('div');
+    card.style.cssText = 'background:' + UI.paper + ';color:' + UI.ink + ';'
+      + 'box-sizing:border-box;border:1px solid ' + UI.line + ';border-radius:0;padding:22px;'
+      + 'width:min(94vw,430px);max-height:82vh;overflow:auto;box-shadow:0 24px 70px rgba(0,0,0,.4)';
+
+    /* 머리말 — 리더 화면의 작은 대문자 줄과 같은 결 */
+    const kick = document.createElement('div');
+    kick.style.cssText = 'display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;'
+      + 'letter-spacing:.2em;color:' + UI.muted + ';margin:0 0 9px';
+    const dot = document.createElement('span');
+    dot.style.cssText = 'width:7px;height:7px;flex:0 0 7px;border-radius:0;background:' + UI.ink;
+    const kickText = document.createElement('span'); kickText.textContent = '룸 로그 수집';
+    kick.appendChild(dot); kick.appendChild(kickText);
+    const h = document.createElement('div');
+    h.style.cssText = 'font-size:19px;font-weight:700;letter-spacing:-.025em;line-height:1.25;margin:0 0 6px';
+    h.textContent = '수집할 탭 고르기';
+    const p = document.createElement('div');
+    p.style.cssText = 'font-size:12.5px;line-height:1.7;color:' + UI.muted + ';margin:0 0 16px';
+    p.textContent = '체크를 끄면 그 탭은 열지도 않고 건너뜁니다. 고른 내용은 다음 실행 때도 그대로 뜹니다.';
+
+    /* 탭 목록 — 한 줄씩 실선으로 끊는다. 켜진 줄은 진하게, 꺼진 줄은 흐리게 두어
+       무엇을 건너뛰는지 한눈에 보이게 한다. */
+    const list = document.createElement('div');
+    list.style.cssText = 'border:1px solid ' + UI.line + ';border-radius:0';
+    const rows = [];
+    const boxes = names.map((n, i) => {
+      const row = document.createElement('label');
+      row.style.cssText = 'display:flex;align-items:center;gap:11px;padding:11px 13px;cursor:pointer;'
+        + 'background:' + UI.paper + (i ? ';border-top:1px solid ' + UI.line : '');
+      /* 브라우저 기본 체크박스는 모서리가 둥글다. 각을 세운 네모를 직접 그리고,
+         진짜 입력칸은 그 위에 투명하게 겹쳐 둔다. 키보드와 라벨 동작은 그대로 남는다. */
+      const box = document.createElement('span');
+      box.style.cssText = 'position:relative;box-sizing:border-box;display:grid;place-items:center;'
+        + 'width:17px;height:17px;flex:0 0 17px;'
+        + 'border:1px solid ' + UI.line2 + ';border-radius:0;background:' + UI.paper;
+      const tick = document.createElement('span');
+      tick.textContent = '✓';
+      tick.style.cssText = 'font-size:11.5px;font-weight:700;line-height:1;color:' + UI.paper + ';pointer-events:none';
+      const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = dflt(n);
+      cb.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer';
+      box.appendChild(tick); box.appendChild(cb);
+      const nm = document.createElement('span');
+      nm.style.cssText = 'font-size:14.5px;font-weight:600;min-width:0;overflow:hidden;'
+        + 'text-overflow:ellipsis;white-space:nowrap';
+      nm.textContent = n;
+      const tag = document.createElement('span');
+      tag.style.cssText = 'margin-left:auto;flex:0 0 auto;font-size:11px;font-weight:700;'
+        + 'letter-spacing:.1em;color:' + UI.faint;
+      row.appendChild(box); row.appendChild(nm); row.appendChild(tag);
+      list.appendChild(row);
+      rows.push({ cb: cb, box: box, tick: tick, nm: nm, tag: tag });
+      cb.addEventListener('change', paint);
+      /* 키보드로 옮겨 온 자리만 테를 두른다. 마우스로 누른 자리까지 테가 남으면 지저분하다. */
+      cb.addEventListener('focus', () => {
+        let key = true; try { key = cb.matches(':focus-visible'); } catch (e) {}
+        box.style.boxShadow = key ? '0 0 0 2px ' + UI.ink : 'none';
+      });
+      cb.addEventListener('blur', () => { box.style.boxShadow = 'none'; });
+      hover(row, 'backgroundColor', UI.subtle, UI.paper);
+      return cb;
+    });
+
+    /* 아래 줄 — 전체 선택·해제는 리더 상단 바의 세그먼트와 같은 모양으로 붙여 놓는다. */
+    const foot = document.createElement('div');
+    foot.style.cssText = 'display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px';
+    const seg = document.createElement('span');
+    seg.style.cssText = 'display:inline-flex;border:1px solid ' + UI.line + ';border-radius:0;'
+      + 'overflow:hidden;background:' + UI.paper;
+    const mkSeg = (t, first) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = t;
+      b.style.cssText = 'font:inherit;font-size:12.5px;font-weight:600;line-height:1;cursor:pointer;'
+        + 'border:0;border-radius:0;padding:8px 11px;background:transparent;color:' + UI.muted
+        + (first ? '' : ';border-left:1px solid ' + UI.line);
+      hover(b, 'color', UI.ink, UI.muted);
+      seg.appendChild(b);
+      return b;
+    };
+    const bAll = mkSeg('전체 선택', true), bNone = mkSeg('전체 해제', false);
+    const cnt = document.createElement('span');
+    cnt.style.cssText = 'margin-left:auto;font-size:12px;color:' + UI.faint + ';font-variant-numeric:tabular-nums';
+    foot.appendChild(seg); foot.appendChild(cnt);
+
+    const acts = document.createElement('div');
+    acts.style.cssText = 'display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;'
+      + 'margin-top:16px;padding-top:14px;border-top:1px solid ' + UI.line;
+    const mk = (t, primary) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = t;
+      b.style.cssText = 'font:inherit;font-size:13px;font-weight:600;line-height:1;cursor:pointer;'
+        + 'border-radius:0;padding:10px 15px;white-space:nowrap;transition:.15s;'
+        + (primary ? 'border:1px solid ' + UI.ink + ';background:' + UI.ink + ';color:' + UI.paper
+                   : 'border:1px solid ' + UI.line + ';background:' + UI.paper + ';color:' + UI.ink2);
+      if (primary) hover(b, 'opacity', '.86', '1'); else hover(b, 'borderColor', UI.ink, UI.line);
+      return b;
+    };
+    const bNo = mk('취소', false), bGo = mk('수집 시작', true);
+    acts.appendChild(bNo); acts.appendChild(bGo);
+
+    /* 인라인 스타일로는 :checked를 적을 수 없다. 켜짐·꺼짐을 직접 칠한다. */
+    function paint() {
+      let on = 0;
+      rows.forEach(r => {
+        const c = r.cb.checked; if (c) on++;
+        r.box.style.background = c ? UI.ink : UI.paper;
+        r.box.style.borderColor = c ? UI.ink : UI.line2;
+        r.tick.style.visibility = c ? 'visible' : 'hidden';
+        r.nm.style.color = c ? UI.ink : UI.faint;
+        r.tag.textContent = c ? '' : '건너뜀';
+      });
+      cnt.textContent = names.length + '개 탭 중 ' + on + '개 수집';
+    }
+
+    bAll.onclick = () => { boxes.forEach(b => { b.checked = true; }); paint(); };
+    bNone.onclick = () => { boxes.forEach(b => { b.checked = false; }); paint(); };
+    const done = out => { document.removeEventListener('keydown', esc, true); ov.remove(); resolve(out); };
+    function esc(e) { if (e.key === 'Escape') done(null); }
+    document.addEventListener('keydown', esc, true);
+    ov.onclick = e => { if (e.target === ov) done(null); };
+    bNo.onclick = () => done(null);
+    bGo.onclick = () => {
+      try { localStorage.setItem(SKIP_KEY, JSON.stringify(names.filter((n, i) => !boxes[i].checked))); } catch (e) {}
+      done(names.map((n, i) => boxes[i].checked));
+    };
+    [kick, h, p, list, foot, acts].forEach(el => card.appendChild(el));
+    paint();
+    ov.appendChild(card); document.body.appendChild(ov);
+    bGo.focus();
+  });
+
+  const tabNames = cands.map(tabName);
+  say('수집할 탭을 고르세요');
+  const picked = await askTabs(tabNames);
+  if (!picked) { console.log('[ccfolia] 취소했습니다.'); return; }
+  if (!picked.some(Boolean)) { alert('고른 탭이 없습니다. 하나 이상 골라 주세요.'); return; }
+  console.log('[ccfolia] 수집할 탭 → ' + tabNames.filter((n, i) => picked[i]).join(' , ')
+    + (picked.every(Boolean) ? '' : ' · 건너뜀 → ' + tabNames.filter((n, i) => !picked[i]).join(' , ')));
+
   const packs = [], seen = {};
   /* 지금 화면에 떠 있는 탭은 딱 하나다. 다른 막대에서 '선택됨'인 탭은 채팅과 무관하므로
      반드시 눌러 보고 채팅이 바뀌는지 확인해야 한다. 안 그러면 같은 화면을 또 긁는다. */
@@ -1787,8 +2489,13 @@
     || ['true', 'page', 'step'].indexOf(t.getAttribute('aria-current')) >= 0
     || /(^|\\s)Mui-selected(\\s|$)/.test(String(t.className || ''));
   const shown = cands.filter(isOn)[0] || null;
+  /* 탭마다 제한 시간을 따로 두면 탭이 많을수록 전체가 한없이 길어진다. 총량도 따로 막는다. */
+  const run = clock(), RUN_MS = 120 * 60 * 1000;
   for (let i = 0; i < cands.length; i++) {
-    const t = cands[i], name = tabName(t, i);
+    if (ABORT) { console.warn('[ccfolia] 중단했습니다. 여기까지 모은 것만 저장합니다.'); break; }
+    if (run() > RUN_MS) { console.warn('[ccfolia] 전체 제한 시간에 걸렸습니다. 여기까지 모은 것만 저장합니다.'); break; }
+    const t = cands[i], name = tabNames[i];
+    if (!picked[i]) { console.log('[ccfolia] ' + name + ' · 고르지 않아 건너뜁니다'); continue; }
     if (t !== shown) {
       const d0 = dlgCount(), sig0 = listSig();
       t.click();
@@ -1803,7 +2510,7 @@
         continue;
       }
     }
-    console.log('[ccfolia] ' + name + ' 탭 수집 시작');
+    say(name + ' 탭 수집 시작'); console.log('[ccfolia] ' + name + ' 탭 수집 시작');
     const rows = await harvest(name);
     if (!rows.length) { console.log('[ccfolia] ' + name + ' · 비어 있어 건너뜁니다'); continue; }
     const sig = rows.length + '::' + rows[0].html.slice(0, 240) + '::' + rows[rows.length - 1].html.slice(-240);
@@ -1811,19 +2518,17 @@
     seen[sig] = name;
     packs.push({ name: name, rows: rows, primary: packs.length === 0 && cands.length > 1 });
   }
-  if (!packs.length) {   /* 후보가 하나도 안 통했으면 지금 화면이라도 건진다 */
+  /* 지금 화면이 '고르지 않은 탭'이면 되살리기도 하지 않는다. 뺐다는 뜻을 뒤집으면 안 된다. */
+  if (!packs.length && !ABORT && picked[cands.indexOf(shown)] !== false) {   /* 후보가 하나도 안 통했으면 지금 화면이라도 건진다 */
     const rows = await harvest('메인');
     if (rows.length) packs.push({ name: '메인', rows: rows, primary: false });
   }
   if (dlgCount()) await closeDlg();   /* 순회 중 열린 창이 남아 있으면 닫고 끝낸다 */
-  for (let k = 0; k < prevSel.length; k++) {
-    if (prevSel[k].getAttribute('aria-selected') !== 'true') { prevSel[k].click(); await wait(280); }
-  }
-  /* 처음 보고 있던 탭은 aria-selected가 안 변했더라도 다시 눌러 준다.
-     다른 막대가 채팅을 갈아 끼운 경우, 표시 상태만 맞고 화면은 남의 탭에 머무를 수 있다. */
-  const home = shown || cands[0];   /* 표식이 아예 없으면 첫 탭(=메인)으로 돌려 놓는다 */
-  if (home) { home.click(); await wait(400); }
-  if (dlgCount()) await closeDlg();
+  /* ── 여기서 그대로 끝낸다 ──
+     예전에는 '원래 보던 탭'으로 되돌려 놓았다. 그런데 마지막 탭을 다 모은 뒤 다시 탭을 눌러
+     채팅 목록을 갈아 끼우면, 방금까지 그 목록을 잡고 있던 코드와 겹쳐 오류가 잦았다.
+     탭 하나 되돌리는 건 사용자가 한 번 누르면 되는 일이다. 다 모았으면 아무것도 건드리지 않는다. */
+  say('저장하는 중…');
 
   /* 탭을 하나밖에 못 건졌다면, 정보탭이 어디 숨어 있는지 알아낼 단서를 남긴다 */
   if (packs.length < 2) {
@@ -1831,16 +2536,30 @@
     let box = lst;
     for (let k = 0; k < 5 && box && box.parentElement; k++) box = box.parentElement;
     const btns = all(box, 'button, [role="button"], [role="tab"]')
-      .filter(b => lst && !lst.contains(b)).slice(0, 40)
+      .filter(b => lst && !lst.contains(b) && !badge.contains(b)).slice(0, 40)
       .map(b => JSON.stringify(clean(b.textContent).slice(0, 18)) + '/' + JSON.stringify(b.getAttribute('aria-label')));
     console.log('[ccfolia] 진단 · 채팅 주변 클릭 요소 ' + btns.length + '개 → ' + btns.join(' , '));
   }
 
-  /* 스테이터스 변화·/system 줄에는 시각이 안 찍힌다. 같은 탭 안에서는 시간순이므로 앞뒤 줄에서 메운다. */
+  /* ── 시각이 비는 줄 메우기 ──
+     스테이터스 변화·/system 줄에는 시각이 안 찍힌다. 그런 한두 줄은 바로 옆줄에서 메우면 된다.
+     하지만 코코포리아는 오래된 글에 '2025/10/05'처럼 날짜만 보여 준다 — 시각이 화면에 아예 없다.
+     그런 줄이 수백·수천 개씩 이어지는데 이웃의 시각을 늘여 붙이면, 없는 시각을 지어내는 꼴이 된다.
+     그러면 리더는 그 지어낸 시각을 믿고 줄을 세워 로그가 엉킨다.
+     짧은 틈만 메우고 긴 구간은 0으로 남긴다. 그래야 리더가 '날짜는 알고 시각은 모르는 줄'로 보고
+     화면의 날짜를 근거로 제대로 배치한다. */
+  const GAP_MAX = 3;
   const fill = (rows, k) => {
-    let last = 0;
-    for (let i = 0; i < rows.length; i++) { if (rows[i][k]) last = rows[i][k]; else if (last) rows[i][k] = last; }
-    for (let i = rows.length - 1; i >= 0; i--) { if (rows[i][k]) last = rows[i][k]; else if (last) rows[i][k] = last; }
+    for (let i = 0; i < rows.length; i++) {
+      if (rows[i][k]) continue;
+      let j = i;
+      while (j < rows.length && !rows[j][k]) j++;
+      if (j - i <= GAP_MAX) {
+        const v = (i > 0 ? rows[i - 1][k] : 0) || (j < rows.length ? rows[j][k] : 0);
+        if (v) for (let x = i; x < j; x++) rows[x][k] = v;
+      }
+      i = j - 1;
+    }
     return rows;
   };
   packs.forEach(p => fill(p.rows, 'c'));
@@ -1851,8 +2570,9 @@
   /* 한 줄이라도 날짜를 못 읽으면 전부 버린다. 반쪽짜리 절대시각을 섞으면 병합이 되레 어긋난다.
      그 경우 리더가 시:분만 보고 '앞으로만 훑는 병합'으로 처리한다. */
   const nC = rowsAll.filter(r => r.c).length, useC = nC === rowsAll.length;
-  console.log('[ccfolia] 시각 출처: ' + (useC ? '화면 표시 날짜·시각(분 단위)' : '시:분 추정')
-    + ' · 날짜까지 읽은 줄 ' + nC + '/' + rowsAll.length);
+  console.log('[ccfolia] 시각 출처: ' + (useC ? '화면의 날짜·시각을 그대로(분 단위)'
+    : '화면에 시각이 없는 줄이 있어, 배치는 리더에 맡깁니다')
+    + ' · 시:분까지 읽은 줄 ' + nC + '/' + rowsAll.length);
 
   const blocks = packs.map(p => p.rows.map(r => {
     const at = useC ? r.c : 0;
@@ -1861,16 +2581,26 @@
   }).join('\\n'));
 
   const names = packs.map(p => p.name), counts = packs.map(p => p.rows.length);
-  const html = '<div id="ccfolia-log" data-tabs="' + esc(names.join(',')) + '">\\n' + blocks.join('\\n') + '\\n</div>';
+  const html = '<div id="ccfolia-log" data-tabs="' + esc(names.join(',')) + '" data-ccf-now="' + Date.now() + '">\\n' + blocks.join('\\n') + '\\n</div>';
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
   a.download = 'ccfolia-log.html';
   document.body.appendChild(a); a.click(); a.remove();
   console.log('[ccfolia] 수집 완료:', names.map((n, i) => n + ' ' + counts[i] + '개').join(' / '));
-  alert('수집 완료 · ' + names.map((n, i) => n + ' ' + counts[i] + '개').join(' · ')
+  alert((ABORT ? '중단함 · 여기까지 모았습니다 · ' : '수집 완료 · ') + names.map((n, i) => n + ' ' + counts[i] + '개').join(' · ')
     + '\\nccfolia-log.html로 저장했습니다.\\n이제 이 파일을 코코포리아 로그 백업으로 끌어다 놓으세요.'
     + (packs.length > 1 ? '' : '\\n\\n탭을 하나만 건졌습니다. 다른 탭을 열고 한 번 더 실행한 뒤, 받은 파일들을 함께 놓으세요.'
       + '\\n(F12 → Console의 [ccfolia] 진단 줄을 모두 복사해 두시면 원인을 짚을 수 있습니다.)'));
+  };
+
+  try { await main(); }
+  catch (e) { console.error('[ccfolia] 수집 중 오류', e); alert('수집 중 오류가 났습니다.\\n' + (e && e.message ? e.message : e)); }
+  finally {
+    /* 어떻게 끝나든 흔적은 지운다. 배지가 남거나 잠금이 안 풀리면 다음 실행이 막힌다. */
+    removeEventListener('keydown', onKey, true);
+    if (badge.parentNode) badge.remove();
+    delete window.__ccfoliaHarvest;
+  }
 })();`;
   const hb = $('#harvest'); if(hb) hb.value = HARVEST;
   $('#copyHarvest') && $('#copyHarvest').addEventListener('click', async () => {
