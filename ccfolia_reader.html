@@ -115,8 +115,10 @@
   .panel:not(.mode-edit) .edit-only{display:none !important;}
   .panel.mode-edit .collect-only{display:none !important;}
   .panel.mode-edit .card{margin-top:22px;}
-  .panel.mode-edit details.adv{margin-top:0;}
-  .panel.mode-edit details.adv > summary{display:none;}
+  /* 편집 모드에서는 패널 전체가 설정이므로 '고급 설정' 요약줄만 접는다.
+     details.adv 전체를 노리면 그 안에 든 '배치 미세조정'까지 열 수 없게 된다. */
+  .panel.mode-edit #advBox{margin-top:0;}
+  .panel.mode-edit #advBox > summary{display:none;}
   .panel.mode-edit #convertBtn{background:var(--accent);color:var(--on-accent);border-color:var(--accent);}
   .panel.mode-edit #convertBtn:hover{opacity:.86;}
 
@@ -131,7 +133,18 @@
   .adv .fname{flex:0 0 auto;color:var(--ink-2);font-weight:600;}
   .adv .avprev{flex:0 0 auto;width:26px;height:26px;background:var(--subtle-2);border-radius:var(--av-radius);box-shadow:0 0 0 1px var(--line);}
   .jalign{display:flex;flex-direction:column;gap:8px;width:100%;margin-top:6px;}
+  #infoWrap{flex-direction:column;align-items:stretch;gap:.45rem;}
+  #infoWrap > details.adv{margin-top:6px;}
   .jrow{display:flex;align-items:center;gap:10px;}
+  /* 정보탭 배치 미세조정 목록 */
+  .itune{display:flex;flex-direction:column;gap:5px;width:100%;margin:8px 0 4px;max-height:264px;overflow:auto;}
+  .irow{display:flex;align-items:center;gap:9px;font-size:12.5px;min-width:0;}
+  .irow .iat{flex:0 0 auto;color:var(--faint);font-variant-numeric:tabular-nums;}
+  .irow .itxt{flex:1 1 40%;min-width:0;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .irow .ipos{flex:1 1 34%;min-width:0;color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .irow .ipos b{font-weight:600;color:var(--muted);}
+  .irow .seg button{padding:5px 8px;font-size:12px;}
+  .imoved{font-size:11.5px;color:var(--muted);}
   .jname{flex:1;min-width:0;font-weight:600;color:var(--ink-2);font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .jseg{flex:0 0 auto;}
   .jseg button{font-size:12px;padding:5px 11px;}
@@ -186,6 +199,22 @@
     border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
   .sysmsg .lbl{display:block;font-size:10.5px;letter-spacing:.28em;color:var(--faint);text-transform:uppercase;margin-bottom:6px;}
   .sysmsg .txt{font-size:14px;line-height:1.6;} .sysmsg .txt p{margin:0 0 4px;} .sysmsg .txt p:last-child{margin:0;}
+
+  /* 정보탭 → 본문 흐름에 끼워 넣는 구분 카드 */
+  .infocard{position:relative;margin:18px 0 18px calc(var(--av) + var(--gap));padding:12px 15px;
+    border:1px solid var(--line);border-left:2px solid var(--speaker,var(--line-2));}
+  .infocard > .lbl{margin-bottom:7px;}
+  .infocard > .lbl .tag{font-size:10px;letter-spacing:.24em;color:var(--faint);text-transform:uppercase;}
+  .infocard .body{color:var(--ink-2);}
+  .infocard .body p{margin:0 0 9px;} .infocard .body p:last-child{margin-bottom:0;}
+  .infocard.center{margin-left:0;text-align:center;}
+  /* 자리 옮기기 — 앱에서만 보이고 저장 HTML·게시판 HTML에는 실리지 않는다 */
+  .infocard .mv{position:absolute;top:-1px;right:-1px;display:flex;opacity:0;transition:opacity .15s;}
+  .infocard:hover .mv,.infocard:focus-within .mv{opacity:1;}
+  .infocard .mv button{border:1px solid var(--line);background:var(--surface);color:var(--muted);
+    font:inherit;font-size:11px;line-height:1;width:23px;height:21px;padding:0;cursor:pointer;}
+  .infocard .mv button + button{border-left:0;}
+  .infocard .mv button:hover{color:var(--ink);background:var(--subtle);}
 
   /* 주사위·시스템(포함 옵션) */
   .turn.muted .body,.narr.muted .body{color:var(--faint);font-size:13px;line-height:1.5;}
@@ -302,7 +331,7 @@
   <div id="resumeSlot" class="collect-only"></div>
 
   <h1 class="collect-only">세션 로그 백업</h1>
-  <p class="lead collect-only">코코포리아 룸 채팅 ‘메인’ 탭을 그대로 옮겨, 읽기 좋은 반응형 페이지로 저장합니다. 아바타·이름·색상을 살리고, GM은 내레이션으로 흘려 씁니다. 코코포리아 채팅은 가상 스크롤이라, 아래 <b>‘룸 로그 수집’</b>으로 전체 로그를 먼저 모읍니다.</p>
+  <p class="lead collect-only">코코포리아 룸 채팅을 그대로 옮겨, 읽기 좋은 반응형 페이지로 저장합니다. 아바타·이름·색상을 살리고, GM은 내레이션으로 흘려 씁니다. <b>‘정보’ 등 다른 탭의 메시지도 함께 모아 시간 순서대로 본문에 끼워 넣습니다.</b> 코코포리아 채팅은 가상 스크롤이라, 아래 <b>‘룸 로그 수집’</b>으로 전체 로그를 먼저 모읍니다.</p>
 
   <h1 class="edit-only">표시 설정</h1>
   <p class="lead edit-only">읽는 방식만 바꿉니다. 아래에서 고친 뒤 <b>‘변환 · 다시 적용’</b>을 누르면 세션에 곧바로 반영됩니다.</p>
@@ -311,20 +340,20 @@
   <div class="card collect-only">
     <p class="step"><span class="no">1</span> 로그 수집 · 클릭 한 번</p>
     <h2>‘룸 로그 수집’ 북마클릿</h2>
-    <p class="sub">북마크바에 <b>한 번만</b> 등록해 두면, 다음부터는 룸에서 클릭 한 번으로 전체 로그가 <code>ccfolia-main-log.html</code>로 저장됩니다. F12·콘솔이 필요 없습니다.</p>
+    <p class="sub">북마크바에 <b>한 번만</b> 등록해 두면, 다음부터는 룸에서 클릭 한 번으로 <b>모든 탭의</b> 전체 로그가 <code>ccfolia-log.html</code>로 저장됩니다. F12·콘솔이 필요 없습니다.</p>
     <div class="bmk-row">
       <a class="bmk" id="bmk" href="#" title="북마크바로 드래그하세요" draggable="true"><span class="ic">⬇</span> 룸 로그 수집</a>
       <span class="bmk-hint">← 이 버튼을 브라우저 <b>북마크바</b>로 드래그</span>
     </div>
     <ol class="steps">
       <li>위 버튼을 북마크바로 <b>드래그</b>하세요. (막히면 아래 콘솔 스크립트를 사용하세요.)</li>
-      <li>코코포리아 룸에서 <b>‘메인’ 탭</b>을 열어 둡니다.</li>
-      <li>북마크의 <b>‘룸 로그 수집’</b>을 클릭 → 위로 끝까지 훑어 전체 로그를 모아 파일로 저장합니다.</li>
+      <li>코코포리아 룸에서 <b>채팅창</b>을 열어 둡니다. 탭은 아무거나 상관없습니다.</li>
+      <li>북마크의 <b>‘룸 로그 수집’</b>을 클릭 → <b>메인·정보 등 탭을 하나씩 눌러 가며</b> 위로 끝까지 훑어 파일 하나로 저장합니다. 끝나면 원래 보던 탭으로 되돌려 놓습니다.</li>
       <li>저장된 파일을 <b>이 페이지로 끌어다 놓으면</b> 곧바로 변환됩니다.</li>
     </ol>
     <details class="adv">
       <summary>북마클릿이 막히면 · 콘솔 스크립트 사용</summary>
-      <p style="margin:.6rem 0">룸 ‘메인’ 탭에서 <b>F12 → Console</b>에 붙여넣고 실행하세요. 결과는 북마클릿과 동일합니다.</p>
+      <p style="margin:.6rem 0">룸에서 <b>F12 → Console</b>에 붙여넣고 실행하세요. 결과는 북마클릿과 동일합니다.</p>
       <textarea id="harvest" readonly style="min-height:110px"></textarea>
       <div class="row"><button class="btn" id="copyHarvest">스크립트 복사</button></div>
     </details>
@@ -334,9 +363,9 @@
   <div class="card">
     <p class="step collect-only"><span class="no">2</span> 불러오기 · 변환</p>
     <h2 class="collect-only">수집한 파일 열기</h2>
-    <p class="sub collect-only">저장한 <code>ccfolia-main-log.html</code>을 아래 버튼으로 열거나, <b>이 페이지 아무 곳에나 끌어다 놓으세요.</b> 직접 붙여넣기도 됩니다.</p>
+    <p class="sub collect-only">저장한 <code>ccfolia-log.html</code>을 아래 버튼으로 열거나, <b>이 페이지 아무 곳에나 끌어다 놓으세요.</b> 탭을 따로 모았다면 <b>파일 여러 개를 한꺼번에</b> 놓아도 됩니다. 직접 붙여넣기도 됩니다.</p>
     <div class="row collect-only">
-      <input type="file" id="fileInput" accept=".html,.htm,text/html" class="hidden">
+      <input type="file" id="fileInput" accept=".html,.htm,text/html" multiple class="hidden">
       <button class="btn btn-primary" id="fileBtn">HTML 파일 열기</button>
     </div>
     <div id="urlhint" class="urlhint hidden collect-only"></div>
@@ -369,6 +398,19 @@
         <label style="display:block;margin-bottom:2px">저널 정렬 <span class="jhint">— 변환 후 캐릭터별 좌측/중앙 지정 · 변경 뒤 ‘변환 · 다시 적용’으로 반영</span></label>
         <div id="journalAlign" class="jalign"></div>
       </div>
+
+      <div class="field jalign-wrap hidden" id="infoWrap">
+        <label style="display:block;margin-bottom:2px">정보탭 <span class="jhint">— ‘메인’ 밖의 탭에서 온 메시지를 시:분 순서대로 본문에 끼워 넣습니다</span></label>
+        <label><input type="checkbox" id="optInfo" checked> 정보탭 함께 보기</label>
+        <label><input type="checkbox" id="optInfoCard" checked> 구분 카드로 표시 <span class="jhint">— 끄면 본문과 똑같이 섞입니다</span></label>
+        <label><input type="checkbox" id="optInfoFirst" checked> 시:분이 겹칠 때 정보를 먼저</label>
+        <details class="adv" id="infoTuneBox">
+          <summary>배치 미세조정 <span id="infoCount" class="imoved"></span></summary>
+          <p style="margin:.55rem 0 0">코코포리아는 시:분까지만 알려 주므로, 같은 분에 겹친 카드는 순서가 어긋날 수 있습니다. 어긋난 것만 손보세요. ‘↳’ 뒤가 바로 앞에 놓인 메시지입니다. 본문의 정보 카드에 마우스를 올려도 같은 버튼이 나옵니다.</p>
+          <div id="infoTune" class="itune"></div>
+          <div class="row"><button class="btn" type="button" id="infoReset">자동 배치로 되돌리기</button></div>
+        </details>
+      </div>
       <div id="msg"></div>
     </details>
 
@@ -387,7 +429,7 @@
   <footer class="site-foot">문장을 드래그하면 발췌 이미지를 만들 수 있습니다. · 상단 검색으로 대사를 찾을 수 있습니다.</footer>
 </main>
 
-<div class="dropzone" id="dropzone"><div class="inner"><div class="big">여기에 놓으면 변환</div><div class="small">ccfolia-main-log.html 파일을 놓으세요</div></div></div>
+<div class="dropzone" id="dropzone"><div class="inner"><div class="big">여기에 놓으면 변환</div><div class="small">ccfolia-log.html 파일을 놓으세요 · 여러 개도 됩니다</div></div></div>
 <div id="toast" role="status" aria-live="polite"></div>
 
 <!-- 게시판용 HTML 추출 (앱 전용) -->
@@ -662,7 +704,18 @@
   const rollOutcome = flat => ROLL_NG.test(flat) ? 'ng' : (ROLL_OK.test(flat) ? 'ok' : '');
 
   /* ── 파싱 ── */
-  function parse(html, opts){
+  function parse(html, opts){ return stampSeq(parseRaw(html, opts)); }
+  /* 탭 안에서의 순번을 박아 둔다. 수동 배치가 재변환 뒤에도 같은 메시지를 가리키게 하는 열쇠다. */
+  function stampSeq(list){
+    const n = {};
+    list.forEach(m => {
+      const t = m.tab || ''; m.tab = t; n[t] = (n[t] || 0) + 1; m.seq = n[t];
+      if(typeof m.at !== 'number') m.at = null;
+      if(typeof m.time !== 'string') m.time = '';
+    });
+    return list;
+  }
+  function parseRaw(html, opts){
     const doc = new DOMParser().parseFromString(html, 'text/html');
     const rows = [...doc.querySelectorAll('.MuiListItem-root')];
     if(rows.length) return rows.map(extractCcfolia).filter(Boolean);
@@ -690,6 +743,20 @@
       return { avatar:'', name, color:'', paras:pp, shots:[], system:!name, dice:false, status:detectStatus(pp.join(' ')) };
     }).filter(x => x && (x.paras.length || x.name));
   }
+  /* 수집기가 붙여 둔 표식. 코코포리아 행은 <div data-index><div class="MuiListItem-root">…</div></div>
+     꼴이라 표식이 파싱 대상의 조상에 붙는다. 그래서 자기 자신부터 위로 훑어 찾는다. */
+  function markOf(row, name){ const h = row.closest('[' + name + ']'); return h ? (h.getAttribute(name) || '') : ''; }
+  function tabOf(row){ return markOf(row, 'data-ccf-tab'); }
+  function atOf(row){ const v = markOf(row, 'data-ccf-at'); return /^\d+$/.test(v) ? +v : null; }
+  function primaryOf(row){ return !!row.closest('[data-ccf-primary]'); }
+  /* 시:분 표시(h6 안의 caption)는 지우지 말고 챙긴다. 탭을 합칠 유일한 단서다. */
+  const CAP_SEL = '.MuiTypography-caption, span[class*="caption"]';
+  const CLOCK = /(\d{1,2})\s*[:：]\s*([0-5]\d)/;
+  function timeOf(row, h6){
+    const cap = (h6 && h6.querySelector(CAP_SEL)) || row.querySelector(CAP_SEL);
+    const m = cap && CLOCK.exec(cap.textContent || '');
+    return m ? (m[1].length < 2 ? '0' : '') + m[1] + ':' + m[2] : '';
+  }
   function extractCcfolia(row){
     const avImg = row.querySelector('img[alt="avatar"]') || row.querySelector('.MuiAvatar-img');
     const avatar = avImg ? (avImg.getAttribute('src') || avImg.src || '') : '';
@@ -697,7 +764,7 @@
     const h6 = row.querySelector('h6');
     if(h6){
       const c = h6.cloneNode(true);
-      c.querySelectorAll('.MuiTypography-caption, span[class*="caption"]').forEach(s => s.remove());
+      c.querySelectorAll(CAP_SEL).forEach(s => s.remove());
       name = clean(c.textContent);
       const cm = (h6.getAttribute('style')||'').match(/color\s*:\s*([^;]+)/i);
       if(cm) color = cm[1].trim();
@@ -711,7 +778,8 @@
     const system = !avatar && !name;
     const dice = !!rollSpan || (/＞|＝/.test(flat) && /\d*[dD]\d+/.test(flat.replace(/\s/g,'')));
     const status = detectStatus(flat);
-    return { avatar, name, color, paras, shots, system, dice, status };
+    return { avatar, name, color, paras, shots, system, dice, status,
+             time: timeOf(row, h6), tab: tabOf(row), at: atOf(row), primary: primaryOf(row) };
   }
   function extractGeneric(root, avatarImg){
     const avatar = avatarImg.getAttribute('src') || avatarImg.src || '';
@@ -728,6 +796,102 @@
     return { avatar, name:name||'', color, paras, shots, system:!avatar&&!name, dice:false, status:detectStatus(paras.join(' ')) };
   }
 
+  /* ── 탭 병합 ──
+     탭 안에서는 이미 시간순이므로, 필요한 것은 정렬이 아니라 '앞으로만 훑는 병합'이다.
+     커서가 되감기지 않으니 자정 넘김(23:58 → 00:03)이 저절로 풀리고,
+     남는 애매함은 '같은 분 안에서 앞이냐 뒤냐' 하나뿐이다. */
+  const HHMM = /^(\d{1,2}):([0-5]\d)$/;
+  const minOf = t => { const m = HHMM.exec((t || '').trim()); return m ? (+m[1]) * 60 + (+m[2]) : null; };
+  const DAY = 1440, BASE = DAY * 30;   /* 음수 절대분이 나오지 않도록 띄워 둔 기준점 */
+
+  /* 한 탭의 시:분을 단조 증가하는 절대 분으로 편다. 시각이 없는 줄은 직전 값에 붙인다. */
+  function absLine(msgs){
+    const out = []; let day = 0, prev = -1;
+    msgs.forEach(m => {
+      const v = minOf(m.time);
+      if(v === null){ out.push(null); return; }
+      if(prev >= 0 && v < prev) day++;
+      prev = v; out.push(BASE + day * DAY + v);
+    });
+    let last = BASE;
+    for(let i = 0; i < out.length; i++){ if(out[i] === null) out[i] = last; else last = out[i]; }
+    return out;
+  }
+  function mergeStream(main, side, infoFirst){
+    if(!side.length) return main;
+    if(!main.length) return side.slice();
+    const mAbs = absLine(main), out = []; let i = 0;
+    /* 시계를 반나절 앞에서 시작한다. 메인보다 이른 시각의 정보(세션 전에 깔아 둔 핸드아웃 등)가 맨 앞에 오도록. */
+    let cur = mAbs[0] - (DAY / 2 - 1);
+    side.forEach(s => {
+      const v = minOf(s.time);
+      let a;
+      if(v === null) a = cur;                                   /* 시각을 못 읽으면 커서 자리에 둔다 */
+      else { a = Math.floor(cur / DAY) * DAY + v; if(a < cur) a += DAY; }
+      while(i < main.length && (infoFirst ? mAbs[i] < a : mAbs[i] <= a)) out.push(main[i++]);
+      out.push(s); cur = a;
+    });
+    while(i < main.length) out.push(main[i++]);
+    return out;
+  }
+  function tabsOf(list){ const t = []; list.forEach(m => { const v = m.tab || ''; if(t.indexOf(v) === -1) t.push(v); }); return t; }
+  /* 어느 탭이 본문인가. 이름으로 먼저 고르고, 못 고르면 가장 두꺼운 탭을 본문으로 삼는다.
+     탭별로 따로 모은 파일을 아무 순서로 놓아도 ‘메인’이 본문이 되도록. */
+  const MAIN_TAB = ['메인', '메인탭', 'メイン', 'Main', 'main', '기본'];
+  function primaryTab(tabs, list){
+    /* ① 탭을 한 번에 훑은 수집기가 첫 탭에 표식을 남긴다. 있으면 그 말을 믿는다. */
+    const flagged = list.find(m => m.primary && tabs.indexOf(m.tab || '') >= 0);
+    if(flagged) return flagged.tab || '';
+    /* ② 이름으로 고른다. 단, 눈에 띄게 작은 탭이면 이름을 믿지 않는다(수집 사고 대비). */
+    const size = t => list.filter(m => (m.tab || '') === t).length;
+    let big = tabs[0], n = -1;
+    tabs.forEach(t => { const c = size(t); if(c > n){ n = c; big = t; } });
+    const named = tabs.find(t => MAIN_TAB.indexOf(t) >= 0);
+    if(named && size(named) * 3 >= n) return named;
+    /* ③ 가장 두꺼운 탭 */
+    return big;
+  }
+  function mergeTabs(list, opts){
+    const tabs = tabsOf(list);
+    if(tabs.length < 2) return list.slice();
+    const main = (tabs.indexOf(mainTab) >= 0) ? mainTab : tabs[0];
+    if(opts.withInfo === false) return list.filter(m => (m.tab || '') === main);
+    /* 수집기가 원본 시각을 다 건져 왔다면 추정할 것이 없다. 그대로 줄 세운다.
+       분 단위까지만 건진 경우 동률이 생기므로, 그때만 ‘정보 먼저’ 설정을 적용한다. */
+    if(list.every(m => typeof m.at === 'number')){
+      const first = opts.infoFirst !== false;
+      const rank = m => ((m.tab || '') === main) === first ? 1 : 0;
+      return list.map((m, i) => [m, i])
+        .sort((a, b) => (a[0].at - b[0].at) || (rank(a[0]) - rank(b[0])) || (a[1] - b[1]))
+        .map(x => x[0]);
+    }
+    let out = list.filter(m => (m.tab || '') === main);
+    tabs.forEach(t => {
+      if(t === main) return;
+      out = mergeStream(out, list.filter(m => (m.tab || '') === t), opts.infoFirst !== false);
+    });
+    return out;
+  }
+
+  /* ── 수동 배치 보정 ──
+     자동 배치에서 '몇 칸 옮겼는지'만 기억한다. 재변환·이어보기 뒤에도 같은 자리로 돌아온다. */
+  let rawMessages = null, mainTab = '', moveState = {};
+  const midOf = m => (m.tab || '') + '#' + (m.seq || 0);
+  const isInfo = m => !!(m.tab && m.tab !== mainTab);
+  function applyMoves(arr){
+    const ids = Object.keys(moveState).filter(k => moveState[k]);
+    if(!ids.length) return arr;
+    const out = arr.slice();
+    ids.forEach(id => {
+      const i = out.findIndex(m => midOf(m) === id); if(i < 0) return;
+      const j = Math.max(0, Math.min(out.length - 1, i + moveState[id]));
+      out.splice(j, 0, out.splice(i, 1)[0]);
+    });
+    return out;
+  }
+  const composeLog = (raw, opts) => applyMoves(mergeTabs(raw, opts));
+  function adoptRaw(raw){ rawMessages = raw; mainTab = primaryTab(tabsOf(raw), raw); }
+
   /* ── 렌더 ── */
   const normName = s => (s||'').trim().toLowerCase();
   const narratorSet = opts => new Set(((opts && Array.isArray(opts.narrators)) ? opts.narrators : ['GM']).map(normName).filter(Boolean));
@@ -737,6 +901,30 @@
   const sysLines = arr => arr.map(p => p.replace(/^\s*✦\s*/, '').trim()).filter(Boolean);
   function figure(src){ const f=document.createElement('figure'); f.className='shot'; const i=document.createElement('img'); i.src=src; i.alt='삽입 이미지'; i.loading='lazy'; f.appendChild(i); const c=document.createElement('figcaption'); c.textContent='이미지'; f.appendChild(c); return f; }
   function paras(el, arr){ arr.forEach(p => { const x=document.createElement('p'); x.textContent=p; el.appendChild(x); }); }
+  const excerptOf = m => { const t = cleanParas(m.paras).join(' ') || (m.shots.length ? '(이미지)' : ''); return t.length > 42 ? t.slice(0, 42) + '…' : t; };
+  /* 정보탭 카드 — 시간 순서상 제자리에 앉히되, 어느 탭에서 왔는지는 남긴다 */
+  function infoCard(m, P, opts){
+    const w = document.createElement('div');
+    const center = (opts.align && m.name && opts.align[m.name] === 'center');
+    w.className = 'infocard' + (center ? ' center' : '');
+    if(m.color) w.style.setProperty('--speaker', m.color);
+    w.dataset.mid = midOf(m);
+    /* 라벨은 탭 이름만. 화자는 왼쪽 테두리 색으로 남고, 시각은 미세조정 목록에서 본다. */
+    const lbl = document.createElement('div'); lbl.className = 'lbl';
+    const tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = m.tab || '정보'; lbl.appendChild(tag);
+    w.appendChild(lbl);
+    if(P.length){ const b = document.createElement('div'); b.className = 'body'; paras(b, isSys(m) ? sysLines(P) : P); w.appendChild(b); }
+    m.shots.forEach(src => w.appendChild(figure(src)));
+    /* 자리 옮기기 버튼은 앱 전용이라, 저장 HTML·게시판 HTML에는 실리지 않는다 */
+    const mv = document.createElement('div'); mv.className = 'mv app-only';
+    [['-1', '↑', '한 칸 위로'], ['1', '↓', '한 칸 아래로']].forEach(([d, t, lab]) => {
+      const b = document.createElement('button'); b.type = 'button'; b.dataset.mv = d; b.textContent = t;
+      b.title = lab; b.setAttribute('aria-label', (m.name || m.tab || '정보') + ' 메시지를 ' + lab);
+      mv.appendChild(b);
+    });
+    w.appendChild(mv);
+    return w;
+  }
   function sysNote(lines, label){
     const w = document.createElement('div'); w.className = 'sysmsg';
     if(label){ const l = document.createElement('span'); l.className = 'lbl'; l.textContent = label; w.appendChild(l); }
@@ -746,6 +934,8 @@
   const luma = hex => { const m=/^#?([0-9a-f]{6})$/i.exec((hex||'').trim()); if(!m) return null; const n=parseInt(m[1],16); const r=(n>>16)&255,g=(n>>8)&255,b=n&255; return (0.2126*r+0.7152*g+0.0587*b)/255; };
 
   let lastMessages = null, lastOpts = null, alignState = {};
+  /* 정보 카드를 옮길 때는 화면을 위로 튕기거나 패널을 접지 않는다 */
+  let quietRender = false;
 
   /* ── 아바타·판정 표시 설정 (저장 HTML에도 그대로 실려 간다) ── */
   function applyDisplay(o){
@@ -780,6 +970,11 @@
       const P = cleanParas(m.paras);
       if(!P.length && !m.shots.length && !m.name) return;
 
+      if(isInfo(m) && opts.infoCard !== false){
+        prevName = null; curNarr = null;
+        book.appendChild(infoCard(m, P, opts));
+        return;
+      }
       if(m.status){
         prevName = null; curNarr = null;
         let lines = P; if(m.name && !P.some(t => t.includes(m.name))) lines = [m.name].concat(P);
@@ -828,23 +1023,27 @@
     });
 
     populateJournalAlign(messages);
+    populateInfoTune(messages);
     if(window.__resetSearch) window.__resetSearch();
 
-    if(dt) dt.classList.remove('hidden');
-    $('#findWidget').classList.remove('hidden');
-    $('#pastePanel').classList.add('hidden');
-    $('#output').classList.remove('hidden');
-    $('#saveBtn').classList.remove('hidden');
-    $('#exportBtn').classList.remove('hidden');
-    $('#editBtn').classList.remove('hidden');
-    window.scrollTo(0, 0);
+    if(!quietRender){
+      if(dt) dt.classList.remove('hidden');
+      $('#findWidget').classList.remove('hidden');
+      $('#pastePanel').classList.add('hidden');
+      $('#output').classList.remove('hidden');
+      $('#saveBtn').classList.remove('hidden');
+      $('#exportBtn').classList.remove('hidden');
+      $('#editBtn').classList.remove('hidden');
+      window.scrollTo(0, 0);
+    }
     if(!opts._demo && !opts._restore) saveDraft(messages, opts, title);
   }
 
   /* ── 자동 보관 ── */
   const KEY = 'ccfolia:v2:last';
   function saveDraft(messages, opts, title){
-    try{ localStorage.setItem(KEY, JSON.stringify({ t:title, o:{merge:opts.merge, hideNoise:opts.hideNoise, avatarKey:opts.avatarKey, showStatus:opts.showStatus, align:opts.align, narrators:opts.narrators, avShape:opts.avShape, avSize:opts.avSize, rollHighlight:opts.rollHighlight, sysNarr:opts.sysNarr}, m:messages, at:Date.now() })); }
+    /* 병합 결과가 아니라 원본을 담는다. 배치 보정(mv)만 따로 얹으면 언제든 되살아난다. */
+    try{ localStorage.setItem(KEY, JSON.stringify({ t:title, o:{merge:opts.merge, hideNoise:opts.hideNoise, avatarKey:opts.avatarKey, showStatus:opts.showStatus, align:opts.align, narrators:opts.narrators, avShape:opts.avShape, avSize:opts.avSize, rollHighlight:opts.rollHighlight, sysNarr:opts.sysNarr, withInfo:opts.withInfo, infoCard:opts.infoCard, infoFirst:opts.infoFirst}, m:(rawMessages && rawMessages.length ? rawMessages : messages), mv:moveState, at:Date.now() })); }
     catch(e){ /* 용량 초과 등은 조용히 무시 */ }
   }
   function showResume(){
@@ -868,11 +1067,16 @@
       if(d.o && $('#optNoise')) $('#optNoise').checked = !d.o.hideNoise;
       if(d.o && $('#optRoll')) $('#optRoll').checked = !!d.o.rollHighlight;
       if(d.o && $('#optSysNarr')) $('#optSysNarr').checked = !!d.o.sysNarr;
+      if($('#optInfo')) $('#optInfo').checked = !(d.o && d.o.withInfo === false);
+      if($('#optInfoCard')) $('#optInfoCard').checked = !(d.o && d.o.infoCard === false);
+      if($('#optInfoFirst')) $('#optInfoFirst').checked = !(d.o && d.o.infoFirst === false);
+      moveState = (d.mv && typeof d.mv === 'object') ? Object.assign({}, d.mv) : {};
       if(d.o && d.o.avSize && $('#avSize')){ $('#avSize').value = d.o.avSize; $('#avSizeVal').textContent = d.o.avSize + 'px'; }
       if(d.o && d.o.avShape) document.querySelectorAll('[data-av-shape]').forEach(x => x.setAttribute('aria-pressed', x.dataset.avShape === d.o.avShape ? 'true' : 'false'));
       syncRollEnabled();
       const o = Object.assign({merge:true,hideNoise:true,avatarKey:'avatar',title:d.t}, d.o||{}, {_restore:true, align:alignState});
-      render(d.m, o);
+      adoptRaw(stampSeq(d.m));
+      render(composeLog(d.m, o), o);
     };
     del.onclick = () => { try{ localStorage.removeItem(KEY); }catch(e){} slot.innerHTML=''; toast('보관된 세션을 지웠습니다'); };
     box.append(txt, open, del); slot.appendChild(box);
@@ -899,6 +1103,92 @@
       row.append(nm, seg); box.appendChild(row);
     });
   }
+  /* -- 정보탭 배치 미세조정 (고급 설정) -- */
+  function populateInfoTune(list){
+    const wrap = $('#infoWrap'), box = $('#infoTune'), cnt = $('#infoCount');
+    if(!wrap || !box) return;
+    /* 설정을 띄울지는 '정보탭이 들어 있는 로그인가'로 정한다.
+       화면에 뿌려진 목록으로 정하면 '함께 보기'를 끈 순간 설정까지 사라져 되돌릴 수 없다. */
+    const tune = $('#infoTuneBox');
+    if(!(rawMessages && tabsOf(rawMessages).length > 1)){
+      wrap.classList.add('hidden'); box.innerHTML = '';
+      if(tune) tune.classList.add('hidden');
+      return;
+    }
+    wrap.classList.remove('hidden');
+    const infos = list.filter(isInfo);
+    if(!infos.length){   /* 함께 보기를 꺼 둔 상태 — 체크박스는 남기고 미세조정만 접는다 */
+      box.innerHTML = '';
+      if(tune){ tune.open = false; tune.classList.add('hidden'); }
+      return;
+    }
+    if(tune) tune.classList.remove('hidden');
+    const moved = infos.filter(m => moveState[midOf(m)]).length;
+    if(cnt) cnt.textContent = '· ' + infos.length + '개' + (moved ? ' · ' + moved + '개 손봄' : '');
+    box.innerHTML = '';
+    infos.forEach(m => {
+      const i = list.indexOf(m);
+      let prev = null;
+      for(let k = i - 1; k >= 0; k--){ if(!isInfo(list[k])){ prev = list[k]; break; } }
+      const row = document.createElement('div'); row.className = 'irow'; row.dataset.mid = midOf(m);
+      const at = document.createElement('span'); at.className = 'iat'; at.textContent = m.time || '--:--';
+      const tx = document.createElement('span'); tx.className = 'itxt'; tx.textContent = excerptOf(m);
+      const ps = document.createElement('span'); ps.className = 'ipos';
+      ps.textContent = prev ? '↳ ' + (prev.name || '시스템') + ' · ' + excerptOf(prev).slice(0, 20) : '↳ 맨 앞';
+      const seg = document.createElement('span'); seg.className = 'seg';
+      [['-1', '↑', '한 칸 위로'], ['1', '↓', '한 칸 아래로']].forEach(([d, t, lab]) => {
+        const b = document.createElement('button'); b.type = 'button'; b.dataset.mv = d; b.textContent = t;
+        b.title = lab; b.setAttribute('aria-label', excerptOf(m).slice(0, 14) + ' 카드를 ' + lab);
+        seg.appendChild(b);
+      });
+      row.append(at, tx, ps, seg); box.appendChild(row);
+    });
+  }
+  /* 화면에서 한 칸 옮긴다. 숨겨 둔 주사위·스테이터스 로그는 건너뛰므로 보이는 대로 움직인다. */
+  function nudgeInfo(id, dir, focus){
+    if(!rawMessages) return;
+    const opts = lastOpts || currentOpts();
+    const arr = composeLog(rawMessages, opts);
+    const i = arr.findIndex(m => midOf(m) === id); if(i < 0) return;
+    const vis = m => (m.status ? !!opts.showStatus : (m.dice ? !opts.hideNoise : true));
+    let j = i + dir;
+    while(j > 0 && j < arr.length - 1 && !vis(arr[j])) j += dir;
+    if(j < 0 || j >= arr.length){ toast('더 옮길 곳이 없습니다'); return; }
+    moveState[id] = (moveState[id] || 0) + (j - i);
+    quietRender = true;
+    try{ render(composeLog(rawMessages, opts), opts); } finally { quietRender = false; }
+    if(focus){
+      const el = document.querySelector('#book [data-mid="' + id + '"]');
+      if(el){
+        el.scrollIntoView({block: 'center', behavior: 'smooth'});
+        if(el.animate) el.animate([{opacity: .3}, {opacity: 1}], 300);
+      }
+    } else {
+      const el = document.querySelector('#infoTune .irow[data-mid="' + id + '"] button[data-mv="' + dir + '"]');
+      if(el) el.focus();
+    }
+  }
+  const mvClick = focus => e => {
+    const b = e.target.closest('button[data-mv]'); if(!b) return;
+    const host = b.closest('[data-mid]'); if(!host) return;
+    e.preventDefault(); nudgeInfo(host.dataset.mid, +b.dataset.mv, focus);
+  };
+  $('#book') && $('#book').addEventListener('click', mvClick(true));
+  $('#infoTune') && $('#infoTune').addEventListener('click', mvClick(false));
+  function recompose(){
+    if(!rawMessages) return;
+    const opts = currentOpts();
+    quietRender = true;
+    try{ render(composeLog(rawMessages, opts), opts); } finally { quietRender = false; }
+  }
+  $('#infoReset') && $('#infoReset').addEventListener('click', () => {
+    if(!rawMessages) return;
+    moveState = {}; recompose(); toast('정보 카드를 자동 배치로 되돌렸습니다');
+  });
+  ['#optInfo', '#optInfoCard', '#optInfoFirst'].forEach(sel => {
+    const el = $(sel); if(el) el.addEventListener('change', recompose);
+  });
+
   $('#journalAlign') && $('#journalAlign').addEventListener('click', e => {
     const b = e.target.closest('button[data-align]'); if(!b) return;
     const row = b.closest('.jrow'); if(!row) return;
@@ -910,7 +1200,9 @@
   /* ── 이벤트 ── */
   const parseNarr = s => (s||'').split(/[,，\n]/).map(x => x.trim()).filter(Boolean);
   const avShapeNow = () => { const b = document.querySelector('[data-av-shape][aria-pressed="true"]'); return b ? b.dataset.avShape : 'square'; };
-  const currentOpts = () => ({ avatarKey: 'avatar', merge: $('#optMerge').checked, hideNoise: !$('#optNoise').checked, showStatus: $('#optStatus') ? $('#optStatus').checked : false, align: alignState, narrators: parseNarr($('#narrNames') ? $('#narrNames').value : 'GM'), title: '',
+  const chk = (sel, dflt) => { const e = $(sel); return e ? e.checked : dflt; };
+  const currentOpts = () => ({ avatarKey: 'avatar', merge: $('#optMerge').checked,
+    withInfo: chk('#optInfo', true), infoCard: chk('#optInfoCard', true), infoFirst: chk('#optInfoFirst', true), hideNoise: !$('#optNoise').checked, showStatus: $('#optStatus') ? $('#optStatus').checked : false, align: alignState, narrators: parseNarr($('#narrNames') ? $('#narrNames').value : 'GM'), title: '',
     avShape: avShapeNow(), avSize: parseInt(($('#avSize') ? $('#avSize').value : 55), 10) || 55, rollHighlight: !!($('#optRoll') && $('#optRoll').checked), sysNarr: !!($('#optSysNarr') && $('#optSysNarr').checked) });
 
   /* 아바타·판정 설정은 ‘변환’을 기다리지 않고 곰바로 반영된다 */
@@ -927,13 +1219,21 @@
   function run(html){
     const msg = $('#msg');
     try{
-      const messages = parse(html, currentOpts());
-      if(!messages.length){ msg.innerHTML = '<span class="err">메시지를 찾지 못했습니다. 로그 전체를 담은 HTML인지 확인해 주세요.</span>'; return; }
-      render(messages, currentOpts());
+      const o = currentOpts();
+      const raw = parse(html, o);
+      if(!raw.length){ msg.innerHTML = '<span class="err">메시지를 찾지 못했습니다. 로그 전체를 담은 HTML인지 확인해 주세요.</span>'; return; }
+      adoptRaw(raw);
+      render(composeLog(raw, o), o);
     }catch(e){ msg.innerHTML = '<span class="err">오류: ' + e.message + '</span>'; }
   }
 
-  $('#convertBtn').onclick = () => { const s = $('#src').value; if(s && s.trim()) run(s); else if(lastMessages) render(lastMessages, currentOpts()); else run(s); };
+  $('#convertBtn').onclick = () => {
+    const s = $('#src').value;
+    if(s && s.trim()) run(s);
+    else if(rawMessages){ const o = currentOpts(); render(composeLog(rawMessages, o), o); }
+    else if(lastMessages) render(lastMessages, currentOpts());
+    else run(s);
+  };
   $('#editBtn').onclick = () => {
     $('#output').classList.add('hidden'); $('#pastePanel').classList.remove('hidden');
     $('#saveBtn').classList.add('hidden'); $('#exportBtn').classList.add('hidden'); $('#editBtn').classList.add('hidden');
@@ -947,8 +1247,21 @@
   };
   $('#reopenBtn') && ($('#reopenBtn').onclick = () => $('#fileInput').click());
   $('#fileBtn').onclick = () => $('#fileInput').click();
-  $('#fileInput').onchange = e => { const f = e.target.files[0]; if(!f) return; loadFile(f); };
-  function loadFile(f){ const r = new FileReader(); r.onload = () => { $('#pastePanel').classList.remove('mode-edit'); $('#src').value = r.result; run(r.result); }; r.readAsText(f); }
+  $('#fileInput').onchange = e => loadFiles(e.target.files);
+  /* 탭을 따로 모았다면 파일 여러 개를 한꺼번에 놓아도 된다. 이어 붙여 하나의 로그로 읽는다. */
+  function loadFiles(files){
+    const list = [...(files || [])].filter(Boolean); if(!list.length) return;
+    Promise.all(list.map(f => new Promise(res => {
+      const r = new FileReader(); r.onload = () => res(r.result || ''); r.onerror = () => res(''); r.readAsText(f);
+    }))).then(texts => {
+      const html = texts.filter(t => t && t.trim()).join('\n');
+      if(!html) { toast('파일을 읽지 못했습니다'); return; }
+      $('#pastePanel').classList.remove('mode-edit');
+      $('#src').value = html;
+      run(html);
+    });
+  }
+  function loadFile(f){ loadFiles([f]); }
 
   /* 룸 링크 감지 */
   const ROOM_RE = /https?:\/\/(?:www\.)?ccfolia\.com\/rooms\/([A-Za-z0-9_-]+)/i;
@@ -1078,12 +1391,27 @@
       }
       narr = null; narrCenter = false;
     };
+    /* 정보탭 카드 - 화면과 같은 모양을 인라인 스타일로 옮긴다 */
+    const infoBlock = (m, P) => {
+      const center = alignOf(m.name) === 'center';
+      const head = '<div style="margin-bottom:7px;"><span style="font-size:10px;letter-spacing:.24em;'
+        + 'text-transform:uppercase;color:' + C('faint') + ';">' + esc(m.tab || '정보') + '</span></div>';
+      const body = P.length ? pHTML(isSys(m) ? sysLines(P) : P, C('ink2'), FS, LH, m.shots.length > 0) : '';
+      return '<div style="margin:18px 0 18px ' + (center ? '0' : AVG + 'px') + ';padding:12px 15px;border:1px solid ' + C('line')
+        + ';border-left:2px solid ' + (m.color || C('line')) + ';' + (center ? 'text-align:center;' : '') + '">'
+        + head + body + m.shots.map(figHTML).join('') + '</div>';
+    };
 
     shown.forEach(m => {
       const noise = m.dice;
       const P = cleanParas(m.paras);
       if(!P.length && !m.shots.length && !m.name) return;
 
+      if(isInfo(m) && opts.infoCard !== false){
+        flush(); prevName = null;
+        parts.push(infoBlock(m, P));
+        return;
+      }
       if(m.status){
         flush(); prevName = null;
         let arr = P; if(m.name && !P.some(t => t.includes(m.name))) arr = [m.name].concat(P);
@@ -1180,68 +1508,362 @@
   addEventListener('drop', e => {
     if(!hasFile(e)) return;
     e.preventDefault(); dragDepth = 0; dz.classList.remove('on');
-    const f = [...e.dataTransfer.files].find(f => /\.html?$/i.test(f.name) || f.type==='text/html') || e.dataTransfer.files[0];
-    if(f) loadFile(f);
+    const picked = [...e.dataTransfer.files].filter(f => /\.html?$/i.test(f.name) || f.type === 'text/html');
+    loadFiles(picked.length ? picked : [...e.dataTransfer.files]);
   });
 
   /* ── 로그 수집 스크립트 · 북마클릿 ── */
   const HARVEST =
 `(async () => {
   const wait = ms => new Promise(r => setTimeout(r, ms));
-  const list = document.querySelector('ul[role="log"]')
-            || document.querySelector('ul[aria-label="룸 채팅"]')
-            || document.querySelector('ul[aria-label="ルームチャット"]');
-  if (!list) { alert('룸 채팅 목록을 못 찾음. \\'메인\\' 탭 채팅창이 열려 있는지 확인하세요.'); return; }
-  let sc = list;
-  while (sc && sc !== document.body) {
-    const oy = getComputedStyle(sc).overflowY;
-    if ((oy === 'auto' || oy === 'scroll') && sc.scrollHeight > sc.clientHeight + 4) break;
-    sc = sc.parentElement;
-  }
-  if (!sc || sc === document.body) sc = list;
-  const store = new Map();
-  const grab = () => list.querySelectorAll('[data-index]').forEach(el => {
-    const i = Number(el.getAttribute('data-index'));
-    if (!Number.isNaN(i)) store.set(i, el.outerHTML);
-  });
-  const fire = () => sc.dispatchEvent(new Event('scroll'));
-  const t0 = Date.now(), TIMEOUT = 12 * 60 * 1000;
-  sc.scrollTop = sc.scrollHeight; fire(); await wait(500);
-  let idle = 0, prevH = -1, g = 0;
-  while (g++ < 200000 && Date.now() - t0 < TIMEOUT) {
-    const atTop = sc.scrollTop <= 1, h = sc.scrollHeight;
-    if (atTop) {
-      if (h !== prevH) idle = 0; else idle++;
-      if (idle >= 30) break;
-      sc.scrollTop = 0; fire(); await wait(180);
-      sc.scrollTop = 60; fire(); await wait(90); sc.scrollTop = 0; fire();
-    } else {
-      idle = 0;
-      sc.scrollTop = Math.max(0, sc.scrollTop - Math.max(150, sc.clientHeight * 0.7));
-      fire(); await wait(120);
+  const clean = t => (t || '').replace(/\\s+/g, ' ').trim();
+  const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const all = (root, sel) => [].slice.call((root || document).querySelectorAll(sel));
+
+  /* 채팅 목록과 그 스크롤 상자. 탭을 바꾸면 새로 그려지므로 그때마다 다시 찾는다. */
+  const findList = () => document.querySelector('ul[role="log"]')
+    || document.querySelector('ul[aria-label="룸 채팅"]')
+    || document.querySelector('ul[aria-label="ルームチャット"]')
+    || document.querySelector('[role="log"]');
+  const findScroller = list => {
+    let sc = list;
+    while (sc && sc !== document.body) {
+      const oy = getComputedStyle(sc).overflowY;
+      if ((oy === 'auto' || oy === 'scroll') && sc.scrollHeight > sc.clientHeight + 4) break;
+      sc = sc.parentElement;
     }
-    if (g % 40 === 0) console.log('[ccfolia] 과거 로그 로딩... 높이', sc.scrollHeight);
-    prevH = h;
-  }
-  sc.scrollTop = 0; fire(); await wait(400); grab();
-  let last = -1, stable = 0; g = 0;
-  while (g++ < 200000 && Date.now() - t0 < TIMEOUT) {
+    return (!sc || sc === document.body) ? list : sc;
+  };
+  if (!findList()) { alert('룸 채팅 목록을 못 찾음. 룸 채팅창이 열려 있는지 확인하세요.'); return; }
+
+  /* ── 시각 ①: 코코포리아가 들고 있는 원본 시각(ms)을 React 내부에서 꺼내 본다 ── */
+  const toMs = v => {
+    if (v == null) return 0;
+    if (typeof v === 'number') return v > 1e12 ? v : (v > 1e9 ? v * 1000 : 0);
+    if (typeof v === 'string') { const t = Date.parse(v); return isNaN(t) ? 0 : t; }
+    if (typeof v === 'object') {
+      if (typeof v.toMillis === 'function') { try { return v.toMillis(); } catch (e) { return 0; } }
+      if (typeof v.getTime === 'function') return v.getTime();
+      if (typeof v.seconds === 'number') return v.seconds * 1000 + Math.round((v.nanoseconds || 0) / 1e6);
+      if (typeof v._seconds === 'number') return v._seconds * 1000;
+    }
+    return 0;
+  };
+  const KEYS = ['createdAt', 'created_at', 'timestamp', 'updatedAt', 'time'];
+  const dig = o => {
+    if (!o || typeof o !== 'object') return 0;
+    for (let i = 0; i < KEYS.length; i++) { const ms = toMs(o[KEYS[i]]); if (ms) return ms; }
+    return 0;
+  };
+  const fiberAt = el => {
+    let key = null;
+    const ks = Object.keys(el);
+    for (let i = 0; i < ks.length; i++) {
+      if (ks[i].indexOf('__reactFiber') === 0 || ks[i].indexOf('__reactInternalInstance') === 0) { key = ks[i]; break; }
+    }
+    if (!key) return 0;
+    let f = el[key], hop = 0;
+    while (f && hop++ < 14) {
+      const p = f.memoizedProps;
+      if (p) { const ms = dig(p) || dig(p.message) || dig(p.item) || dig(p.data); if (ms) return ms; }
+      f = f.return;
+    }
+    return 0;
+  };
+
+  /* ── 시각 ②: 화면 캡션의 날짜 단서를 실제 시각으로 푼다 ──
+     코코포리아는 '- 今日 14:42', '昨日 23:50', '10/26 21:00'처럼 날짜를 함께 적는다.
+     수집하는 오늘을 기준으로 풀어야 맞으므로, 리더가 아니라 여기서 계산한다. */
+  const CLOCK = /(\\d{1,2})\\s*[:\\uFF1A]\\s*([0-5]\\d)/;
+  const stampToMs = txt => {
+    const s = clean(txt || ''), tm = CLOCK.exec(s);
+    if (!tm) return 0;
+    const hh = +tm[1], mm = +tm[2], now = new Date();
+    const mk = (y, mo, d) => new Date(y, mo, d, hh, mm, 0, 0).getTime();
+    const Y = now.getFullYear(), M = now.getMonth(), D = now.getDate();
+    if (/今日|오늘|today/i.test(s)) return mk(Y, M, D);
+    if (/一昨日|그저께|그제/.test(s)) return mk(Y, M, D - 2);
+    if (/昨日|어제|yesterday/i.test(s)) return mk(Y, M, D - 1);
+    const rest = s.replace(CLOCK, ' ');
+    const d3 = /(\\d{4})\\s*[\\/\\-.]\\s*(\\d{1,2})\\s*[\\/\\-.]\\s*(\\d{1,2})/.exec(rest);
+    if (d3) return mk(+d3[1], +d3[2] - 1, +d3[3]);
+    const d2 = /(\\d{1,2})\\s*[\\/\\-.]\\s*(\\d{1,2})/.exec(rest);
+    if (d2) {
+      let t = mk(Y, +d2[1] - 1, +d2[2]);
+      if (t > now.getTime() + 864e5) t = mk(Y - 1, +d2[1] - 1, +d2[2]);   /* 해를 넘긴 로그 */
+      return t;
+    }
+    return 0;   /* 날짜 단서가 없으면 리더가 시:분으로 병합한다 */
+  };
+  const capOf = el => {
+    const c = el.querySelector('.MuiTypography-caption, span[class*="caption"]');
+    return c ? c.textContent : '';
+  };
+
+  /* ── 탭 막대 ──
+     탭 이름·언어·뱃지에 기대면 부러진다. 채팅 목록에서 위로 올라가며
+     '채팅을 품지 않는, 탭이 둘 이상인 tablist'를 찾는 구조 기반 탐색으로 간다. */
+  const findTabBar = () => {
+    const list = findList();
+    let n = list ? list.parentElement : null;
+    while (n && n !== document.body) {
+      const cand = all(n, '[role="tablist"]')
+        .filter(b => !b.contains(list) && b.querySelectorAll('[role="tab"]').length > 1);
+      if (cand.length) return cand[cand.length - 1];
+      n = n.parentElement;
+    }
+    const anyBar = all(document, '[role="tablist"]').filter(b => b.querySelectorAll('[role="tab"]').length > 1)[0];
+    if (anyBar) return anyBar;
+    /* tablist 컨테이너가 없는 판이라면, role=tab을 둘 이상 품은 부모를 탭 막대로 본다 */
+    const groups = new Map();
+    all(document, '[role="tab"]').forEach(t => {
+      const p = t.parentElement; if (!p) return;
+      groups.set(p, (groups.get(p) || 0) + 1);
+    });
+    let best = null;
+    groups.forEach((c, p) => { if (c > 1 && (!best || p.contains(list) === false)) best = best || p; });
+    return best;
+  };
+  const NORM = { 'メイン': '메인', 'Main': '메인', 'main': '메인', 'MAIN': '메인', 'Home': '메인',
+                 '情報': '정보', 'Info': '정보', 'info': '정보', 'INFO': '정보', 'インフォ': '정보' };
+  const tabName = (t, i) => {
+    const c = t.cloneNode(true);
+    /* 개수 알맹이만 떼어 낸다. MuiBadge-root(=라벨을 감싸는 껍데기)까지 지우면 이름이 통째로 날아간다. */
+    all(c, '.MuiBadge-badge, [class*="Badge-badge"], [class*="badge-badge"], sup').forEach(x => x.remove());
+    let n = clean(c.textContent);
+    /* 뱃지가 요소로 안 잡히고 글자로 붙어 나온 경우('메인0'), 그 숫자만 든 자식이 있으면 떼어 낸다 */
+    const tail = /(\\d+)$/.exec(n);
+    if (tail && n.length > tail[1].length && all(t, '*').some(k => clean(k.textContent) === tail[1]))
+      n = clean(n.slice(0, -tail[1].length));
+    if (!n) n = clean(t.getAttribute('aria-label') || t.getAttribute('title') || '');
+    if (!n) { const sv = t.querySelector('[data-testid]'); if (sv) n = clean(sv.getAttribute('data-testid')).replace(/Icon$/, ''); }
+    if (!n) n = '탭' + (i + 1);
+    return NORM[n] || n;
+  };
+
+  /* 탭을 누른 뒤 목록이 실제로 갈아 끼워질 때까지 기다린다 */
+  const listSig = () => {
+    const l = findList(); if (!l) return 'x';
+    const rows = l.querySelectorAll('[data-index]');
+    let s = rows.length + '|';
+    for (let i = 0; i < rows.length && i < 3; i++) s += (rows[i].textContent || '').slice(0, 40);
+    return s;
+  };
+  const settle = async () => {
+    let prev = '', same = 0;
+    for (let i = 0; i < 45; i++) {
+      await wait(120);
+      const sg = listSig();
+      if (sg === prev) { if (++same >= 5) return; } else { same = 0; prev = sg; }
+    }
+  };
+
+  /* 지금 열려 있는 탭 하나를 위로 끝까지 훑어 모은다 */
+  const harvest = async (name) => {
+    const list = findList(); if (!list) return [];
+    const sc = findScroller(list);
+    const store = new Map(), meta = new Map();
+    const grab = () => list.querySelectorAll('[data-index]').forEach(el => {
+      const i = Number(el.getAttribute('data-index'));
+      if (Number.isNaN(i)) return;
+      if (!meta.has(i)) meta.set(i, { f: fiberAt(el), c: stampToMs(capOf(el)) });   /* 한 줄에 한 번이면 족하다 */
+      store.set(i, el.outerHTML);
+    });
+    const fire = () => sc.dispatchEvent(new Event('scroll'));
+    const t0 = Date.now(), TIMEOUT = 10 * 60 * 1000;
+    sc.scrollTop = sc.scrollHeight; fire(); await wait(500);
+    let idle = 0, prevH = -1, g = 0;
+    while (g++ < 200000 && Date.now() - t0 < TIMEOUT) {
+      const atTop = sc.scrollTop <= 1, h = sc.scrollHeight;
+      if (atTop) {
+        if (h !== prevH) idle = 0; else idle++;
+        if (idle >= 30) break;
+        sc.scrollTop = 0; fire(); await wait(180);
+        sc.scrollTop = 60; fire(); await wait(90); sc.scrollTop = 0; fire();
+      } else {
+        idle = 0;
+        sc.scrollTop = Math.max(0, sc.scrollTop - Math.max(150, sc.clientHeight * 0.7));
+        fire(); await wait(120);
+      }
+      if (g % 40 === 0) console.log('[ccfolia] ' + name + ' · 과거 로그 로딩... 높이', sc.scrollHeight);
+      prevH = h;
+    }
+    sc.scrollTop = 0; fire(); await wait(400); grab();
+    let last = -1, stable = 0; g = 0;
+    while (g++ < 200000 && Date.now() - t0 < TIMEOUT) {
+      grab();
+      const atBottom = sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 2;
+      if (atBottom) { if (store.size === last) { if (++stable >= 6) break; } else stable = 0; last = store.size; }
+      sc.scrollTop += Math.max(120, sc.clientHeight * 0.6);
+      fire(); await wait(90);
+      if (g % 40 === 0) console.log('[ccfolia] ' + name + ' · 수집 중...', store.size);
+    }
     grab();
-    const atBottom = sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 2;
-    if (atBottom) { if (store.size === last) { if (++stable >= 6) break; } else stable = 0; last = store.size; }
-    sc.scrollTop += Math.max(120, sc.clientHeight * 0.6);
-    fire(); await wait(90);
-    if (g % 40 === 0) console.log('[ccfolia] 수집 중...', store.size);
+    return Array.from(store.keys()).sort((a, b) => a - b)
+      .map(i => ({ html: store.get(i), f: meta.get(i).f, c: meta.get(i).c }));
+  };
+
+  /* ── 탭 순회 ──
+     '어느 tablist가 채팅 것인가'를 맞히려 들면 방 구조가 조금만 달라도 부러진다.
+     후보를 넓게 모아 두고, 눌러서 채팅 목록이 실제로 바뀌는지로 판별한다. */
+  /* 탭 추가(+) 버튼. 코코포리아는 UI 언어와 무관하게 aria-label이 일본어로 고정돼 있다. */
+  const ADD_TAB_RE = /タブを追加|탭\\s*추가|add\\s*tab|new\\s*tab/i;
+  const ADD_RE = /追加|추가|新規|作成|\\badd\\b|create/i;
+  const isAdder = t => {
+    const lab = (t.getAttribute('aria-label') || '') + ' ' + (t.getAttribute('title') || '');
+    if (ADD_TAB_RE.test(lab)) return true;
+    /* 라벨만 보고 자르면 '추가정보' 같은 진짜 탭까지 날아간다. 글자 없는 아이콘 버튼일 때만 넓게 본다. */
+    const noText = !clean(t.textContent);
+    if (noText && ADD_RE.test(lab)) return true;
+    const ic = t.querySelector('[data-testid]');
+    return !!(noText && ic && /add|plus|create/i.test(ic.getAttribute('data-testid') || ''));
+  };
+  const CLICKABLE = '[role="tab"], button, [role="button"]';
+  /* 숨긴 채 DOM에 남겨 두는 대화상자가 흔하다. 붙어 있는 개수가 아니라 실제로 그려졌는지를 본다. */
+  const visible = el => !!(el && el.getClientRects && el.getClientRects().length);
+  const dlgCount = () => all(document, '[role="dialog"], .MuiDialog-root, .MuiModal-root').filter(visible).length;
+  const closeDlg = async () => {
+    for (let k = 0; k < 3 && dlgCount(); k++) {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', keyCode: 27, which: 27, bubbles: true }));
+      await wait(220);
+      if (!dlgCount()) break;
+      const bd = all(document, '.MuiBackdrop-root, [class*="ackdrop"]').filter(visible)[0];
+      if (bd) { bd.click(); await wait(220); }
+      const cls = all(document, '[role="dialog"] button, .MuiDialog-root button').filter(visible)
+        .filter(b => /閉じ|닫기|close|cancel|キャンセル|취소/i.test((b.textContent || '') + (b.getAttribute('aria-label') || '')))[0];
+      if (cls) { cls.click(); await wait(220); }
+    }
+  };
+
+  /* 탭 줄에서 후보를 집는다. role=tab만 믿으면 안 된다 —
+     실제 룸에서 기본 '메인'과 '+'에만 role=tab이 붙고, 사용자가 만든 탭(정보·잡담)은 그냥 button이었다. */
+  const pickFrom = box => box ? all(box, CLICKABLE).filter(el => !el.querySelector(CLICKABLE)) : [];
+  const chatBar = findTabBar();
+  const usable = ts => ts.filter(t => !isAdder(t)).length;
+
+  let cands = pickFrom(chatBar);
+  if (usable(cands) < 2) {
+    /* '+' 버튼을 닻으로 삼아 같은 줄을 다시 찾는다. 탭 줄에는 반드시 '+'가 있다. */
+    const plus = all(document, CLICKABLE).filter(isAdder)[0];
+    let box = plus ? plus.parentElement : null;
+    for (let k = 0; k < 4 && box; k++) {
+      const here = pickFrom(box);
+      if (usable(here) >= 2) { cands = here; break; }
+      box = box.parentElement;
+    }
   }
-  grab();
-  const idx = [...store.keys()].sort((a, b) => a - b);
-  const html = '<div id="ccfolia-log">\\n' + idx.map(i => store.get(i)).join('\\n') + '\\n</div>';
+  if (usable(cands) < 2) {   /* 그래도 안 되면 문서 전체의 role=tab으로 넓힌다 */
+    all(document, '[role="tab"]').forEach(t => { if (cands.indexOf(t) === -1) cands.push(t); });
+  }
+  const skipped = cands.filter(isAdder);
+  cands = cands.filter(t => !isAdder(t));
+
+  /* 진단은 항상 남긴다. 탭을 못 찾았을 때 이 줄들만 있으면 원인을 짚을 수 있다. */
+  const desc = t => JSON.stringify(clean(t.textContent).slice(0, 24)) + '/' + JSON.stringify(t.getAttribute('aria-label'))
+    + (t.getAttribute('aria-selected') === 'true' ? '/선택됨' : '') + (isAdder(t) ? '/추가버튼' : '');
+  const bars = all(document, '[role="tablist"]');
+  console.log('[ccfolia] 진단 · tablist ' + bars.length + '개 · role=tab ' + document.querySelectorAll('[role="tab"]').length
+    + '개 · 후보 ' + cands.length + '개' + (skipped.length ? ' · 추가버튼 ' + skipped.length + '개 제외' : ''));
+  bars.forEach((b, k) => console.log('[ccfolia] 진단 · tablist#' + k + (b === chatBar ? '(채팅에 가장 가까움)' : '')
+    + ' → ' + all(b, '[role="tab"]').map(desc).join(' , ')));
+  console.log('[ccfolia] 진단 · 후보 → ' + (cands.map(desc).join(' , ') || '(없음)'));
+
+  /* 후보를 넓히면 채팅과 무관한 막대까지 누르게 된다. 막대마다 원래 눌려 있던 탭을 적어 두고 끝나면 되돌린다. */
+  const prevSel = [];
+  bars.forEach(b => { const sel = all(b, '[role="tab"]').filter(t => t.getAttribute('aria-selected') === 'true')[0]; if (sel) prevSel.push(sel); });
+  cands.forEach(t => { if (t.getAttribute('aria-selected') === 'true' && prevSel.indexOf(t) === -1) prevSel.push(t); });
+  const packs = [], seen = {};
+  /* 지금 화면에 떠 있는 탭은 딱 하나다. 다른 막대에서 '선택됨'인 탭은 채팅과 무관하므로
+     반드시 눌러 보고 채팅이 바뀌는지 확인해야 한다. 안 그러면 같은 화면을 또 긁는다. */
+  /* 사용자가 만든 탭에는 aria-selected가 없다. 흔히 쓰이는 다른 표식도 함께 본다. */
+  const isOn = t => t.getAttribute('aria-selected') === 'true'
+    || ['true', 'page', 'step'].indexOf(t.getAttribute('aria-current')) >= 0
+    || /(^|\\s)Mui-selected(\\s|$)/.test(String(t.className || ''));
+  const shown = cands.filter(isOn)[0] || null;
+  for (let i = 0; i < cands.length; i++) {
+    const t = cands[i], name = tabName(t, i);
+    if (t !== shown) {
+      const d0 = dlgCount(), sig0 = listSig();
+      t.click();
+      await settle();
+      if (dlgCount() > d0) {   /* 창이 떴다 = 탭이 아니다. 닫고 건너뛴다. */
+        console.warn('[ccfolia] ' + name + ' · 창이 떠서 탭이 아니라고 보고 건너뜁니다');
+        await closeDlg();
+        continue;
+      }
+      if (listSig() === sig0) {   /* 채팅이 그대로다 = 이 탭은 채팅과 무관하다 */
+        console.log('[ccfolia] ' + name + ' · 눌러도 채팅이 바뀌지 않아 건너뜁니다');
+        continue;
+      }
+    }
+    console.log('[ccfolia] ' + name + ' 탭 수집 시작');
+    const rows = await harvest(name);
+    if (!rows.length) { console.log('[ccfolia] ' + name + ' · 비어 있어 건너뜁니다'); continue; }
+    const sig = rows.length + '::' + rows[0].html.slice(0, 240) + '::' + rows[rows.length - 1].html.slice(-240);
+    if (seen[sig]) { console.warn('[ccfolia] ' + name + ' · ' + seen[sig] + ' 탭과 내용이 같아 건너뜁니다'); continue; }
+    seen[sig] = name;
+    packs.push({ name: name, rows: rows, primary: packs.length === 0 && cands.length > 1 });
+  }
+  if (!packs.length) {   /* 후보가 하나도 안 통했으면 지금 화면이라도 건진다 */
+    const rows = await harvest('메인');
+    if (rows.length) packs.push({ name: '메인', rows: rows, primary: false });
+  }
+  if (dlgCount()) await closeDlg();   /* 순회 중 열린 창이 남아 있으면 닫고 끝낸다 */
+  for (let k = 0; k < prevSel.length; k++) {
+    if (prevSel[k].getAttribute('aria-selected') !== 'true') { prevSel[k].click(); await wait(280); }
+  }
+  /* 처음 보고 있던 탭은 aria-selected가 안 변했더라도 다시 눌러 준다.
+     다른 막대가 채팅을 갈아 끼운 경우, 표시 상태만 맞고 화면은 남의 탭에 머무를 수 있다. */
+  const home = shown || cands[0];   /* 표식이 아예 없으면 첫 탭(=메인)으로 돌려 놓는다 */
+  if (home) { home.click(); await wait(400); }
+  if (dlgCount()) await closeDlg();
+
+  /* 탭을 하나밖에 못 건졌다면, 정보탭이 어디 숨어 있는지 알아낼 단서를 남긴다 */
+  if (packs.length < 2) {
+    const lst = findList();
+    let box = lst;
+    for (let k = 0; k < 5 && box && box.parentElement; k++) box = box.parentElement;
+    const btns = all(box, 'button, [role="button"], [role="tab"]')
+      .filter(b => lst && !lst.contains(b)).slice(0, 40)
+      .map(b => JSON.stringify(clean(b.textContent).slice(0, 18)) + '/' + JSON.stringify(b.getAttribute('aria-label')));
+    console.log('[ccfolia] 진단 · 채팅 주변 클릭 요소 ' + btns.length + '개 → ' + btns.join(' , '));
+  }
+
+  /* 스테이터스 변화·/system 줄에는 시각이 안 찍힌다. 같은 탭 안에서는 시간순이므로 앞뒤 줄에서 메운다. */
+  const fill = (rows, k) => {
+    let last = 0;
+    for (let i = 0; i < rows.length; i++) { if (rows[i][k]) last = rows[i][k]; else if (last) rows[i][k] = last; }
+    for (let i = rows.length - 1; i >= 0; i--) { if (rows[i][k]) last = rows[i][k]; else if (last) rows[i][k] = last; }
+    return rows;
+  };
+  packs.forEach(p => { fill(p.rows, 'f'); fill(p.rows, 'c'); });
+
+  const rowsAll = packs.reduce((a, p) => a.concat(p.rows), []);
+  if (!rowsAll.length) { alert('수집된 메시지가 없습니다. 룸 채팅창이 열려 있는지 확인하세요.'); return; }
+
+  /* 시각의 출처는 하나로 통일한다. 원본(초 단위)과 캡션(분 단위)을 섞으면 같은 분 안에서 순서가 뒤집힌다. */
+  const nF = rowsAll.filter(r => r.f).length, nC = rowsAll.filter(r => r.c).length;
+  const useF = nF === rowsAll.length, useC = !useF && nC === rowsAll.length;
+  console.log('[ccfolia] 시각 출처: ' + (useF ? '코코포리아 원본(정확)' : (useC ? '화면 표시 날짜·시각(분 단위)' : '시:분 추정'))
+    + ' · 원본 ' + nF + '/' + rowsAll.length + ' · 캡션 ' + nC + '/' + rowsAll.length);
+
+  const blocks = packs.map(p => p.rows.map(r => {
+    const at = useF ? r.f : (useC ? r.c : 0);
+    return '<div data-ccf-tab="' + esc(p.name) + '"' + (p.primary ? ' data-ccf-primary="1"' : '')
+      + (at ? ' data-ccf-at="' + at + '"' : '') + '>' + r.html + '</div>';
+  }).join('\\n'));
+
+  const names = packs.map(p => p.name), counts = packs.map(p => p.rows.length);
+  const html = '<div id="ccfolia-log" data-tabs="' + esc(names.join(',')) + '">\\n' + blocks.join('\\n') + '\\n</div>';
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
-  a.download = 'ccfolia-main-log.html';
+  a.download = 'ccfolia-log.html';
   document.body.appendChild(a); a.click(); a.remove();
-  console.log('[ccfolia] 수집한 메시지 수:', idx.length);
-  alert('메인 탭 로그 ' + idx.length + '개 수집 완료 → ccfolia-main-log.html 저장.\\n이제 이 파일을 세션 리더로 끌어다 놓으세요.');
+  console.log('[ccfolia] 수집 완료:', names.map((n, i) => n + ' ' + counts[i] + '개').join(' / '));
+  alert('수집 완료 · ' + names.map((n, i) => n + ' ' + counts[i] + '개').join(' · ')
+    + '\\nccfolia-log.html로 저장했습니다.\\n이제 이 파일을 세션 리더로 끌어다 놓으세요.'
+    + (packs.length > 1 ? '' : '\\n\\n탭을 하나만 건졌습니다. 다른 탭을 열고 한 번 더 실행한 뒤, 받은 파일들을 함께 놓으세요.'
+      + '\\n(F12 → Console의 [ccfolia] 진단 줄을 모두 복사해 두시면 원인을 짚을 수 있습니다.)'));
 })();`;
   const hb = $('#harvest'); if(hb) hb.value = HARVEST;
   $('#copyHarvest') && $('#copyHarvest').addEventListener('click', async () => {
