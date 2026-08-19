@@ -145,6 +145,8 @@
   .irow .ipos b{font-weight:600;color:var(--muted);}
   .irow .seg button{padding:5px 8px;font-size:12px;}
   .imoved{font-size:11.5px;color:var(--muted);}
+  .irow.gone .iat,.irow.gone .itxt{opacity:.45;text-decoration:line-through;}
+  .irow.gone .ipos{opacity:.45;}
   .jname{flex:1;min-width:0;font-weight:600;color:var(--ink-2);font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .jseg{flex:0 0 auto;}
   .jseg button{font-size:12px;padding:5px 11px;}
@@ -215,6 +217,7 @@
     font:inherit;font-size:11px;line-height:1;width:23px;height:21px;padding:0;cursor:pointer;}
   .infocard .mv button + button{border-left:0;}
   .infocard .mv button:hover{color:var(--ink);background:var(--subtle);}
+  .infocard .mv button.del:hover{color:var(--ng);}
 
   /* 주사위·시스템(포함 옵션) */
   .turn.muted .body,.narr.muted .body{color:var(--faint);font-size:13px;line-height:1.5;}
@@ -408,7 +411,7 @@
           <summary>배치 미세조정 <span id="infoCount" class="imoved"></span></summary>
           <p style="margin:.55rem 0 0">코코포리아는 시:분까지만 알려 주므로, 같은 분에 겹친 카드는 순서가 어긋날 수 있습니다. 어긋난 것만 손보세요. ‘↳’ 뒤가 바로 앞에 놓인 메시지입니다. 본문의 정보 카드에 마우스를 올려도 같은 버튼이 나옵니다.</p>
           <div id="infoTune" class="itune"></div>
-          <div class="row"><button class="btn" type="button" id="infoReset">자동 배치로 되돌리기</button></div>
+          <div class="row"><button class="btn" type="button" id="infoReset">자동 배치로 되돌리기</button><button class="btn hidden" type="button" id="infoUndel">지운 카드 모두 되살리기</button></div>
         </details>
       </div>
       <div id="msg"></div>
@@ -875,7 +878,7 @@
 
   /* ── 수동 배치 보정 ──
      자동 배치에서 '몇 칸 옮겼는지'만 기억한다. 재변환·이어보기 뒤에도 같은 자리로 돌아온다. */
-  let rawMessages = null, mainTab = '', moveState = {};
+  let rawMessages = null, mainTab = '', moveState = {}, delState = {};
   const midOf = m => (m.tab || '') + '#' + (m.seq || 0);
   const isInfo = m => !!(m.tab && m.tab !== mainTab);
   function applyMoves(arr){
@@ -889,7 +892,11 @@
     });
     return out;
   }
-  const composeLog = (raw, opts) => applyMoves(mergeTabs(raw, opts));
+  /* composeAll = 지운 것까지 포함한 전체 배열. 미세조정 목록과 자리 계산은 이쪽을 본다.
+     composeLog = 실제로 보여 줄 배열. 렌더·내보내기·저장은 이쪽만 쓴다. */
+  const isGone = m => !!delState[midOf(m)];
+  const composeAll = (raw, opts) => applyMoves(mergeTabs(raw, opts));
+  const composeLog = (raw, opts) => composeAll(raw, opts).filter(m => !isGone(m));
   function adoptRaw(raw){ rawMessages = raw; mainTab = primaryTab(tabsOf(raw), raw); }
 
   /* ── 렌더 ── */
@@ -922,6 +929,10 @@
       b.title = lab; b.setAttribute('aria-label', (m.name || m.tab || '정보') + ' 메시지를 ' + lab);
       mv.appendChild(b);
     });
+    const del = document.createElement('button'); del.type = 'button'; del.className = 'del';
+    del.dataset.del = '1'; del.textContent = '×'; del.title = '이 카드 지우기';
+    del.setAttribute('aria-label', (m.name || m.tab || '정보') + ' 메시지 지우기');
+    mv.appendChild(del);
     w.appendChild(mv);
     return w;
   }
@@ -1023,7 +1034,7 @@
     });
 
     populateJournalAlign(messages);
-    populateInfoTune(messages);
+    populateInfoTune(rawMessages ? composeAll(rawMessages, opts) : messages);
     if(window.__resetSearch) window.__resetSearch();
 
     if(!quietRender){
@@ -1043,7 +1054,7 @@
   const KEY = 'ccfolia:v2:last';
   function saveDraft(messages, opts, title){
     /* 병합 결과가 아니라 원본을 담는다. 배치 보정(mv)만 따로 얹으면 언제든 되살아난다. */
-    try{ localStorage.setItem(KEY, JSON.stringify({ t:title, o:{merge:opts.merge, hideNoise:opts.hideNoise, avatarKey:opts.avatarKey, showStatus:opts.showStatus, align:opts.align, narrators:opts.narrators, avShape:opts.avShape, avSize:opts.avSize, rollHighlight:opts.rollHighlight, sysNarr:opts.sysNarr, withInfo:opts.withInfo, infoCard:opts.infoCard, infoFirst:opts.infoFirst}, m:(rawMessages && rawMessages.length ? rawMessages : messages), mv:moveState, at:Date.now() })); }
+    try{ localStorage.setItem(KEY, JSON.stringify({ t:title, o:{merge:opts.merge, hideNoise:opts.hideNoise, avatarKey:opts.avatarKey, showStatus:opts.showStatus, align:opts.align, narrators:opts.narrators, avShape:opts.avShape, avSize:opts.avSize, rollHighlight:opts.rollHighlight, sysNarr:opts.sysNarr, withInfo:opts.withInfo, infoCard:opts.infoCard, infoFirst:opts.infoFirst}, m:(rawMessages && rawMessages.length ? rawMessages : messages), mv:moveState, dl:delState, at:Date.now() })); }
     catch(e){ /* 용량 초과 등은 조용히 무시 */ }
   }
   function showResume(){
@@ -1071,6 +1082,7 @@
       if($('#optInfoCard')) $('#optInfoCard').checked = !(d.o && d.o.infoCard === false);
       if($('#optInfoFirst')) $('#optInfoFirst').checked = !(d.o && d.o.infoFirst === false);
       moveState = (d.mv && typeof d.mv === 'object') ? Object.assign({}, d.mv) : {};
+      delState = (d.dl && typeof d.dl === 'object') ? Object.assign({}, d.dl) : {};
       if(d.o && d.o.avSize && $('#avSize')){ $('#avSize').value = d.o.avSize; $('#avSizeVal').textContent = d.o.avSize + 'px'; }
       if(d.o && d.o.avShape) document.querySelectorAll('[data-av-shape]').forEach(x => x.setAttribute('aria-pressed', x.dataset.avShape === d.o.avShape ? 'true' : 'false'));
       syncRollEnabled();
@@ -1124,23 +1136,37 @@
     }
     if(tune) tune.classList.remove('hidden');
     const moved = infos.filter(m => moveState[midOf(m)]).length;
-    if(cnt) cnt.textContent = '· ' + infos.length + '개' + (moved ? ' · ' + moved + '개 손봄' : '');
+    const gone = infos.filter(isGone).length;
+    if(cnt) cnt.textContent = '· ' + infos.length + '개'
+      + (moved ? ' · ' + moved + '개 손봄' : '') + (gone ? ' · ' + gone + '개 지움' : '');
+    const undoAll = $('#infoUndel'); if(undoAll) undoAll.classList.toggle('hidden', !gone);
     box.innerHTML = '';
     infos.forEach(m => {
+      const dead = isGone(m);
       const i = list.indexOf(m);
-      let prev = null;
-      for(let k = i - 1; k >= 0; k--){ if(!isInfo(list[k])){ prev = list[k]; break; } }
-      const row = document.createElement('div'); row.className = 'irow'; row.dataset.mid = midOf(m);
+      let prev = null;   /* 앵커는 '보이는' 메시지로 잡는다. 지운 카드를 가리키면 헷갈린다. */
+      for(let k = i - 1; k >= 0; k--){ if(!isInfo(list[k]) && !isGone(list[k])){ prev = list[k]; break; } }
+      const row = document.createElement('div'); row.className = 'irow' + (dead ? ' gone' : '');
+      row.dataset.mid = midOf(m);
       const at = document.createElement('span'); at.className = 'iat'; at.textContent = m.time || '--:--';
       const tx = document.createElement('span'); tx.className = 'itxt'; tx.textContent = excerptOf(m);
       const ps = document.createElement('span'); ps.className = 'ipos';
-      ps.textContent = prev ? '↳ ' + (prev.name || '시스템') + ' · ' + excerptOf(prev).slice(0, 20) : '↳ 맨 앞';
+      ps.textContent = dead ? '지움' : (prev ? '↳ ' + (prev.name || '시스템') + ' · ' + excerptOf(prev).slice(0, 20) : '↳ 맨 앞');
       const seg = document.createElement('span'); seg.className = 'seg';
-      [['-1', '↑', '한 칸 위로'], ['1', '↓', '한 칸 아래로']].forEach(([d, t, lab]) => {
-        const b = document.createElement('button'); b.type = 'button'; b.dataset.mv = d; b.textContent = t;
-        b.title = lab; b.setAttribute('aria-label', excerptOf(m).slice(0, 14) + ' 카드를 ' + lab);
+      if(dead){
+        const b = document.createElement('button'); b.type = 'button'; b.dataset.del = '0'; b.textContent = '되살리기';
+        b.setAttribute('aria-label', excerptOf(m).slice(0, 14) + ' 카드 되살리기');
         seg.appendChild(b);
-      });
+      } else {
+        [['-1', '↑', '한 칸 위로'], ['1', '↓', '한 칸 아래로']].forEach(([d, t, lab]) => {
+          const b = document.createElement('button'); b.type = 'button'; b.dataset.mv = d; b.textContent = t;
+          b.title = lab; b.setAttribute('aria-label', excerptOf(m).slice(0, 14) + ' 카드를 ' + lab);
+          seg.appendChild(b);
+        });
+        const d = document.createElement('button'); d.type = 'button'; d.dataset.del = '1'; d.textContent = '×';
+        d.title = '지우기'; d.setAttribute('aria-label', excerptOf(m).slice(0, 14) + ' 카드 지우기');
+        seg.appendChild(d);
+      }
       row.append(at, tx, ps, seg); box.appendChild(row);
     });
   }
@@ -1148,9 +1174,9 @@
   function nudgeInfo(id, dir, focus){
     if(!rawMessages) return;
     const opts = lastOpts || currentOpts();
-    const arr = composeLog(rawMessages, opts);
+    const arr = composeAll(rawMessages, opts);   /* 자리 계산은 지운 것까지 포함한 원래 틀에서 한다 */
     const i = arr.findIndex(m => midOf(m) === id); if(i < 0) return;
-    const vis = m => (m.status ? !!opts.showStatus : (m.dice ? !opts.hideNoise : true));
+    const vis = m => !isGone(m) && (m.status ? !!opts.showStatus : (m.dice ? !opts.hideNoise : true));
     let j = i + dir;
     while(j > 0 && j < arr.length - 1 && !vis(arr[j])) j += dir;
     if(j < 0 || j >= arr.length){ toast('더 옮길 곳이 없습니다'); return; }
@@ -1168,7 +1194,17 @@
       if(el) el.focus();
     }
   }
+  /* 정보 카드 지우기·되살리기. 원본은 그대로 두고 표시에서만 뺀다. */
+  function dropInfo(id, on){
+    if(!rawMessages) return;
+    if(on) delState[id] = 1; else delete delState[id];
+    recompose();
+    toast(on ? '정보 카드를 지웠습니다 · 미세조정 목록에서 되살릴 수 있습니다' : '정보 카드를 되살렸습니다');
+  }
   const mvClick = focus => e => {
+    const host0 = e.target.closest('[data-mid]');
+    const d = e.target.closest('button[data-del]');
+    if(d && host0){ e.preventDefault(); dropInfo(host0.dataset.mid, d.dataset.del === '1'); return; }
     const b = e.target.closest('button[data-mv]'); if(!b) return;
     const host = b.closest('[data-mid]'); if(!host) return;
     e.preventDefault(); nudgeInfo(host.dataset.mid, +b.dataset.mv, focus);
@@ -1184,6 +1220,10 @@
   $('#infoReset') && $('#infoReset').addEventListener('click', () => {
     if(!rawMessages) return;
     moveState = {}; recompose(); toast('정보 카드를 자동 배치로 되돌렸습니다');
+  });
+  $('#infoUndel') && $('#infoUndel').addEventListener('click', () => {
+    if(!rawMessages) return;
+    delState = {}; recompose(); toast('지운 정보 카드를 모두 되살렸습니다');
   });
   ['#optInfo', '#optInfoCard', '#optInfoFirst'].forEach(sel => {
     const el = $(sel); if(el) el.addEventListener('change', recompose);
