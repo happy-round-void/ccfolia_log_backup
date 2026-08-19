@@ -746,7 +746,8 @@
       return { avatar:'', name, color:'', paras:pp, shots:[], system:!name, dice:false, status:detectStatus(pp.join(' ')) };
     }).filter(x => x && (x.paras.length || x.name));
   }
-  /* 수집기가 붙여 둔 표식. 코코포리아 행은 <div data-index><div class="MuiListItem-root">…</div></div>
+  /* 수집기가 붙여 둔 표식. data-ccf-at은 화면 캡션의 날짜·시각을 푼 값(ms)이다.
+     코코포리아 행은 <div data-index><div class="MuiListItem-root">…</div></div>
      꼴이라 표식이 파싱 대상의 조상에 붙는다. 그래서 자기 자신부터 위로 훑어 찾는다. */
   function markOf(row, name){ const h = row.closest('[' + name + ']'); return h ? (h.getAttribute(name) || '') : ''; }
   function tabOf(row){ return markOf(row, 'data-ccf-tab'); }
@@ -859,8 +860,8 @@
     if(tabs.length < 2) return list.slice();
     const main = (tabs.indexOf(mainTab) >= 0) ? mainTab : tabs[0];
     if(opts.withInfo === false) return list.filter(m => (m.tab || '') === main);
-    /* 수집기가 원본 시각을 다 건져 왔다면 추정할 것이 없다. 그대로 줄 세운다.
-       분 단위까지만 건진 경우 동률이 생기므로, 그때만 ‘정보 먼저’ 설정을 적용한다. */
+    /* 수집기가 날짜까지 풀어 놨다면 추정할 것이 없다. 그대로 줄 세운다.
+       분 단위라 같은 시각이 겹치므로, 그 동률에만 ‘정보 먼저’ 설정을 적용한다. */
     if(list.every(m => typeof m.at === 'number')){
       const first = opts.infoFirst !== false;
       const rank = m => ((m.tab || '') === main) === first ? 1 : 0;
@@ -1576,44 +1577,10 @@
   };
   if (!findList()) { alert('룸 채팅 목록을 못 찾음. 룸 채팅창이 열려 있는지 확인하세요.'); return; }
 
-  /* ── 시각 ①: 코코포리아가 들고 있는 원본 시각(ms)을 React 내부에서 꺼내 본다 ── */
-  const toMs = v => {
-    if (v == null) return 0;
-    if (typeof v === 'number') return v > 1e12 ? v : (v > 1e9 ? v * 1000 : 0);
-    if (typeof v === 'string') { const t = Date.parse(v); return isNaN(t) ? 0 : t; }
-    if (typeof v === 'object') {
-      if (typeof v.toMillis === 'function') { try { return v.toMillis(); } catch (e) { return 0; } }
-      if (typeof v.getTime === 'function') return v.getTime();
-      if (typeof v.seconds === 'number') return v.seconds * 1000 + Math.round((v.nanoseconds || 0) / 1e6);
-      if (typeof v._seconds === 'number') return v._seconds * 1000;
-    }
-    return 0;
-  };
-  const KEYS = ['createdAt', 'created_at', 'timestamp', 'updatedAt', 'time'];
-  const dig = o => {
-    if (!o || typeof o !== 'object') return 0;
-    for (let i = 0; i < KEYS.length; i++) { const ms = toMs(o[KEYS[i]]); if (ms) return ms; }
-    return 0;
-  };
-  const fiberAt = el => {
-    let key = null;
-    const ks = Object.keys(el);
-    for (let i = 0; i < ks.length; i++) {
-      if (ks[i].indexOf('__reactFiber') === 0 || ks[i].indexOf('__reactInternalInstance') === 0) { key = ks[i]; break; }
-    }
-    if (!key) return 0;
-    let f = el[key], hop = 0;
-    while (f && hop++ < 14) {
-      const p = f.memoizedProps;
-      if (p) { const ms = dig(p) || dig(p.message) || dig(p.item) || dig(p.data); if (ms) return ms; }
-      f = f.return;
-    }
-    return 0;
-  };
-
-  /* ── 시각 ②: 화면 캡션의 날짜 단서를 실제 시각으로 푼다 ──
+  /* ── 시각: 화면에 적힌 날짜 단서를 실제 시각으로 푼다 ──
      코코포리아는 '- 今日 14:42', '昨日 23:50', '10/26 21:00'처럼 날짜를 함께 적는다.
-     수집하는 오늘을 기준으로 풀어야 맞으므로, 리더가 아니라 여기서 계산한다. */
+     수집하는 오늘을 기준으로 풀어야 맞으므로, 리더가 아니라 여기서 계산한다.
+     화면에 보이는 것만 읽는다. 앱 내부 구조는 건드리지 않는다. */
   const CLOCK = /(\\d{1,2})\\s*[:\\uFF1A]\\s*([0-5]\\d)/;
   const stampToMs = txt => {
     const s = clean(txt || ''), tm = CLOCK.exec(s);
@@ -1706,7 +1673,7 @@
     const grab = () => list.querySelectorAll('[data-index]').forEach(el => {
       const i = Number(el.getAttribute('data-index'));
       if (Number.isNaN(i)) return;
-      if (!meta.has(i)) meta.set(i, { f: fiberAt(el), c: stampToMs(capOf(el)) });   /* 한 줄에 한 번이면 족하다 */
+      if (!meta.has(i)) meta.set(i, { c: stampToMs(capOf(el)) });   /* 한 줄에 한 번이면 족하다 */
       store.set(i, el.outerHTML);
     });
     const fire = () => sc.dispatchEvent(new Event('scroll'));
@@ -1740,7 +1707,7 @@
     }
     grab();
     return Array.from(store.keys()).sort((a, b) => a - b)
-      .map(i => ({ html: store.get(i), f: meta.get(i).f, c: meta.get(i).c }));
+      .map(i => ({ html: store.get(i), c: meta.get(i).c }));
   };
 
   /* ── 탭 순회 ──
@@ -1876,19 +1843,19 @@
     for (let i = rows.length - 1; i >= 0; i--) { if (rows[i][k]) last = rows[i][k]; else if (last) rows[i][k] = last; }
     return rows;
   };
-  packs.forEach(p => { fill(p.rows, 'f'); fill(p.rows, 'c'); });
+  packs.forEach(p => fill(p.rows, 'c'));
 
   const rowsAll = packs.reduce((a, p) => a.concat(p.rows), []);
   if (!rowsAll.length) { alert('수집된 메시지가 없습니다. 룸 채팅창이 열려 있는지 확인하세요.'); return; }
 
-  /* 시각의 출처는 하나로 통일한다. 원본(초 단위)과 캡션(분 단위)을 섞으면 같은 분 안에서 순서가 뒤집힌다. */
-  const nF = rowsAll.filter(r => r.f).length, nC = rowsAll.filter(r => r.c).length;
-  const useF = nF === rowsAll.length, useC = !useF && nC === rowsAll.length;
-  console.log('[ccfolia] 시각 출처: ' + (useF ? '코코포리아 원본(정확)' : (useC ? '화면 표시 날짜·시각(분 단위)' : '시:분 추정'))
-    + ' · 원본 ' + nF + '/' + rowsAll.length + ' · 캡션 ' + nC + '/' + rowsAll.length);
+  /* 한 줄이라도 날짜를 못 읽으면 전부 버린다. 반쪽짜리 절대시각을 섞으면 병합이 되레 어긋난다.
+     그 경우 리더가 시:분만 보고 '앞으로만 훑는 병합'으로 처리한다. */
+  const nC = rowsAll.filter(r => r.c).length, useC = nC === rowsAll.length;
+  console.log('[ccfolia] 시각 출처: ' + (useC ? '화면 표시 날짜·시각(분 단위)' : '시:분 추정')
+    + ' · 날짜까지 읽은 줄 ' + nC + '/' + rowsAll.length);
 
   const blocks = packs.map(p => p.rows.map(r => {
-    const at = useF ? r.f : (useC ? r.c : 0);
+    const at = useC ? r.c : 0;
     return '<div data-ccf-tab="' + esc(p.name) + '"' + (p.primary ? ' data-ccf-primary="1"' : '')
       + (at ? ' data-ccf-at="' + at + '"' : '') + '>' + r.html + '</div>';
   }).join('\\n'));
