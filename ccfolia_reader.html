@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>세션 리더 · CCFOLIA 아카이브</title>
+<title>코코포리아 로그 백업</title>
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;700&display=swap">
@@ -333,7 +333,7 @@
 <section class="panel app-only" id="pastePanel">
   <div id="resumeSlot" class="collect-only"></div>
 
-  <h1 class="collect-only">세션 로그 백업</h1>
+  <h1 class="collect-only">코코포리아 로그 백업</h1>
   <p class="lead collect-only">코코포리아 룸 채팅을 그대로 옮겨, 읽기 좋은 반응형 페이지로 저장합니다. 아바타·이름·색상을 살리고, GM은 내레이션으로 흘려 씁니다. <b>‘정보’ 등 다른 탭의 메시지도 함께 모아 시간 순서대로 본문에 끼워 넣습니다.</b> 코코포리아 채팅은 가상 스크롤이라, 아래 <b>‘룸 로그 수집’</b>으로 전체 로그를 먼저 모읍니다.</p>
 
   <h1 class="edit-only">표시 설정</h1>
@@ -481,7 +481,7 @@
 
     const title = $('#docTitle');
     if(title){
-      const sync = () => { document.title = ((title.textContent || '').trim() || '클릭하여 세션 제목을 입력해 주세요.') + ' · 세션 리더'; };
+      const sync = () => { document.title = ((title.textContent || '').trim() || '클릭하여 세션 제목을 입력해 주세요.') + ' · 코코포리아 로그 백업'; };
       title.addEventListener('input', sync);
       title.addEventListener('blur', sync);
       /* 상단 바의 한 줄 제목: 줄바꿈·서식 붙여넣기는 막는다 */
@@ -962,7 +962,7 @@
     const dt = document.getElementById('docTitle');
     const title = clean(opts.title) || (dt ? dt.textContent.trim() : '') || '클릭하여 세션 제목을 입력해 주세요.';
     if(dt) dt.textContent = title;
-    document.title = title + ' · 세션 리더';
+    document.title = title + ' · 코코포리아 로그 백업';
 
     const shown = messages.filter(m => {
       if(m.status) return !!opts.showStatus;
@@ -1901,7 +1901,7 @@
   document.body.appendChild(a); a.click(); a.remove();
   console.log('[ccfolia] 수집 완료:', names.map((n, i) => n + ' ' + counts[i] + '개').join(' / '));
   alert('수집 완료 · ' + names.map((n, i) => n + ' ' + counts[i] + '개').join(' · ')
-    + '\\nccfolia-log.html로 저장했습니다.\\n이제 이 파일을 세션 리더로 끌어다 놓으세요.'
+    + '\\nccfolia-log.html로 저장했습니다.\\n이제 이 파일을 코코포리아 로그 백업으로 끌어다 놓으세요.'
     + (packs.length > 1 ? '' : '\\n\\n탭을 하나만 건졌습니다. 다른 탭을 열고 한 번 더 실행한 뒤, 받은 파일들을 함께 놓으세요.'
       + '\\n(F12 → Console의 [ccfolia] 진단 줄을 모두 복사해 두시면 원인을 짚을 수 있습니다.)'));
 })();`;
