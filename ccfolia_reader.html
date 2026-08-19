@@ -345,6 +345,7 @@
     <details class="adv" id="advBox">
       <summary>고급 설정</summary>
       <div class="field"><label>내레이션으로 쓸 캐릭터 이름 <span class="jhint">— 쉼표로 여러 명 지정 가능 (예: GM, 사회자)</span></label><input type="text" id="narrNames" value="GM" placeholder="예: GM, 사회자"></div>
+      <div class="field"><label><input type="checkbox" id="optSysNarr"> /system 메시지를 내레이션에 포함하기 <span class="jhint">— 가운데 시스템 블록 대신 내레이션 문단으로 흘려 씁니다</span></label></div>
       <div class="field"><label><input type="checkbox" id="optMerge" checked> 같은 화자 연속 발화 합치기</label></div>
       <div class="field"><label><input type="checkbox" id="optNoise"> 주사위·판정 로그도 포함</label></div>
       <div class="field"><label><input type="checkbox" id="optRoll"> 주사위·판정 로그도 강조 <span class="jhint">— 성공은 초록, 실패는 빨강으로</span></label></div>
@@ -772,6 +773,7 @@
     let prevName = null, curNarr = null;
     const alignOf = name => (name && opts.align && opts.align[name] === 'center') ? 'center' : 'left';
     const narrators = narratorSet(opts); const isNarr = m => narrators.has(normName(m.name));
+    const narrLead = (Array.isArray(opts.narrators) && opts.narrators[0]) || 'GM';
 
     shown.forEach(m => {
       const noise = m.dice;
@@ -784,19 +786,21 @@
         book.appendChild(sysNote(lines, ''));
         return;
       }
-      if(isSys(m) && !noise && !m.shots.length){
+      const asNarr = isSys(m) && !noise && !!opts.sysNarr;
+      if(isSys(m) && !noise && !asNarr && !m.shots.length){
         prevName = null; curNarr = null;
         book.appendChild(sysNote(sysLines(P), ''));
         return;
       }
-      if(isNarr(m) && !noise){
+      if((isNarr(m) || asNarr) && !noise){
         prevName = null;
+        const who = asNarr ? narrLead : (m.name || 'GM');
         if(!curNarr){
-          curNarr = document.createElement('div'); curNarr.className = 'narr' + (alignOf(m.name)==='center' ? ' center' : ''); curNarr.dataset.who = m.name || 'GM';
+          curNarr = document.createElement('div'); curNarr.className = 'narr' + (alignOf(who)==='center' ? ' center' : ''); curNarr.dataset.who = who;
           const b = document.createElement('div'); b.className = 'body'; curNarr.appendChild(b); book.appendChild(curNarr);
         }
         const b = curNarr.querySelector('.body');
-        paras(b, P); m.shots.forEach(s => b.appendChild(figure(s)));
+        paras(b, asNarr ? sysLines(P) : P); m.shots.forEach(s => b.appendChild(figure(s)));
         return;
       }
       curNarr = null;
@@ -840,7 +844,7 @@
   /* ── 자동 보관 ── */
   const KEY = 'ccfolia:v2:last';
   function saveDraft(messages, opts, title){
-    try{ localStorage.setItem(KEY, JSON.stringify({ t:title, o:{merge:opts.merge, hideNoise:opts.hideNoise, avatarKey:opts.avatarKey, showStatus:opts.showStatus, align:opts.align, narrators:opts.narrators, avShape:opts.avShape, avSize:opts.avSize, rollHighlight:opts.rollHighlight}, m:messages, at:Date.now() })); }
+    try{ localStorage.setItem(KEY, JSON.stringify({ t:title, o:{merge:opts.merge, hideNoise:opts.hideNoise, avatarKey:opts.avatarKey, showStatus:opts.showStatus, align:opts.align, narrators:opts.narrators, avShape:opts.avShape, avSize:opts.avSize, rollHighlight:opts.rollHighlight, sysNarr:opts.sysNarr}, m:messages, at:Date.now() })); }
     catch(e){ /* 용량 초과 등은 조용히 무시 */ }
   }
   function showResume(){
@@ -863,6 +867,7 @@
       if(d.o && d.o.narrators && $('#narrNames')) $('#narrNames').value = d.o.narrators.join(', ');
       if(d.o && $('#optNoise')) $('#optNoise').checked = !d.o.hideNoise;
       if(d.o && $('#optRoll')) $('#optRoll').checked = !!d.o.rollHighlight;
+      if(d.o && $('#optSysNarr')) $('#optSysNarr').checked = !!d.o.sysNarr;
       if(d.o && d.o.avSize && $('#avSize')){ $('#avSize').value = d.o.avSize; $('#avSizeVal').textContent = d.o.avSize + 'px'; }
       if(d.o && d.o.avShape) document.querySelectorAll('[data-av-shape]').forEach(x => x.setAttribute('aria-pressed', x.dataset.avShape === d.o.avShape ? 'true' : 'false'));
       syncRollEnabled();
@@ -906,7 +911,7 @@
   const parseNarr = s => (s||'').split(/[,，\n]/).map(x => x.trim()).filter(Boolean);
   const avShapeNow = () => { const b = document.querySelector('[data-av-shape][aria-pressed="true"]'); return b ? b.dataset.avShape : 'square'; };
   const currentOpts = () => ({ avatarKey: 'avatar', merge: $('#optMerge').checked, hideNoise: !$('#optNoise').checked, showStatus: $('#optStatus') ? $('#optStatus').checked : false, align: alignState, narrators: parseNarr($('#narrNames') ? $('#narrNames').value : 'GM'), title: '',
-    avShape: avShapeNow(), avSize: parseInt(($('#avSize') ? $('#avSize').value : 55), 10) || 55, rollHighlight: !!($('#optRoll') && $('#optRoll').checked) });
+    avShape: avShapeNow(), avSize: parseInt(($('#avSize') ? $('#avSize').value : 55), 10) || 55, rollHighlight: !!($('#optRoll') && $('#optRoll').checked), sysNarr: !!($('#optSysNarr') && $('#optSysNarr').checked) });
 
   /* 아바타·판정 설정은 ‘변환’을 기다리지 않고 곰바로 반영된다 */
   document.querySelectorAll('[data-av-shape]').forEach(b => b.addEventListener('click', () => {
@@ -1060,6 +1065,7 @@
     const alignOf = name => (name && opts.align && opts.align[name] === 'center') ? 'center' : 'left';
     const parts = []; let prevName = null, narr = null, narrCenter = false;
     const narrators = narratorSet(opts); const isNarr = m => narrators.has(normName(m.name));
+    const narrLead = (Array.isArray(opts.narrators) && opts.narrators[0]) || 'GM';
 
     const flush = () => {
       if(narr && narr.length){
@@ -1084,14 +1090,17 @@
         parts.push(sysBlock(sysP(arr), ''));
         return;
       }
-      if(isSys(m) && !noise && !m.shots.length){
+      const asNarr = isSys(m) && !noise && !!opts.sysNarr;
+      if(isSys(m) && !noise && !asNarr && !m.shots.length){
         flush(); prevName = null;
         parts.push(sysBlock(sysP(sysLines(P)), ''));
         return;
       }
-      if(isNarr(m) && !noise){
-        prevName = null; if(!narr){ narr = []; narrCenter = alignOf(m.name) === 'center'; }
-        P.forEach(p => narr.push({p})); m.shots.forEach(s => narr.push({img:s}));
+      if((isNarr(m) || asNarr) && !noise){
+        prevName = null;
+        const who = asNarr ? narrLead : (m.name || 'GM');
+        if(!narr){ narr = []; narrCenter = alignOf(who) === 'center'; }
+        (asNarr ? sysLines(P) : P).forEach(p => narr.push({p})); m.shots.forEach(s => narr.push({img:s}));
         return;
       }
       flush();
