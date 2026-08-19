@@ -786,7 +786,7 @@
       }
       if(isSys(m) && !noise && !m.shots.length){
         prevName = null; curNarr = null;
-        book.appendChild(sysNote(sysLines(P), '시스템'));
+        book.appendChild(sysNote(sysLines(P), ''));
         return;
       }
       if(isNarr(m) && !noise){
@@ -1086,7 +1086,7 @@
       }
       if(isSys(m) && !noise && !m.shots.length){
         flush(); prevName = null;
-        parts.push(sysBlock(sysP(sysLines(P)), '시스템'));
+        parts.push(sysBlock(sysP(sysLines(P)), ''));
         return;
       }
       if(isNarr(m) && !noise){
