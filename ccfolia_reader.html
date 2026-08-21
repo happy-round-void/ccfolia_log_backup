@@ -4,9 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>코코포리아 로그 백업</title>
-<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;700&display=swap">
+<!-- 판이 바뀌면 글꼴을 싣지 않는다. 이 <link>는 저장한 아카이브에도 그대로 실려,
+     남이 그 파일을 열 때도 같은 곳에 요청이 나간다. 그래서 받은 것이 우리가 아는 그 파일인지
+     integrity로 확인한다. 어긋나면 글꼴만 조용히 시스템 글꼴로 떨어질 뿐 화면은 멀쩡하다.
+     (본문 글꼴 파일 자체는 이 CSS가 상대 주소로 가리키므로 여기서 함께 잠기지는 않는다.) -->
+<link rel="stylesheet" crossorigin
+      integrity="sha384-5BlC3z5PiUASCwi5iNqbsXbtE1SBi8nn1Upz4JWJg2upbZKNNDXLRPKEcn79qArn"
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css">
+<!-- 본명조(Noto Serif KR)는 골라야 쓰이는 글씨체다. 그런데 여기 <link>로 박아 두면
+     본명조를 한 번도 안 쓰는 사람도, 아카이브를 받아 여는 사람도 전부 구글에 요청을 보낸다.
+     실제로 고른 순간에만 부른다 — 아래 런타임의 ensureSerif()가 맡는다. -->
 <style>
   :root{
     --paper:#FFFFFF; --surface:#FFFFFF; --subtle:#F4F4F5; --subtle-2:#EDEDF0;
@@ -18,6 +25,7 @@
     --ok:#2F7D5B; --ng:#B04A42;
     --sans:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
     --serif:var(--sans);
+    --mono:ui-monospace,SFMono-Regular,"Cascadia Mono",Menlo,Consolas,"D2Coding",monospace;
     --read-font:var(--sans);
   }
   html[data-theme="dark"]{
@@ -97,9 +105,12 @@
   .panes > #charPanel{flex:0 1 400px;min-width:300px;max-width:440px;}
 
   /* ── 캐릭터 이미지 설정 ──
-     로그를 불러와 ‘편집’으로 들어왔을 때만 나온다. 첫 화면에서는 자리도 차지하지 않는다. */
-  #charPanel{display:none;}
-  #editPanes:has(> #pastePanel.mode-edit) > #charPanel{display:block;}
+     로그를 불러와 ‘편집’으로 들어왔을 때만 나온다. 첫 화면에서는 자리도 차지하지 않는다.
+     보이고 안 보이고는 .hidden 하나로만 정한다(첫 화면에서는 처음부터 붙여 두고,
+     ‘편집’에서 떼고, 변환할 때 다시 붙인다). 예전에는 :has()로 한 겹 더 잠갔는데,
+     :has()를 모르는 브라우저에서는 그 잠금이 풀리지 않아 패널이 영영 안 나왔다.
+     아래 두 줄의 :has()는 '두 칸으로 나눠 쓰기'라는 멋내기에만 쓰이므로,
+     모르는 브라우저에서는 한 칸으로 순순히 내려앉는다. */
   /* 편집 중에는 두 칸이 폭을 반씩 나눠 쓴다. 혼자 있을 때(첫 화면)는 원래의 한 칸 폭을 지킨다. */
   #editPanes:has(> #pastePanel.mode-edit){max-width:1400px;margin:0 auto;}
   #editPanes:has(> #pastePanel.mode-edit) > .panel{flex:1 1 380px;min-width:0;max-width:none;}
@@ -179,7 +190,9 @@
   .adv .fname{flex:0 0 auto;color:var(--ink-2);font-weight:600;}
   .adv .avprev{flex:0 0 auto;width:26px;height:26px;background:var(--subtle-2);border-radius:var(--av-radius);box-shadow:0 0 0 1px var(--line);}
   .jalign{display:flex;flex-direction:column;gap:8px;width:100%;min-width:0;max-width:100%;margin-top:6px;}
-  #infoWrap{flex-direction:column;align-items:stretch;gap:.45rem;min-width:0;}
+  #infoWrap,#rollStyleWrap,#blankSlotWrap{flex-direction:column;align-items:stretch;gap:.45rem;min-width:0;}
+  /* 세로로 쌓는 줄에서는 stretch가 세그먼트를 폭 끝까지 늘린다. 글자만큼만 차지하게 둔다. */
+  #blankSlotWrap .seg{align-self:flex-start;}
   #infoWrap > details.adv{min-width:0;max-width:100%;}
   #infoWrap > details.adv{margin-top:6px;}
   .jrow{display:flex;align-items:center;gap:10px;}
@@ -253,8 +266,38 @@
   .alert .alist{margin:8px 0 0;padding-left:19px;}
   .alert .alist li{margin:3px 0;color:var(--ink-2);}
   .alert .atail{margin:7px 0 0;color:var(--muted);}
+  /* '고친 것' 목록과 '이번에 이런 일이 생깁니다'는 성격이 다르다. 선 하나로 나눠 세운다.
+     색은 목록과 같은 무게로 둔다 — .panel p가 muted로 눌러 버리므로 여기서 되돌린다. */
+  .alert .anote{margin:10px 0 0;padding-top:9px;border-top:1px solid var(--line-2);color:var(--ink-2);}
   /* .panel p b 가 먹색으로 눌러 버리므로 같은 무게로 맞춘다 */
   .alert p b{color:var(--ng);font-weight:700;}
+
+  /* 피드백 안내 — 첫 화면 맨 끝에서 건네는 한마디.
+     판올림 알림(빨강)과 나란히 놓여도 안 싸우도록 띠는 먹색으로 둔다. */
+  .feedback{display:flex;align-items:flex-start;gap:11px;margin-top:22px;padding:14px 16px;
+    border:1px solid var(--line);border-left:3px solid var(--ink);background:var(--subtle);
+    border-radius:0;font-size:13.5px;line-height:1.62;color:var(--ink-2);}
+  .feedback .fic{flex:0 0 19px;display:grid;place-items:center;width:19px;height:19px;margin-top:1px;color:var(--ink);}
+  .feedback .fic svg{width:17px;height:17px;}
+  .feedback .ftxt{flex:1 1 auto;min-width:0;}
+  .feedback .fh{margin:0 0 4px;font-size:11px;font-weight:700;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--faint);}
+  .feedback p{margin:0;color:var(--ink-2);}
+  .feedback p b{color:var(--ink);font-weight:700;}
+
+  /* 만든 내력 — 첫 화면을 닫는 꼬리말. 본문 꼬리말(.site-foot)과 같은 헤어라인 틀을 쓰되,
+     위의 피드백 상자와 무게가 겹치지 않게 테두리 없이 조용히 둔다. */
+  .colophon{margin-top:26px;padding-top:18px;border-top:1px solid var(--line);
+    font-size:12.5px;line-height:1.7;color:var(--muted);}
+  .colophon .ch{margin:0 0 7px;font-size:11px;font-weight:700;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--faint);}
+  .colophon p{margin:0;color:var(--muted);}
+  .colophon p + p{margin-top:2px;}
+  /* ‘바이브 코딩’은 괄호 대신 작은 딱지로 둔다 — 문장이 끊기지 않으면서 눈에는 걸리도록 */
+  .colophon .tag{display:inline-block;margin-left:5px;padding:1px 7px;
+    border:1px solid var(--line-2);border-radius:0;
+    font-size:11px;font-weight:600;letter-spacing:.02em;color:var(--muted);vertical-align:1px;}
+  .colophon .cclose{margin-top:10px;color:var(--ink-2);font-weight:600;}
 
   /* 이어보기 배너 */
   .resume{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:22px;padding:13px 16px;
@@ -277,12 +320,29 @@
   .av{width:var(--av);height:var(--av);flex:0 0 var(--av);border-radius:var(--av-radius);overflow:hidden;background:var(--subtle);box-shadow:0 0 0 1px var(--line);}
   .av img{width:100%;height:100%;display:block;object-fit:cover;object-position:var(--av-focus);transform:scale(var(--av-zoom));transform-origin:var(--av-focus);}
   .av-space{width:var(--av);flex:0 0 var(--av);}
+  /* 이미지가 없는 저널의 이미지 칸 — 단색으로 채울지, 빈 자리로 둘지, 통째로 접을지는 고급 설정이 정한다.
+     칸은 언제나 그려 두고 보이는 방식만 CSS로 갈아 끼운다. 설정을 바꿔도 본문을 다시 그릴 일이 없다. */
+  .av.blank{background:var(--subtle);}
+  /* 빈 자리로 둘 때는 높이도 놓아 준다 — 안 그러면 한 줄짜리 저널이 그림 높이만큼 부풀어
+     그림 없는 캐릭터의 줄만 유독 성기게 벌어진다. 폭만 지키면 글머리는 그대로 맞는다. */
+  html[data-avblank="gap"] .av.blank{background:none;box-shadow:none;height:auto;}
+  html[data-avblank="gap"] .turn.center > .av.blank{display:none;}
+  html[data-avblank="hide"] .av.blank,html[data-avblank="hide"] .av-space.blank{display:none;}
   .content{flex:1;min-width:0;padding-top:2px;}
   .head{display:flex;align-items:baseline;gap:9px;margin-bottom:5px;}
   .who{font-weight:700;font-size:15px;letter-spacing:-.01em;color:var(--speaker,var(--ink));}
   .time{font-size:12.5px;color:var(--faint);}
   .body{color:var(--ink-2);}
   .body p{margin:0 0 10px;} .body p:last-child{margin-bottom:0;}
+  /* 본명조는 획이 굵고 글자 속공간이 좁아, 같은 행간에서도 줄이 서로 붙어 보인다.
+     긴 글을 줄바꿈 없이 한 문단으로 쏟아 놓으면 특히 그렇다 — 문단 여백이 쉬어 갈 자리를
+     내주지 못해, 접힌 줄이 그대로 쌓이기 때문이다. 그래서 본명조를 골랐을 때만
+     읽는 글의 행간을 한 칸 벌린다. 줄을 바꾼 자리의 사이는 문단 여백(10px)이 정하므로
+     그대로고, 한 문단 안에서 저절로 접힌 줄만 넓어진다.
+     주사위·판정 로그와 시스템 메시지는 읽는 글이 아니므로 건드리지 않는다. */
+  html[data-font="serif"] .turn:not(.muted) .body,
+  html[data-font="serif"] .narr:not(.muted) .body,
+  html[data-font="serif"] .infocard .body{line-height:calc(var(--lh) + .26);}
 
   /* GM = 내레이션 */
   .narr{margin:16px 0 16px calc(var(--av) + var(--gap));padding:13px 16px;background:var(--narr-bg);}
@@ -317,6 +377,44 @@
   .infocard .mv button + button{border-left:0;}
   .infocard .mv button:hover{color:var(--ink);background:var(--subtle);}
   .infocard .mv button.del:hover{color:var(--ng);}
+  .infocard .mv button.grip{cursor:grab;letter-spacing:-1px;}
+  /* 집어 든 카드는 흐려 두고, 그동안 본문의 단추와 글자 고르기는 잠근다 */
+  .infocard.picked{opacity:.38;border-style:dashed;}
+  html[data-moving] #book{user-select:none;-webkit-user-select:none;cursor:copy;}
+  html[data-dragging] #book,html[data-dragging] .infocard .mv button.grip{cursor:grabbing;}
+  html[data-moving] .infocard .mv{opacity:0 !important;pointer-events:none;}
+  /* 놓을 자리 — 줄을 하나만 만들어 옮겨 그린다. 본문에 요소를 끼우지 않으므로 글이 흔들리지 않는다 */
+  .dropline{position:absolute;height:0;border-top:2px solid var(--accent);
+    pointer-events:none;z-index:6;}
+  .dropline::before{content:"";position:absolute;left:0;top:-4px;width:7px;height:7px;background:var(--accent);}
+  /* 같은 시:분에 걸린 자리 — 어긋남의 대부분이 이 안에서 생긴다 */
+  .samemin{position:absolute;pointer-events:none;z-index:5;background:var(--subtle);
+    border-top:1px dashed var(--line-2);border-bottom:1px dashed var(--line-2);}
+  .samemin > span{position:absolute;right:2px;top:-9px;padding:1px 5px;background:var(--surface);
+    border:1px solid var(--line);font-size:10px;letter-spacing:.06em;color:var(--muted);white-space:nowrap;}
+  /* 집어 든 동안 떠 있는 안내 */
+  .movebar{position:fixed;left:50%;top:64px;transform:translateX(-50%);z-index:96;
+    display:flex;align-items:center;gap:10px;max-width:min(560px,92vw);
+    padding:9px 12px;background:var(--surface);border:1px solid var(--line-2);
+    box-shadow:0 8px 26px -16px rgba(0,0,0,.55);font-size:12.5px;color:var(--ink-2);}
+  .movebar .mtxt{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .movebar .mpos{flex:0 0 auto;max-width:38%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    padding:2px 7px;background:var(--subtle);color:var(--muted);font-size:11.5px;}
+  /* 손본 것이 있을 때만 나오는 알림. 토스트와 겹치지 않게 오른쪽 아래에 둔다 */
+  .tunechip{position:fixed;right:22px;bottom:22px;z-index:94;
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;
+    max-width:min(420px,92vw);padding:7px 11px;background:var(--surface);
+    border:1px solid var(--line-2);box-shadow:0 8px 26px -16px rgba(0,0,0,.55);
+    font-size:12px;color:var(--muted);}
+  .movebar button,.tunechip button{border:1px solid var(--line);background:var(--surface);
+    color:var(--muted);font:inherit;font-size:11.5px;line-height:1.3;padding:4px 8px;
+    cursor:pointer;white-space:nowrap;}
+  .movebar button:hover,.tunechip button:not(:disabled):hover{color:var(--ink);background:var(--subtle);}
+  .tunechip button:disabled{opacity:.4;cursor:default;}
+  @media (max-width:620px){
+    .movebar{top:auto;bottom:74px;}
+    .tunechip{right:12px;left:12px;bottom:14px;justify-content:center;}
+  }
 
   /* 주사위·시스템(포함 옵션) */
   .turn.muted .body,.narr.muted .body{color:var(--faint);font-size:13px;line-height:1.5;}
@@ -327,17 +425,93 @@
   /* 강조를 켜면 주사위·판정 로그도 본문과 같은 크기로 읽는다 */
   html[data-roll="on"] .turn.muted .body,html[data-roll="on"] .narr.muted .body{font-size:var(--fs);line-height:var(--lh);}
 
+  /* ── 판정 강조 스타일 ──
+     네 가지 모양은 전부 '식 ＞ 숫자 ＞ 결과'라는 같은 재료를 쓴다.
+     색은 성공(--ok)·실패(--ng)를 따르고, 결과를 못 알아본 줄은 중립으로 둔다.
+     대성공·대실패만 한 단계 더 세다 — 성공·실패는 선으로, 대성공·대실패는 면으로 가른다. */
+  .rollx{--rc:var(--line-2);--rt:var(--muted);}
+  .rollx.ok{--rc:var(--ok);--rt:var(--ok);}
+  .rollx.ng{--rc:var(--ng);--rt:var(--ng);}
+  .rollx .rx-expr{font-family:var(--mono);font-size:12.5px;letter-spacing:.01em;color:var(--faint);}
+  .rollx .rx-sub{font-family:var(--mono);font-size:12px;color:var(--faint);}
+  .rollx .rx-num{font-variant-numeric:tabular-nums;letter-spacing:-.02em;}
+  /* 미세 라벨만은 본문 서체를 따르지 않는다 — 10px에 자간을 벌린 글자는 명조에서 뭉갠다 */
+  .rollx .rx-lbl{font-family:var(--sans);font-size:10px;letter-spacing:.24em;color:var(--faint);}
+
+  /* 판정 티켓 — 정보 카드와 같은 어법의 작은 표 */
+  .rollx.rs-ticket{margin:14px 0 14px calc(var(--av) + var(--gap));padding:10px 14px 11px;
+    border:1px solid var(--line);border-left:2px solid var(--rc);background:var(--surface);}
+  .rollx.rs-ticket.crit{border-left-width:4px;}
+  .rollx.rs-ticket .rx-top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:5px;}
+  .rollx.rs-ticket .rx-nm{font-size:11.5px;font-weight:600;color:var(--muted);}
+  .rollx.rs-ticket .rx-top .rx-expr{margin-left:auto;}
+  .rollx.rs-ticket .rx-bot{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  .rollx.rs-ticket .rx-num{font-size:27px;font-weight:700;line-height:1;color:var(--ink);}
+  .rollx.rs-ticket .rx-out{margin-left:auto;font-size:13px;font-weight:700;letter-spacing:.1em;color:var(--rt);}
+  .rollx.rs-ticket.crit .rx-out{background:var(--rc);color:var(--paper);padding:4px 9px;letter-spacing:.08em;}
+  .rollx.rs-ticket .rx-sub{margin-left:auto;}
+
+  /* 주사위 타일 — 캐릭터 이미지 칸을 주사위 눈으로 바꾸어 글머리를 그대로 둔다 */
+  .rollx.rs-tile{display:flex;gap:var(--gap);padding:15px 0;}
+  .rollx.rs-tile .rx-tile{width:var(--av);height:var(--av);flex:0 0 var(--av);
+    display:grid;place-items:center;align-content:center;gap:1px;
+    border:1px solid var(--rc);background:color-mix(in srgb,var(--rc) 9%,transparent);}
+  .rollx.rs-tile.crit .rx-tile{background:var(--rc);}
+  .rollx.rs-tile .rx-tile .rx-num{font-size:19px;font-weight:700;line-height:1;color:var(--rt);}
+  .rollx.rs-tile .rx-die{font-family:var(--mono);font-size:8.5px;letter-spacing:.06em;color:var(--rt);opacity:.75;}
+  .rollx.rs-tile.crit .rx-tile .rx-num{color:var(--paper);}
+  .rollx.rs-tile.crit .rx-die{color:var(--paper);opacity:.8;}
+  .rollx.rs-tile .rx-col{flex:1;min-width:0;padding-top:3px;}
+  .rollx.rs-tile .rx-nm{font-size:11.5px;font-weight:600;color:var(--muted);margin-bottom:4px;}
+  .rollx.rs-tile .rx-out{font-size:15px;font-weight:700;letter-spacing:.04em;color:var(--rt);line-height:1.3;}
+  .rollx.rs-tile .rx-sub{display:block;font-size:13.5px;color:var(--rt);}
+  .rollx.rs-tile .rx-expr{display:block;margin-top:3px;}
+
+  /* 하이라이트 밴드 — 읽는 폭 전체를 가로질러 리듬을 끊는다 */
+  .rollx.rs-band{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:14px 0;padding:11px 15px;
+    border-left:3px solid var(--rc);background:color-mix(in srgb,var(--rc) 7%,var(--paper));}
+  .rollx.rs-band.crit{border-left-width:5px;background:color-mix(in srgb,var(--rc) 15%,var(--paper));}
+  .rollx.rs-band .rx-nm{font-size:13px;font-weight:700;color:var(--ink);}
+  .rollx.rs-band .rx-expr{color:var(--muted);}
+  .rollx.rs-band .rx-right{margin-left:auto;display:flex;align-items:baseline;gap:11px;}
+  .rollx.rs-band .rx-num{font-size:19px;font-weight:700;line-height:1;color:var(--ink);}
+  .rollx.rs-band .rx-out{font-size:12.5px;font-weight:700;letter-spacing:.1em;color:var(--rt);}
+
+  /* 여백 표기 — 상자 없이 얇은 세로선과 네모 하나로만 */
+  .rollx.rs-note{margin:10px 0 10px calc(var(--av) + var(--gap));padding:2px 0 2px 11px;
+    border-left:1px solid var(--line);display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+    font-size:12.5px;line-height:1.5;}
+  .rollx.rs-note .rx-dot{width:6px;height:6px;flex:0 0 6px;border:1px solid var(--rc);}
+  .rollx.rs-note.crit .rx-dot{background:var(--rc);}
+  .rollx.rs-note .rx-nm{color:var(--faint);}
+  .rollx.rs-note .rx-num{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--ink-2);}
+  .rollx.rs-note .rx-out{font-weight:600;letter-spacing:.04em;color:var(--rt);}
+  .rollx.rs-note .rx-ar{color:var(--line-2);}
+
+  /* 결과를 못 알아본 줄은 색 대신 앱의 옅은 바탕으로 둔다.
+     성공·실패 색을 7%로 섞으면 중립색에서는 종이와 구분이 안 돼 띠가 사라진 것처럼 보인다. */
+  .rollx.rs-band:not(.ok):not(.ng){background:var(--subtle);}
+  .rollx.rs-tile:not(.ok):not(.ng) .rx-tile{background:var(--subtle);}
+
+  /* 이미지를 빼면 타일도 함께 접힌다 — 글은 왼쪽 끝에서 시작한다 */
+  html[data-img="off"] .rollx.rs-tile .rx-tile{display:none;}
+  html[data-img="off"] .rollx.rs-ticket,html[data-img="off"] .rollx.rs-note{margin-left:0;}
+  /* 가운데 정렬로 둔 캐릭터의 판정은 들여쓰기를 푼다 */
+  .rollx.center{margin-left:0;}
+
   /* 이미지를 뺐을 때: 캐릭터 이미지 자리를 접어 왼쪽 선을 맞추고, 올렸던 이미지는 조용한 자리 표시만 남긴다 */
   html[data-img="off"] .narr{margin-left:0;}
   html[data-img="off"] .infocard{margin-left:0;}
-  .noshot{font-size:12px;color:var(--faint);letter-spacing:.06em;margin:9px 0;}
-
-  figure.shot{margin:11px 0;}
-  figure.shot img{max-width:100%;height:auto;border-radius:0;border:1px solid var(--line);display:block;}
-  figure.shot figcaption{font-size:12px;color:var(--faint);margin-top:6px;}
 
   mark.hit{background:var(--hit);color:inherit;border-radius:0;padding:0 1px;box-shadow:inset 0 -2px 0 var(--ink-2);}
   mark.hit.cur{background:var(--hit-cur);box-shadow:inset 0 -2px 0 var(--ink),0 0 0 2px var(--ink);}
+
+  /* 숨긴 줄 알림 — 본문 맨 위에서 조용히 알리되, 눈에는 걸리게 */
+  .hiddenbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 20px;padding:9px 13px;
+    border:1px solid var(--line);border-left:3px solid var(--line-2);background:var(--subtle);
+    font-size:12.5px;color:var(--muted);}
+  .hiddenbar .htxt{margin-right:auto;min-width:0;}
+  .hiddenbar .btn{font-size:12px;padding:5px 10px;}
 
   .site-foot{margin-top:60px;padding-top:22px;border-top:1px solid var(--line);color:var(--faint);font-size:12.5px;text-align:center;}
 
@@ -389,7 +563,8 @@
   }
   @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}#progress{transition:none}}
   @media print{
-    .panel,#progress,.excerpt-btn,.ex-overlay,.site-foot,.dropzone,#toast{display:none !important;}
+    .panel,#progress,.excerpt-btn,.ex-overlay,.site-foot,.dropzone,#toast,
+    .movebar,.tunechip,.dropline{display:none !important;}
     /* 상단 바는 접고, 제목만 표제로 남긴다 */
     .bar{position:static;display:block;padding:0 0 10px;margin:0 0 4px;background:none;backdrop-filter:none;border-bottom:1px solid #ddd;}
     .bar > *:not(.brand){display:none !important;}
@@ -437,18 +612,21 @@
 <div class="panes app-only" id="editPanes">
 <section class="panel app-only" id="pastePanel">
   <!-- 파일을 고칠 때마다 이 날짜를 함께 바꾼다. 빌드 과정이 없는 단일 HTML이라 손으로 적어 둔다. -->
-  <div class="stamp collect-only">업데이트 2026-08-19 19:58</div>
+  <div class="stamp collect-only">업데이트 2026-08-21 12:34</div>
   <div class="alert collect-only" role="status">
     <span class="mk" aria-hidden="true">!</span>
     <div class="atxt">
       <p>이번 업데이트 기점으로 수집 관련 부분을 크게 수정했습니다! <b>꼭 북마크를 재등록해 주세요.</b></p>
       <ol class="alist">
-        <li>스크롤 관련 오류</li>
-        <li>채팅 날짜·시간 관련한 여러 케이스에서 로그가 안 보이던 오류</li>
-        <li>다른 탭까지 강제로 수집하던 현상</li>
-        <li>캐릭터 이미지 관련 기능 추가</li>
+        <li>이미지 칸 빼고 추출하기</li>
+        <li>이미지가 없는 저널 처리(엑박 수정)</li>
+        <li>저널에서 간헐적으로 이미지가 사라지는 오류 수정</li>
+        <li>정보탭 메시지의 위치 변경 기능 개선</li>
+        <li>주사위·판정 로그 디자인 개선</li>
+        <li>기타 자잘한 오류와 가독성 수정·최적화</li>
       </ol>
       <p class="atail">등등을 적용했습니다.</p>
+      <p class="anote"><b>수집할 탭 선택이 한 번 초기화됩니다.</b> 방마다 따로 기억하도록 바꾸면서 저장하는 자리가 달라졌습니다. 다음 수집 때 기본값(메인·정보)으로 뜨니, 다른 탭도 함께 모으시려면 그 자리에서 다시 골라 주세요.</p>
     </div>
   </div>
   <div id="resumeSlot" class="collect-only"></div>
@@ -505,9 +683,28 @@
       <div class="field"><label><input type="checkbox" id="optMerge" checked> 같은 화자 연속 발화 합치기</label></div>
       <div class="field"><label><input type="checkbox" id="optNoise"> 주사위·판정 로그도 포함</label></div>
       <div class="field"><label><input type="checkbox" id="optRoll"> 주사위·판정 로그도 강조 <span class="jhint">— 성공은 초록, 실패는 빨강으로</span></label></div>
+
+      <div class="field" id="rollStyleWrap">
+        <label style="display:block;margin-bottom:2px">주사위·판정 로그 강조 스타일 <span class="jhint">— 하나만 고릅니다 · 아무것도 고르지 않으면 지금처럼 글자색만 바뀝니다</span></label>
+        <label><input type="checkbox" id="optRsTicket"> 판정 티켓 <span class="jhint">— 왼쪽 세로선과 큰 숫자가 들어간 작은 표</span></label>
+        <label><input type="checkbox" id="optRsTile"> 주사위 타일 <span class="jhint">— 캐릭터 이미지 자리에 주사위 눈을 놓습니다</span></label>
+        <label><input type="checkbox" id="optRsBand"> 하이라이트 밴드 <span class="jhint">— 읽는 폭 전체에 옅은 색면을 깔고 굵은 선을 세웁니다</span></label>
+        <label><input type="checkbox" id="optRsNote"> 여백 표기 <span class="jhint">— 상자 없이 얇은 세로선 하나로 조용히</span></label>
+      </div>
       <div class="field"><label><input type="checkbox" id="optStatus"> HP·MP·이성 등 스테이터스 변화를 시스템 로그로 포함</label></div>
 
-      <div class="field"><label><input type="checkbox" id="optNoImg"> 이미지 빼고 내보내기 <span class="jhint">— 캐릭터 이미지와 본문에 올린 이미지를 모두 뺍니다</span></label></div>
+      <div class="field"><label><input type="checkbox" id="optNoImg"> 캐릭터 이미지 빼고 내보내기 <span class="jhint">— 이미지 칸까지 접어 글만 남깁니다</span></label></div>
+
+      <!-- 캐릭터 이미지 설정의 '빈 칸' 줄과 같은 표식(data-av-blank)을 쓴다.
+           그래서 어느 쪽을 누르든 두 곳이 함께 움직이고, 담기는 값도 하나다. -->
+      <div class="field collect-only" id="blankSlotWrap">
+        <label style="display:block;margin-bottom:2px">빈 칸인 캐릭터 이미지 처리 <span class="jhint">— 캐릭터 이미지가 없는 저널의 이미지 자리를 어떻게 할지 정합니다 · 변환한 뒤 <b>‘캐릭터 이미지 설정’</b>에서도 바꿀 수 있습니다</span></label>
+        <span class="seg" role="group" aria-label="빈 칸인 캐릭터 이미지 처리">
+          <button type="button" data-av-blank="gap" aria-pressed="true" title="칸을 비워 둡니다 — 글머리는 그대로 맞습니다">비움</button>
+          <button type="button" data-av-blank="solid" aria-pressed="false" title="빈 칸을 단색으로 채웁니다">단색</button>
+          <button type="button" data-av-blank="hide" aria-pressed="false" title="칸을 통째로 접어 글이 왼쪽 끝에서 시작합니다">숨김</button>
+        </span>
+      </div>
 
       <div class="field jalign-wrap hidden" id="jalignWrap">
         <label style="display:block;margin-bottom:2px">저널 정렬 <span class="jhint">— 변환 후 캐릭터별 좌측/중앙 지정 · 변경 뒤 ‘변환 · 다시 적용’으로 반영</span></label>
@@ -535,16 +732,31 @@
     </div>
   </div>
 
-  <div class="note collect-only">이 방의 이미지는 <code>storage.ccfolia-cdn.net/…</code> 영구 URL이라 저장 후에도 보입니다. · 변환한 세션은 이 브라우저에 자동 보관되어, 새로고침해도 ‘이어보기’로 다시 열 수 있습니다.</div>
+  <div class="note collect-only">수집할 때 <b>캐릭터 이미지를 파일 안에 함께 담습니다</b> — 나중에 원본이 지워져도 저장한 아카이브에는 그대로 남습니다. 그림은 화면에 필요한 크기로 줄여 담으므로 보통 한 장에 수십 KB입니다. · 변환한 세션은 이 브라우저에 자동 보관되어, 새로고침해도 ‘이어보기’로 다시 열 수 있습니다. <span class="jhint">— 이어보기는 주소로 다시 불러오므로, 오래 두려면 ‘저장’으로 아카이브를 받아 두세요.</span> <span class="jhint">보관된 세션은 <b>이 브라우저에 그대로 남습니다</b>(기한 없음). 함께 쓰는 컴퓨터라면 다 본 뒤 이어보기의 <b>‘지우기’</b>를 눌러 주세요.</span></div>
+
+  <div class="feedback collect-only">
+    <span class="fic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></span>
+    <div class="ftxt">
+      <p class="fh">피드백</p>
+      <p>피드백은 배포한 계정의 <b>멘션</b> 혹은 <b>DM</b>으로 받고 있습니다. 인용도 확인하는 편이니, 요청사항이 있다면 편히 남겨주세요.</p>
+    </div>
+  </div>
+
+  <footer class="colophon collect-only">
+    <p class="ch">이 페이지에 대하여</p>
+    <p>실상 제가 만든 것이 아니라 클로드 AI가 다 해줬음을 밝힙니다.<span class="tag">바이브 코딩</span></p>
+    <p>글로벌사이버국민 공공재 소스입니다. 개인적으로 편하게 뜯어 고치셔도 상관 없습니다.</p>
+    <p class="cclose">누군가 피해 받지 않고 행복하면 그만이리라⋯!!!</p>
+  </footer>
 </section>
 
-<section class="panel app-only" id="charPanel">
+<section class="panel app-only hidden" id="charPanel">
   <h1>캐릭터 이미지 설정</h1>
   <p class="lead">캐릭터 이미지를 어떻게 잘라 보여 줄지 정합니다. 고친 것은 <b>곧바로</b> 반영되고, 저장·복사·이어보기에 그대로 실려 갑니다.</p>
 
   <div class="card">
     <h2>기본값</h2>
-    <p class="sub">따로 손대지 않은 캐릭터는 모두 이 값을 따릅니다.</p>
+    <p class="sub">따로 손대지 않은 캐릭터는 모두 이 값을 따릅니다. <b>‘빈 칸’</b>은 캐릭터 이미지가 없는 저널의 이미지 자리를 어떻게 할지 정합니다.</p>
     <div class="field">
       <span class="fname">모양</span>
       <span class="setval">
@@ -578,6 +790,16 @@
         <span class="val" id="avZoomVal">100%</span>
       </span>
     </div>
+    <div class="field">
+      <span class="fname">빈 칸</span>
+      <span class="setval">
+        <span class="seg" role="group" aria-label="이미지가 없는 저널의 이미지 칸">
+          <button type="button" data-av-blank="gap" aria-pressed="true" title="칸을 비워 둡니다 — 글머리는 그대로 맞습니다">비움</button>
+          <button type="button" data-av-blank="solid" aria-pressed="false" title="빈 칸을 단색으로 채웁니다">단색</button>
+          <button type="button" data-av-blank="hide" aria-pressed="false" title="칸을 통째로 접어 글이 왼쪽 끝에서 시작합니다">숨김</button>
+        </span>
+      </span>
+    </div>
     <div class="field chk">
       <label for="optAvChange">
         <input type="checkbox" id="optAvChange">
@@ -603,11 +825,25 @@
 <div class="dropzone" id="dropzone"><div class="inner"><div class="big">여기에 놓으면 변환</div><div class="small">ccfolia-log.html 파일을 놓으세요 · 여러 개도 됩니다</div></div></div>
 <div id="toast" role="status" aria-live="polite"></div>
 
+<!-- 정보 카드 자리 옮기기 (앱 전용) -->
+<div class="movebar app-only hidden" id="moveBar" role="status" aria-live="polite">
+  <span class="mtxt"></span>
+  <span class="mpos"></span>
+  <button class="btn" type="button" data-mact="home">제자리로</button>
+  <button class="btn" type="button" data-mact="cancel">취소 (Esc)</button>
+</div>
+<div class="tunechip app-only hidden" id="tuneChip">
+  <span class="ctxt"></span>
+  <button class="btn" type="button" data-cact="undo">되돌리기</button>
+  <button class="btn" type="button" data-cact="reset">자리 전부 되돌리기</button>
+  <button class="btn hidden" type="button" data-cact="undel">지운 카드 되살리기</button>
+</div>
+
 <!-- 게시판용 HTML 추출 (앱 전용) -->
 <div class="export-ov app-only" id="exportOv">
   <div class="export-card">
     <div class="export-head"><b>티스토리·게시판용 HTML</b><button class="btn" id="exportClose">닫기</button></div>
-    <p class="export-desc">블로그·게시판 편집기를 <b>HTML 편집 모드</b>로 바꾼 뒤 아래 코드를 붙여넣으세요. · <b>티스토리</b>: 글쓰기 우측 상단 <b>기본모드 → HTML</b> · <b>아보카도에디션·그누보드</b>: 에디터의 <b>‘HTML’ 소스 버튼</b>. 이미지는 코코포리아 영구 URL이라 붙여넣어도 그대로 보입니다 — 빼고 싶으면 <b>‘편집 → 이미지 빼고 내보내기’</b>를 켜세요. · <b>글씨체·글자 크기·캐릭터 이미지 설정이 그대로 따라가고, 밝은·어두운 테마는 붙여넣는 곳을 따라갑니다.</b></p>
+    <p class="export-desc">블로그·게시판 편집기를 <b>HTML 편집 모드</b>로 바꾼 뒤 아래 코드를 붙여넣으세요. · <b>티스토리</b>: 글쓰기 우측 상단 <b>기본모드 → HTML</b> · <b>아보카도에디션·그누보드</b>: 에디터의 <b>‘HTML’ 소스 버튼</b>. 캐릭터 이미지는 코코포리아 주소를 그대로 걸어 두므로 붙여넣기가 가벼우며, 원본이 살아 있는 동안 보입니다 — 빼고 싶으면 <b>‘편집 → 캐릭터 이미지 빼고 내보내기’</b>를 켜세요. · <b>글씨체·글자 크기·캐릭터 이미지 설정이 그대로 따라가고, 밝은·어두운 테마는 붙여넣는 곳을 따라갑니다.</b></p>
     <div class="export-opts">
       <label><input type="checkbox" id="expTitle" checked> 제목 헤더 포함</label>
       <label><input type="checkbox" id="expBg"> 배경색 넣기</label>
@@ -629,15 +865,108 @@
   const toast = (msg) => { const t=$('#toast'); if(!t) return; t.textContent=msg; t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),1800); };
   window.__toast = toast;
 
+  /* ── 담아 온 캐릭터 이미지 ──
+     수집기는 그림을 파일 끝의 사전(<template id="ccfolia-pics">) 한 벌에만 담는다.
+     말풍선마다 data:를 박으면 같은 그림이 수천 번 복사되어 저장 파일이 수백 MB로 부푼다.
+     그래서 말풍선에는 data-pic에 원래 주소만 적어 두고, 여기서 사전을 풀어 blob: 하나로 이어 붙인다.
+     주소가 짧아 DOM이 가볍고 바이트도 한 벌만 남는다. 사전이 없는 옛 로그는 그냥 주소로 간다. */
+  const picData = new Map(), picBlob = new Map();
+  function blobOfData(d){
+    try{
+      const c = d.indexOf(','); if(c < 0) return '';
+      const mime = (d.slice(0, c).match(/^data:([^;,]+)/) || [, 'image/png'])[1];
+      const bin = atob(d.slice(c + 1)), u8 = new Uint8Array(bin.length);
+      for(let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+      return URL.createObjectURL(new Blob([u8], {type: mime}));
+    }catch(e){ return ''; }
+  }
+  function addPics(node){
+    if(!node) return 0;
+    const root = node.content || node;   /* <template>이면 알맹이를 본다 */
+    let n = 0;
+    root.querySelectorAll('img[data-pic]').forEach(im => {
+      const key = (im.getAttribute('data-pic') || '').trim(), src = im.getAttribute('src') || '';
+      if(!key || picData.has(key) || !/^data:image\//i.test(src)) return;
+      picData.set(key, src);
+      const b = blobOfData(src); if(b) picBlob.set(key, b);
+      n++;
+    });
+    return n;
+  }
+  window.__pics = { data: picData, blob: picBlob, add: addPics };
+
+  /* ── 열리지 않는 그림 ──
+     주소가 멀쩡해도 그림은 얼마든지 안 열린다 — 지워진 파일, 끊긴 회선, 그 페이지에서만 살아 있던 주소.
+     그대로 두면 브라우저가 그 자리에 엑박을 그려 넣는다.
+     다만 한 번 실패했다고 곧바로 지우지는 않는다. 로그가 길면 그림 수백 장을 한꺼번에 부르느라
+     멀쩡한 그림도 회선이 흔들리는 순간에 함께 떨어진다. 그동안은 <img>만 감춰 엑박을 막고
+     — 겉틀은 그대로 두어 자리가 흔들리지 않는다 — 뒤에서 조용히 두 번까지 다시 불러 본다.
+     그래도 안 열리면 그때 ‘이미지가 없는 저널’과 똑같이 칸만 남긴다.
+     error는 거품처럼 올라오지 않으므로 붙잡는 단계에서 듣고, init을 기다리지 않고 지금 바로 건다.
+     이 script는 저장한 아카이브에도 그대로 실려 가므로, 한참 뒤에 그림이 죽어도 엑박은 뜨지 않는다. */
+  const RETRY_WAIT = [900, 2800];
+  addEventListener('error', e => {
+    const img = e.target;
+    if(!img || img.tagName !== 'IMG' || !img.closest) return;
+    const src = img.getAttribute('src') || '';
+    const tried = +(img.dataset.imgRetry || 0);
+    /* data:와 blob:은 다시 불러도 결과가 같다. 회선을 타는 주소만 되짚는다. */
+    if(/^https?:/i.test(src) && tried < RETRY_WAIT.length){
+      img.dataset.imgRetry = tried + 1;
+      img.style.display = 'none';
+      setTimeout(() => { if(img.isConnected){ img.removeAttribute('src'); img.setAttribute('src', src); } }, RETRY_WAIT[tried]);
+      return;
+    }
+    const box = img.closest('.av');
+    if(box){
+      img.remove(); box.classList.add('blank');
+      /* 합쳐 놓은 뒷줄들의 빈 자리도 같이 표시해 둔다. 안 그러면 첫 줄만 접혀 글머리가 어긋난다. */
+      let t = box.closest('.turn');
+      for(t = t && t.nextElementSibling; t && t.classList.contains('cont'); t = t.nextElementSibling)
+        t.querySelectorAll('.av-space').forEach(sp => sp.classList.add('blank'));
+      return;
+    }
+    img.style.display = 'none';
+  }, true);
+  /* 다시 부르기가 통했으면 감춰 두었던 것을 되돌린다 */
+  addEventListener('load', e => {
+    const img = e.target;
+    if(img && img.tagName === 'IMG' && img.dataset && img.dataset.imgRetry){
+      delete img.dataset.imgRetry;
+      img.style.removeProperty('display');
+    }
+  }, true);
+
   function init(){
     const root = document.documentElement;
+
+    /* 저장한 아카이브를 열었을 때 — 사전을 풀어 캐릭터 이미지에 도로 이어 붙인다.
+       저장할 때 src를 떼어 두므로, 여기서 걸어 주기 전까지는 아무것도 불러오지 않는다. */
+    document.querySelectorAll('#ccfolia-pics').forEach(addPics);
+    if(picBlob.size) document.querySelectorAll('#book img[data-pic]').forEach(im => {
+      const b = picBlob.get(im.getAttribute('data-pic'));
+      if(b) im.src = b;
+      else if(!im.getAttribute('src')) im.src = im.getAttribute('data-pic');
+    });
 
     document.querySelectorAll('[data-theme-set]').forEach(b => b.addEventListener('click', () => {
       root.setAttribute('data-theme', b.dataset.themeSet);
       document.querySelectorAll('[data-theme-set]').forEach(x => x.setAttribute('aria-pressed', x === b));
     }));
 
+    /* 본명조는 고른 순간에만 부른다. 한 번 부르면 그대로 두어, 오갈 때마다 다시 받지 않는다.
+       못 받아도 화면은 멀쩡하다 — 글씨체 목록의 다음 후보(AppleMyungjo·Batang)로 내려간다. */
+    function ensureSerif(){
+      if(document.getElementById('serifFont')) return;
+      const l = document.createElement('link');
+      l.id = 'serifFont'; l.rel = 'stylesheet';
+      l.href = 'https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;700&display=swap';
+      document.head.appendChild(l);
+    }
+    if(root.getAttribute('data-font') === 'serif') ensureSerif();   /* 본명조로 저장한 아카이브 */
+
     document.querySelectorAll('[data-font-set]').forEach(b => b.addEventListener('click', () => {
+      if(b.dataset.fontSet === 'serif') ensureSerif();
       root.setAttribute('data-font', b.dataset.fontSet);
       document.querySelectorAll('[data-font-set]').forEach(x => x.setAttribute('aria-pressed', x === b));
     }));
@@ -654,11 +983,24 @@
       title.addEventListener('blur', sync);
       /* 상단 바의 한 줄 제목: 줄바꿈·서식 붙여넣기는 막는다 */
       title.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); title.blur(); } });
+      const plain = s => (s || '').replace(/\s+/g, ' ').trim();
       title.addEventListener('paste', e => {
         e.preventDefault();
         const cd = e.clipboardData || window.clipboardData;
-        document.execCommand('insertText', false, (cd ? cd.getData('text') : '').replace(/\s+/g, ' ').trim());
+        document.execCommand('insertText', false, plain(cd ? cd.getData('text') : ''));
       });
+      /* 붙여넣기를 막아도 끌어다 놓기가 남아 있었다. 웹페이지에서 끌어온 글은 서식째 들어오고,
+         그 마크업이 저장한 아카이브의 제목 자리에 그대로 실린다. 같은 규칙으로 막는다. */
+      title.addEventListener('drop', e => {
+        e.preventDefault();
+        const dt = e.dataTransfer; if(!dt) return;
+        const txt = plain(dt.getData('text/plain'));
+        if(!txt) return;
+        title.focus();
+        document.execCommand('insertText', false, txt);
+        sync();
+      });
+      title.addEventListener('dragover', e => e.preventDefault());
     }
 
     const prog = $('#progress');
@@ -674,10 +1016,17 @@
     if(!book || !q) return;
     let hits = [], cur = -1, timer = null;
 
+    /* 한 글자만 쳐도 3만 줄에서는 결과가 수십만 개 나온다. 그만큼 <mark>를 만들다가
+       화면이 멎고, 다음 키 입력마다 그것을 도로 무른다. 찾기는 그대로 하되 표시는
+       여기서 끊고, 끊었다는 사실은 개수 옆의 '+'로 정직하게 알린다. */
+    const MAX_HITS = 4000;
+    let capped = false;
+    const countText = () => hits.length + (capped ? '+' : '');
+
     function clearMarks(){
       book.querySelectorAll('mark.hit').forEach(m => { const t = document.createTextNode(m.textContent); m.replaceWith(t); });
       book.normalize();
-      hits = []; cur = -1;
+      hits = []; cur = -1; capped = false;
     }
     function paint(term){
       const t = term.toLowerCase();
@@ -687,17 +1036,21 @@
           return n.nodeValue.toLowerCase().includes(t) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT; }
       });
       const targets = []; let n; while(n = walker.nextNode()) targets.push(n);
-      targets.forEach(node => {
+      for(let k = 0; k < targets.length; k++){
+        if(hits.length >= MAX_HITS){ capped = true; break; }
+        const node = targets[k];
         const s = node.nodeValue, low = s.toLowerCase(), frag = document.createDocumentFragment();
         let i = 0, j;
         while((j = low.indexOf(t, i)) !== -1){
           if(j > i) frag.appendChild(document.createTextNode(s.slice(i, j)));
           const mk = document.createElement('mark'); mk.className = 'hit'; mk.textContent = s.slice(j, j + t.length);
           frag.appendChild(mk); hits.push(mk); i = j + t.length;
+          if(hits.length >= MAX_HITS){ capped = true; break; }
         }
+        /* 끊고 나온 자리라도 남은 글자는 반드시 되돌려 붙인다 — 안 그러면 본문이 잘린다 */
         if(i < s.length) frag.appendChild(document.createTextNode(s.slice(i)));
         node.replaceWith(frag);
-      });
+      }
     }
     function setCur(i){
       if(!hits.length){ cur = -1; return; }
@@ -705,9 +1058,9 @@
       cur = (i + hits.length) % hits.length;
       hits[cur].classList.add('cur');
       hits[cur].scrollIntoView({block:'center', behavior:'smooth'});
-      cnt.textContent = (cur + 1) + '/' + hits.length;
+      cnt.textContent = (cur + 1) + '/' + countText();
     }
-    function upd(){ const has = hits.length > 0; cnt.textContent = has ? (cur+1)+'/'+hits.length : (q.value.trim()? '0' : ''); prev.disabled = next.disabled = !has; }
+    function upd(){ const has = hits.length > 0; cnt.textContent = has ? (cur+1)+'/'+countText() : (q.value.trim()? '0' : ''); prev.disabled = next.disabled = !has; }
     function run(){
       clearMarks();
       const term = q.value.trim();
@@ -761,17 +1114,30 @@
     });
     addEventListener('scroll', hide, {passive:true});
 
+    /* 길게 고르면 줄 수만큼 캔버스가 높아진다. 브라우저의 캔버스 한계를 넘는 순간
+       toDataURL이 빈 그림을 돌려주므로, 넘기 전에 앞부분만 담고 그 사실을 알린다. */
+    const MAX_EXCERPT = 500;
     btn.addEventListener('mousedown', e => e.preventDefault());
     btn.addEventListener('click', async () => {
       try{ await (document.fonts && document.fonts.ready); }catch(e){}
-      const cv = drawExcerpt(curText, curSpeaker);
+      const long = curText.length > MAX_EXCERPT;
+      const text = long ? curText.slice(0, MAX_EXCERPT).replace(/\s+$/, '') + '…' : curText;
+      const cv = drawExcerpt(text, curSpeaker);
       ov.querySelector('#exImg').src = cv.toDataURL('image/png');
       ov._cv = cv; ov.classList.add('open'); hide();
+      if(long) toast('고른 글이 길어 앞 ' + MAX_EXCERPT + '자만 담았습니다');
     });
     ov.addEventListener('click', e => {
       if(e.target === ov || e.target.id === 'exClose'){ ov.classList.remove('open'); }
       if(e.target.id === 'exSave' && ov._cv){
-        ov._cv.toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'excerpt.png'; a.click(); URL.revokeObjectURL(a.href); }, 'image/png');
+        /* 앵커는 문서에 붙여야 하고, 주소는 곧바로 거두면 안 된다 —
+           브라우저가 내려받기를 시작하기도 전에 주소가 죽어 조용히 취소되는 판이 있다. */
+        ov._cv.toBlob(b => {
+          const url = URL.createObjectURL(b);
+          const a = document.createElement('a'); a.href = url; a.download = 'excerpt.png';
+          document.body.appendChild(a); a.click(); a.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 10000);
+        }, 'image/png');
       }
       if(e.target.id === 'exCopy' && ov._cv){
         ov._cv.toBlob(async b => {
@@ -861,20 +1227,132 @@
   //  2) 숫자 → 숫자  결과 표기
   //  3) 스탯 키워드 + 부호숫자 (짧은 로그)
   const STAT_KW = /(\bHP\b|\bMP\b|\bSAN\b|\bLP\b|\bFP\b|\bDB\b|이성|정신|광기|공포|체력|생명|마력|기력|근성|내구|침식|침식률|잔기|피해|데미지|damage|상태|스테이터스|스탯|status|正気度|正気|理性|生命力|魔力|耐久|侵蝕|侵蝕率|狂気|ダメージ|SAN値)/i;
+  /* 같은 키워드 목록을 '전부 지우기'에도 쓴다 — 아래에서 남은 말이 있는지 재야 한다.
+     긴 이름을 먼저 놓는 것이 중요하다. 목록에 적힌 차례대로 두면 '侵蝕率'에서 '侵蝕'만
+     떨어져 나가 '率'이 남고, 멀쩡한 스테이터스 줄이 대사로 읽힌다. */
+  const STAT_KW_G = new RegExp(
+    STAT_KW.source.replace(/^\(|\)$/g, '').split('|').sort((a, b) => b.length - a.length).join('|'), 'gi');
+  const ARROW = /-?\d+\s*(?:→|->|—>|⇒|⟶|⇨|=>|~>|▶|➔|➜)\s*-?\d+/;
   const detectStatus = flat => {
     const s = (flat || '').trim();
+    if(!s) return false;
+    /* ① 코코포리아 명령을 그대로 받아 적은 줄 — :HP-5 */
     if(/^[:：]\s*[^\s:：]{1,16}\s*[＋+\-ー－=＝]\s*-?\d+/.test(s)) return true;
-    if(/-?\d+\s*(?:→|->|—>|⇒|⟶|⇨|=>|~>|▶|➔|➜)\s*-?\d+/.test(s)) return STAT_KW.test(s) || s.length <= 48;
-    if(STAT_KW.test(s) && /[＋+\-ー－±][0-9]/.test(s) && s.length <= 48) return true;
-    return false;
+    if(s.length > 64) return false;
+    /* ② 그 밖에는 '스탯 이름·숫자·기호 말고는 아무 말도 없는 줄'만 스테이터스로 본다.
+       예전에는 키워드가 스치기만 해도 잡아냈다. 그래서 ‘체력이 -5 정도 남았어’,
+       ‘상태 +1 이라니 말도 안 돼’ 같은 평범한 대사가 기본 설정에서 통째로 숨겨졌다.
+       스테이터스 줄은 언제나 라벨과 수치뿐이므로, 남는 말이 있으면 대사로 본다. */
+    const hasKw = STAT_KW.test(s), hasArrow = ARROW.test(s);
+    if(!hasKw && !hasArrow) return false;
+    if(!hasArrow && !/[＋+\-ー－±]\s*\d/.test(s)) return false;
+    const bare = s
+      .replace(STAT_KW_G, ' ')                            /* 스탯 이름 */
+      .replace(/\d*[dD]\d+/g, ' ')                        /* 1d6 같은 주사위 꼴 */
+      .replace(/[＋+\-ー－±]?\s*\d+(?:\.\d+)?%?/g, ' ')    /* 수치와 그 부호 */
+      .replace(/[\s:：,，.。/·・()\[\]{}<>＜＞=＝→\-—⇒⟶⇨▶➔➜]/g, '');
+    return bare === '';
   };
 
-  /* 판정 결과: 실패 계열을 먼저 본다 (‘대실패’가 ‘실패’를 포함) */
+  /* ── 화자 색 ──
+     로그의 style="color:…"에서 잘라 온, 남이 쓴 문자열이다. 게시판용 HTML은 이 값을
+     style 속성에 그대로 싣기 때문에 따옴표 하나만 섞여 들어와도 거기서 태그가 열린다.
+     그래서 색으로 쓸 수 있는 꼴만 통과시키고 나머지는 버린다 — 못 알아본 색은
+     그냥 기본 글자색으로 간다. 걸러 내는 자리는 파싱 한 곳뿐이라,
+     화면·저장·복사·이어보기가 전부 같은 값을 본다. */
+  function cssColor(v){
+    const t = (v || '').trim().replace(/\s+/g, ' ');
+    if(!t || t.length > 40) return '';
+    if(/^#[0-9a-f]{3,8}$/i.test(t)) return t;              /* #abc · #aabbcc · #aabbccdd */
+    if(/^[a-z]{3,20}$/i.test(t)) return t;                 /* red · tomato · transparent */
+    if(/^(?:rgb|hsl)a?\([0-9a-z%.,/ +-]{1,36}\)$/i.test(t)) return t;
+    return '';
+  }
+
+  /* 판정 결과: 실패 계열을 먼저 본다 (‘대실패’가 ‘실패’를 포함).
+     한글·일본어·영어를 한 목록에 담는다 — 코코포리아 방은 시스템에 따라 셋이 섞여 나온다. */
   const ROLL_NG = /(대실패|치명적\s*실패|실패|펌블|팜블|ファンブル|大失敗|致命的失敗|失敗|fumble|botch|failure)/i;
   const ROLL_OK = /(대성공|결정적\s*성공|스페셜|크리티컬|성공|大成功|決定的成功|クリティカル|スペシャル|成功|critical|special|success)/i;
   const rollOutcome = flat => ROLL_NG.test(flat) ? 'ng' : (ROLL_OK.test(flat) ? 'ok' : '');
+  /* 대성공·대실패는 한 단계 더 세게 그린다. ‘대성공’이 ‘성공’을, ‘대실패’가 ‘실패’를
+     품고 있으니 성공·실패보다 먼저 본다.
+     크리티컬(クリティカル)과 스페셜(スペシャル)은 대성공으로, 펌블(ファンブル)은 대실패로 친다.
+     성공·실패 갈래는 ROLL_OK·ROLL_NG가 정하고, 여기서는 그 세기만 가른다. */
+  const ROLL_CRIT = /(대성공|대실패|결정적\s*성공|치명적\s*실패|크리티컬|스페셜|펌블|팜블|大成功|大失敗|決定的成功|致命的失敗|クリティカル|スペシャル|ファンブル|critical|special|fumble|botch)/i;
+  const rollGrade = flat => ({ kind: rollOutcome(flat), crit: ROLL_CRIT.test(flat) });
+
+  /* 고를 수 있는 판정 모양. 목록에 없는 이름은 없는 것으로 친다 —
+     옛 보관본이 모르는 값을 들고 와도 지금까지의 모습으로 안전하게 떨어진다. */
+  const ROLL_STYLES = ['ticket', 'tile', 'band', 'note'];
+  const rollStyleOf = o => (o && ROLL_STYLES.indexOf(o.rollStyle) > -1) ? o.rollStyle : '';
+
+  /* 조각에서 결과 수를 뽑는다. 그냥 숫자면 그대로, ‘9[4,5]+2’처럼 굴림 내역이
+     붙어 있으면 괄호를 걷어 내고 더한다. 그 밖의 꼴(choice 결과 같은 말)은
+     숫자가 아니라고 답한다 — 부르는 쪽이 원문으로 되돌릴 수 있게. */
+  function rollNum(seg){
+    const t = String(seg || '').replace(/\[[^\]]*\]/g, '').replace(/\s+/g, '');
+    if(!/^[+-]?\d{1,6}(?:[+-]\d{1,6})*$/.test(t)) return '';
+    /* 이미 수 하나뿐이면 적힌 그대로 둔다 — '04'의 0을 우리가 지울 이유가 없다 */
+    if(/^[+-]?\d+$/.test(t)) return t.replace(/^\+/, '');
+    const m = t.match(/[+-]?\d+/g); if(!m) return '';
+    return String(m.reduce((a, b) => a + parseInt(b, 10), 0));
+  }
+  /* 식은 명령 쪽을 남긴다. ‘CC<=65 (1D100<=65)’에서 괄호 안만 남기면
+     무엇을 굴렸는지가 사라진다 — ‘SAN<=55’의 SAN처럼 기능 이름이 명령에 담기는 탓이다.
+     명령 자리가 비어 있으면(그냥 ‘(2D6)’) 괄호 안을 쓴다. */
+  function rollExpr(seg){
+    let t = String(seg || '').trim();
+    const cut = t.indexOf('(');
+    if(cut > -1){
+      const head = t.slice(0, cut).trim();
+      const par = (t.match(/\(([^)]*)\)/) || ['', ''])[1].trim();
+      t = head || par;
+    }
+    return t.replace(/\s*<=\s*/g, ' \u2264 ').replace(/\s*>=\s*/g, ' \u2265 ')
+            .replace(/\s*<\s*/g, ' < ').replace(/\s*>\s*/g, ' > ')
+            .replace(/\s+/g, ' ').trim();
+  }
+  /* 타일에 적을 주사위 이름. 명령이 아니라 줄 전체에서 찾는다 — 괄호 안에만 있는 일이 잦다. */
+  function rollDie(flat){ const m = String(flat || '').match(/\d*[dD]\d+/); return m ? m[0].toLowerCase() : ''; }
+
+  /* 판정 한 줄을 ‘식 ＞ 중간 ＞ 결과’ 세 조각으로 가른다. 갈라지지 않으면 빈손으로 돌아온다.
+     부르는 쪽은 그때 지금까지의 흐린 한 줄로 되돌린다 — 못 알아본 줄을 말없이 지우는 것이
+     이 도구에서 가장 나쁜 실패다. */
+  function rollParts(flat){
+    const seg = String(flat || '').split(/[＞＝]/).map(x => x.trim()).filter(Boolean);
+    if(seg.length < 2) return null;
+    /* 결과 낱말은 보통 맨 끝에 오지만, 명령이 이어 붙은 줄에서는 가운데 놓이기도 한다.
+       그래서 뒤에서부터 찾는다. 숫자로도 읽히는 조각은 낱말이 아니다. */
+    let wi = -1;
+    for(let i = seg.length - 1; i >= 1; i--){ if(rollOutcome(seg[i]) && !rollNum(seg[i])){ wi = i; break; } }
+    /* 굴린 값은 결과 낱말 바로 앞에 있다. 낱말이 없으면 맨 뒤의 수를 쓴다. */
+    let ni = (wi > 1 && rollNum(seg[wi - 1])) ? wi - 1 : -1;
+    if(ni < 0) for(let i = seg.length - 1; i >= 1; i--){ if(rollNum(seg[i])){ ni = i; break; } }
+    if(ni < 1) return null;
+    const num = rollNum(seg[ni]);
+    if(!num) return null;
+    /* 자리를 못 받은 조각은 한 줄로 모아 곁들인다 — 어느 것도 말없이 사라지지 않는다 */
+    const sub = seg.filter((x, i) => i !== 0 && i !== ni && i !== wi).join(' ');
+    return { expr: rollExpr(seg[0]), num: num, out: wi > -1 ? seg[wi] : '', sub: sub, die: rollDie(flat) };
+  }
 
   /* ── 파싱 ── */
+  /* 그림 주소는 화면에 적혀 있던 그대로만 받는다.
+     src가 비어 있는 <img>에 img.src를 물으면 브라우저가 ‘이 페이지 주소’로 풀어 돌려준다.
+     그림이 아닌 그 값을 믿고 실으면, 이미지가 없는 저널마다 엑박이 하나씩 박힌다.
+     상대 주소와 blob:도 마찬가지다 — 원래 페이지를 떠나면 열리지 않으니 ‘그림 없음’으로 본다. */
+  function okSrc(v){
+    const t = (v || '').trim();
+    if(!t) return '';
+    if(/^data:image\//i.test(t)) return t;
+    if(/^\/\//.test(t)) return 'https:' + t;
+    return /^https?:\/\//i.test(t) ? t : '';
+  }
+  const picSrc = img => img ? okSrc(img.getAttribute('src')) : '';
+  /* 수집기가 담아 온 그림은 파일 끝의 사전에 한 벌로만 들어 있다. 말풍선이 가리키는 것은 여전히
+     원래 주소이므로, 저장·복사·이어보기·캐릭터별 설정은 전부 지금까지의 주소를 그대로 쓴다.
+     화면에 걸 때만 사전에서 꺼낸 blob:으로 바꿔 준다 — 그래야 원본이 지워져도 그림이 남는다. */
+  const localize = u => (window.__pics && window.__pics.blob.get(u)) || u;
   function parse(html, opts){ return stampSeq(parseRaw(html, opts)); }
   /* 탭 안에서의 순번을 박아 둔다. 수동 배치가 재변환 뒤에도 같은 메시지를 가리키게 하는 열쇠다. */
   function stampSeq(list){
@@ -884,12 +1362,15 @@
       if(typeof m.at !== 'number') m.at = null;
       if(typeof m.time !== 'string') m.time = '';
       if(typeof m.stamp !== 'string') m.stamp = '';
+      if(typeof m.now !== 'number') m.now = 0;   /* 이 줄을 수집한 시각(ms) · 0이면 모름 */
     });
     return list;
   }
   function parseRaw(html, opts){
     const doc = new DOMParser().parseFromString(html, 'text/html');
     /* '今日'·'昨日'은 읽는 날이 아니라 수집한 날을 기준으로 풀어야 한다 */
+    /* 사전이 먼저다. 파일 여러 개를 한꺼번에 놓았다면 사전도 여럿일 수 있다. */
+    if(window.__pics) doc.querySelectorAll('#ccfolia-pics').forEach(n => window.__pics.add(n));
     const nw = doc.querySelector('[data-ccf-now]');
     logNow = nw ? (+nw.getAttribute('data-ccf-now') || 0) : 0;
     const rows = [...doc.querySelectorAll('.MuiListItem-root')];
@@ -915,7 +1396,7 @@
       if(colored && clean(colored.textContent).length <= 24){ name = clean(colored.textContent); body = raw.replace(colored.textContent,''); }
       else if(mm){ name = clean(mm[1]); body = mm[2]; }
       const pp = paragraphsFrom(body);
-      return { avatar:'', name, color:'', paras:pp, shots:[], system:!name, dice:false, status:detectStatus(pp.join(' ')) };
+      return { avatar:'', name, color:'', paras:pp, system:!name, dice:false, status:detectStatus(pp.join(' ')) };
     }).filter(x => x && (x.paras.length || x.name));
   }
   /* 수집기가 붙여 둔 표식. data-ccf-at은 화면 캡션의 날짜·시각을 푼 값(ms)이다.
@@ -925,6 +1406,10 @@
   function tabOf(row){ return markOf(row, 'data-ccf-tab'); }
   function atOf(row){ const v = markOf(row, 'data-ccf-at'); return /^\d+$/.test(v) ? +v : null; }
   function primaryOf(row){ return !!row.closest('[data-ccf-primary]'); }
+  /* 이 줄이 어느 수집본에서 왔는지, 그 수집본을 언제 모았는지.
+     파일을 여러 개 한꺼번에 놓으면 수집 시각이 파일마다 다르다. 문서 전체에서 하나만
+     집어 쓰면 어제 모은 파일의 '今日'이 오늘로 풀려 날짜가 하루씩 어긋난다. */
+  function nowOf(row){ const v = markOf(row, 'data-ccf-now'); return /^\d+$/.test(v) ? +v : 0; }
   /* 시:분 표시(h6 안의 caption)는 지우지 말고 챙긴다. 탭을 합칠 유일한 단서다. */
   const CAP_SEL = '.MuiTypography-caption, span[class*="caption"]';
   const CLOCK = /(\d{1,2})\s*[:：]\s*([0-5]\d)/;
@@ -939,7 +1424,7 @@
   }
   function extractCcfolia(row){
     const avImg = row.querySelector('img[alt="avatar"]') || row.querySelector('.MuiAvatar-img');
-    const avatar = avImg ? (avImg.getAttribute('src') || avImg.src || '') : '';
+    const avatar = picSrc(avImg);
     let name = '', color = '';
     const h6 = row.querySelector('h6');
     if(h6){
@@ -947,34 +1432,45 @@
       c.querySelectorAll(CAP_SEL).forEach(s => s.remove());
       name = clean(c.textContent);
       const cm = (h6.getAttribute('style')||'').match(/color\s*:\s*([^;]+)/i);
-      if(cm) color = cm[1].trim();
+      if(cm) color = cssColor(cm[1]);
     }
-    const p = row.querySelector('p');
-    const paras = paragraphsFrom(p ? textWithBreaks(p) : '');
-    const shots = [...row.querySelectorAll('img')].filter(i => i !== avImg && i.getAttribute('alt') !== 'avatar').map(i => i.getAttribute('src') || i.src).filter(Boolean);
-    if(!name && !paras.length && !shots.length) return null;
+    /* 한 메시지가 <p> 여러 개로 그려지는 판이 있다. 첫 하나만 읽으면 뒷부분이 통째로 사라진다.
+       첫 <p>는 지금까지와 똑같이 무조건 싣고, 뒤따르는 것은 비어 있지 않고 시각 캡션과
+       같은 글도 아닐 때만 이어 붙인다 — 본문이 아닌 것을 새로 끌어들이지 않기 위해서다. */
+    const cap = capOf(row, h6);
+    const ps = [...row.querySelectorAll('p')].filter((x, i) => {
+      if(i === 0) return true;
+      const t = clean(x.textContent);
+      return !!t && t !== cap;
+    });
+    const paras = paragraphsFrom(ps.map(textWithBreaks).join('\n'));
+    if(!name && !paras.length) return null;
     const flat = paras.join(' ');
-    const rollSpan = p && p.querySelector('span[class*="ucj"]');
+    const rollSpan = ps.some(x => x.querySelector('span[class*="ucj"]'));
     const system = !avatar && !name;
-    const dice = !!rollSpan || (/＞|＝/.test(flat) && /\d*[dD]\d+/.test(flat.replace(/\s/g,'')));
+    /* 주사위 로그는 '식 ＞ 결과' 꼴이다. 예전에는 줄 어딘가에 ＞와 NdM이 있기만 하면
+       주사위로 봤고, 그래서 ‘3d6 굴린다고? ＞ 아니’ 같은 대사까지 숨겨졌다.
+       식이 먼저 오고 ＞ 뒤에 숫자가 오는 것까지 확인한다. */
+    const flatNS = flat.replace(/\s/g, '');
+    const dice = !!rollSpan
+      || (/\d*[dD]\d+[^＞＝]*[＞＝]/.test(flatNS) && /[＞＝][^＞＝]*\d/.test(flatNS));
     const status = detectStatus(flat);
-    return { avatar, name, color, paras, shots, system, dice, status,
-             time: timeOf(row, h6), stamp: capOf(row, h6),
-             tab: tabOf(row), at: atOf(row), primary: primaryOf(row) };
+    return { avatar, name, color, paras, system, dice, status,
+             time: timeOf(row, h6), stamp: cap,
+             tab: tabOf(row), at: atOf(row), primary: primaryOf(row), now: nowOf(row) };
   }
   function extractGeneric(root, avatarImg){
-    const avatar = avatarImg.getAttribute('src') || avatarImg.src || '';
-    const shots = [...root.querySelectorAll('img')].filter(i => i !== avatarImg && !i.dataset.__av).map(i => i.getAttribute('src') || i.src).filter(Boolean);
+    const avatar = picSrc(avatarImg);
     let name = '', color = '';
     const colored = [...root.querySelectorAll('[style*="color"]')].find(e => { const t = clean(e.textContent); return t && t.length <= 28 && !e.querySelector('img'); });
-    if(colored){ name = clean(colored.textContent); const cm=(colored.getAttribute('style')||'').match(/color\s*:\s*([^;]+)/i); if(cm) color=cm[1].trim(); }
+    if(colored){ name = clean(colored.textContent); const cm=(colored.getAttribute('style')||'').match(/color\s*:\s*([^;]+)/i); if(cm) color=cssColor(cm[1]); }
     const fullText = textWithBreaks(root);
     if(!name){ const first = clean(fullText).split('\n')[0]||''; if(first && first.length<=28) name=first; }
     let bodyText = fullText;
     if(name){ const idx=bodyText.indexOf(name); if(idx!==-1) bodyText=bodyText.slice(0,idx)+bodyText.slice(idx+name.length); }
     let paras = paragraphsFrom(bodyText);
     if(paras[0]===name) paras.shift();
-    return { avatar, name:name||'', color, paras, shots, system:!avatar&&!name, dice:false, status:detectStatus(paras.join(' ')) };
+    return { avatar, name:name||'', color, paras, system:!avatar&&!name, dice:false, status:detectStatus(paras.join(' ')) };
   }
 
   /* ── 탭 병합 ──
@@ -987,6 +1483,25 @@
   const DAY = 1440;
 
   const D_TODAY = /今日|오늘|today/i, D_YEST = /昨日|어제|yesterday/i, D_BEFORE = /一昨日|그저께|그제/;
+  const D_TOMO = /明日|내일|tomorrow/i;
+  /* ── 요일로 적힌 날짜 ──
+     코코포리아는 며칠 안쪽을 숫자 대신 요일로 적는다. 그저께보다 이르고 이레 안쪽이면
+     '先週 水曜日', 모레부터 이레 안쪽이면 '水曜日'처럼 요일만 적는다.
+     닷새 폭 안에 같은 요일은 한 번뿐이라, 요일만으로도 날짜가 하나로 정해진다.
+     짧은 꼴(wed)이 긴 꼴(wednesday)의 앞머리라 어느 쪽이 걸려도 같은 요일을 가리킨다. */
+  const WDAY = ['日曜|일요|sunday|sun', '月曜|월요|monday|mon', '火曜|화요|tuesday|tue',
+                '水曜|수요|wednesday|wed', '木曜|목요|thursday|thu', '金曜|금요|friday|fri',
+                '土曜|토요|saturday|sat'].map(x => new RegExp(x, 'i'));
+  const D_LAST = /先週|지난\s*주|last/i;
+  const weekdayOf = t => { for(let i = 0; i < 7; i++) if(WDAY[i].test(t)) return i; return -1; };
+  /* 오늘 요일에서 몇 칸 떨어졌는지. 같은 요일이면 한 바퀴 돌린 것으로 본다. */
+  function weekStep(t, dow){
+    const wd = weekdayOf(t); if(wd < 0) return null;
+    const back = D_LAST.test(t);
+    let k = back ? ((dow - wd + 7) % 7) : ((wd - dow + 7) % 7);
+    if(k === 0) k = 7;
+    return back ? -k : k;
+  }
   const D_YMD = /(\d{4})\s*[\/\-.]\s*(\d{1,2})\s*[\/\-.]\s*(\d{1,2})/;
   const D_MD = /(\d{1,2})\s*[\/\-.]\s*(\d{1,2})/;
   const CLOCK_G = /\d{1,2}\s*[:：]\s*[0-5]\d/g;
@@ -994,13 +1509,15 @@
 
   /* 정오를 기준으로 일련번호를 매긴다. 서머타임이 있어도 하루가 밀리지 않는다. */
   const dayNum = (y, mo, d) => Math.round(new Date(y, mo, d, 12, 0, 0, 0).getTime() / 864e5);
-  function dayOf(stamp){
+  function dayOf(stamp, at){
     const t = String(stamp || ''); if(!t) return null;
-    const now = new Date(logNow || Date.now());
+    /* 그 줄이 실려 온 파일의 수집 시각을 먼저 본다. 없으면 문서 대표값, 그것도 없으면 오늘. */
+    const now = new Date(at || logNow || Date.now());
     const today = dayNum(now.getFullYear(), now.getMonth(), now.getDate());
     if(D_BEFORE.test(t)) return today - 2;
     if(D_YEST.test(t)) return today - 1;
     if(D_TODAY.test(t)) return today;
+    if(D_TOMO.test(t)) return today + 1;
     const rest = t.replace(CLOCK_G, ' ');   /* 시각의 숫자를 날짜로 오해하지 않도록 걷어 낸다 */
     let m = D_YMD.exec(rest);
     if(m) return dayNum(+m[1], +m[2] - 1, +m[3]);
@@ -1010,6 +1527,9 @@
       const d = dayNum(y, +m[1] - 1, +m[2]);
       return d > today + 1 ? dayNum(y - 1, +m[1] - 1, +m[2]) : d;   /* 해를 넘긴 로그 */
     }
+    /* 숫자 날짜가 없으면 요일을 본다. 숫자가 있으면 그쪽이 더 정확하므로 여기까지 오지 않는다. */
+    const k = weekStep(rest, now.getDay());
+    if(k !== null) return today + k;
     return null;
   }
 
@@ -1017,11 +1537,11 @@
      v[i] = 확정된 절대 분, d[i] = 알아낸 날짜(시각은 모를 때도 있다), 둘 다 모르면 null.
      dated면 날짜가 실려 있어 다른 탭과 곧바로 견줄 수 있다는 뜻이다. */
   function absFrame(msgs){
-    const anyDate = msgs.some(m => dayOf(m.stamp) !== null);
+    const anyDate = msgs.some(m => dayOf(m.stamp, m.now) !== null);
     const v = [], d = [];
     let day = anyDate ? null : 0, prev = -1, roll = 0;
     msgs.forEach(m => {
-      const t = minOf(m.time), dd = dayOf(m.stamp);
+      const t = minOf(m.time), dd = dayOf(m.stamp, m.now);
       if(dd !== null){ day = dd; roll = 0; }
       else if(day !== null && t !== null && prev >= 0 && t < prev) roll++;   /* 되감기면 다음 날 */
       if(t !== null) prev = t;
@@ -1153,27 +1673,110 @@
   }
 
   /* ── 수동 배치 보정 ──
-     자동 배치에서 '몇 칸 옮겼는지'만 기억한다. 재변환·이어보기 뒤에도 같은 자리로 돌아온다. */
-  let rawMessages = null, mainTab = '', moveState = {}, delState = {};
+     '누구 뒤에 놓을 것인가'를 기억한다. 몇 칸인지로 기억하면 자동 배치가 조금만 달라져도
+     — 정렬 설정을 바꾸거나 로그를 더 모아 붙이거나 — 도착지가 통째로 어긋나고,
+     여러 장을 옮겼을 때 서로의 자리를 밀어낸다. 앵커는 그 둘 다 겪지 않는다.
+       moveState[mid] = { after: '앞에 놓일 메시지의 mid' }   · after가 비면 맨 앞
+     예전에 보관한 기록은 숫자(몇 칸)로 남아 있으므로, 값의 생김새로 갈라 그대로 받아 준다. */
+  let rawMessages = null, mainTab = '', moveState = {}, delState = {}, logSeal = null;
   const midOf = m => (m.tab || '') + '#' + (m.seq || 0);
+  /* 탭 이름은 방 주인이 자유롭게 정하는 값이라 큰따옴표나 역슬래시가 섞일 수 있다.
+     그대로 선택자에 이어 붙이면 querySelector가 예외를 던지고, 그 예외가 클릭 핸들러
+     밖으로 튀어 카드 옮기기가 통째로 멎는다. 따옴표 안에서 쓸 수 있게 걸러 준다. */
+  const midSel = id => '[data-mid="' + String(id).replace(/["\\]/g, '\\$&') + '"]';
   const isInfo = m => !!(m.tab && m.tab !== mainTab);
+  const isAnchor = v => !!v && typeof v === 'object';
   function applyMoves(arr){
     const ids = Object.keys(moveState).filter(k => moveState[k]);
     if(!ids.length) return arr;
     const out = arr.slice();
+
+    /* ① 옛 기록의 '몇 칸' — 하던 그대로 순서대로 민다 */
     ids.forEach(id => {
+      if(isAnchor(moveState[id])) return;
       const i = out.findIndex(m => midOf(m) === id); if(i < 0) return;
       const j = Math.max(0, Math.min(out.length - 1, i + moveState[id]));
       out.splice(j, 0, out.splice(i, 1)[0]);
     });
+
+    /* ② '누구 뒤' — 앵커가 사라졌으면(지운 로그·다른 설정) 자동 자리에 그냥 둔다 */
+    const put = id => {
+      const a = moveState[id].after;
+      const i = out.findIndex(m => midOf(m) === id); if(i < 0 || a === id) return;
+      if(a == null){ out.unshift(out.splice(i, 1)[0]); return; }
+      if(out.findIndex(m => midOf(m) === a) < 0) return;
+      const card = out.splice(i, 1)[0];
+      out.splice(out.findIndex(m => midOf(m) === a) + 1, 0, card);
+    };
+    /* 앵커가 저도 옮겨 다니는 카드라면 그쪽이 자리를 잡은 뒤에 앉힌다.
+       서로가 서로의 뒤라고 우기면(순환) 진전이 멎으므로, 그때는 남은 것을 그냥 앉히고 끝낸다. */
+    let rest = ids.filter(id => isAnchor(moveState[id]));
+    while(rest.length){
+      const wait = [];
+      rest.forEach(id => {
+        const a = moveState[id].after;
+        if(a != null && a !== id && rest.indexOf(a) >= 0) wait.push(id);
+        else put(id);
+      });
+      if(wait.length === rest.length){ wait.forEach(put); break; }
+      rest = wait;
+    }
     return out;
+  }
+  /* 어느 로그인가를 가리는 지문. 첫 메시지가 달라지면 탭 안 순번(seq)이 통째로 밀렸다는 뜻이고,
+     그 위에 얹어 둔 보정은 남의 카드를 가리키게 된다. 그때만 보정을 비운다.
+     뒤에 더 모아 붙인 로그는 첫 메시지가 그대로이므로 손봐 둔 자리를 잃지 않는다. */
+  function logSig(raw){
+    /* 앞에서 세 줄을 표본으로 잡는다. 첫 줄 하나만 보면, 시스템 메시지로 시작하는 로그끼리
+       지문이 '메인|||'처럼 뭉뚱그려져 남남인 두 세션이 같은 것으로 읽혔다.
+       표본을 앞에서만 뽑는 것이 중요하다 — 뒤에 더 모아 붙인 로그는 같은 로그로 봐야 하므로,
+       끝쪽이나 전체 개수를 지문에 넣으면 손봐 둔 자리를 애먼 곳에서 잃는다. */
+    const one = m => (m.tab || '') + '|' + (m.name || '') + '|' + (m.time || '') + '|'
+                   + ((m.paras || []).join(' ')).slice(0, 80);
+    return raw.slice(0, 3).map(one).join('#');
   }
   /* composeAll = 지운 것까지 포함한 전체 배열. 미세조정 목록과 자리 계산은 이쪽을 본다.
      composeLog = 실제로 보여 줄 배열. 렌더·내보내기·저장은 이쪽만 쓴다. */
   const isGone = m => !!delState[midOf(m)];
-  const composeAll = (raw, opts) => applyMoves(mergeTabs(raw, opts));
+  /* 방금 만든 '지운 것까지 포함한 전체'를 들고 있는다. 렌더는 composeLog 바로 뒤에 오므로
+     미세조정 목록이 같은 것을 한 번 더 만들 필요가 없다 — 큰 로그에서는 병합을 두 번 도는
+     비용이 그대로 렌더 시간이었다. */
+  let lastAll = null;
+  const composeAll = (raw, opts) => (lastAll = applyMoves(mergeTabs(raw, opts)));
   const composeLog = (raw, opts) => composeAll(raw, opts).filter(m => !isGone(m));
-  function adoptRaw(raw){ rawMessages = raw; mainTab = primaryTab(tabsOf(raw), raw); }
+  /* ── 빠진 캐릭터 이미지 메우기 ──
+     같은 캐릭터인데 어떤 줄에만 그림이 없을 때가 있다. 수집하는 사이에 그 줄이 다시 그려지면
+     그림이 붙기 전 모습이 담기고, 앱이 옛 글을 끼워 넣는 순간에도 같은 일이 난다.
+     한 줄로 끝나지 않는 게 문제다 — 합치기를 켜 두면 덩어리의 첫 줄이 비는 순간
+     그 덩어리 전체에서 캐릭터 이미지가 사라진다. 그래서 같은 이름이 쓰던 그림으로 메운다.
+     앞줄의 그림을 먼저 쓰고(표정이 바뀌는 순서를 지킨다), 앞이 없으면 로그에서 처음 나온 그림을 쓴다.
+     그림을 한 번도 안 쓴 캐릭터는 건드리지 않는다 — 그쪽은 ‘이미지가 없는 저널’ 설정이 맡는다. */
+  function fillAvatars(list){
+    const first = new Map();
+    list.forEach(m => { if(m.name && m.avatar && !first.has(m.name)) first.set(m.name, m.avatar); });
+    if(!first.size) return list;
+    const last = new Map();
+    list.forEach(m => {
+      if(!m.name) return;
+      if(m.avatar){ last.set(m.name, m.avatar); return; }
+      const back = last.get(m.name) || first.get(m.name);
+      if(back) m.avatar = back;
+    });
+    return list;
+  }
+  function adoptRaw(raw, keepMoves){
+    /* 이어보기로 되살린 옛 기록에는 예전 방식으로 주워 담은 엉뚱한 주소·색이 남아 있을 수 있다.
+       색을 여기서 한 번 더 거르는 이유는, 걸러 내기 전에 보관된 기록이 이미 남아 있기 때문이다. */
+    raw.forEach(m => { m.avatar = okSrc(m.avatar); m.color = cssColor(m.color); });
+    fillAvatars(raw);
+    draftWarned = false;   /* 새 로그다 — 보관 실패를 알릴 기회를 한 번 더 준다 */
+    /* 다른 로그를 새로 열었다면 앞서 손봐 둔 자리는 남의 카드를 가리킨다. 조용히 비운다.
+       '변환 · 다시 적용'은 같은 로그라 지문이 같으므로 손대지 않는다. */
+    const sig = logSig(raw);
+    if(!keepMoves && logSeal && logSeal !== sig){ moveState = {}; delState = {}; }
+    logSeal = sig;
+    rawMessages = raw; mainTab = primaryTab(tabsOf(raw), raw);
+  }
 
   /* ── 렌더 ── */
   const normName = s => (s||'').trim().toLowerCase();
@@ -1182,11 +1785,8 @@
   const cleanParas = arr => arr.map(stripEdit).filter(Boolean);
   const isSys = m => !!m.system || (m.paras.length && m.paras[0].trimStart().startsWith('✦'));
   const sysLines = arr => arr.map(p => p.replace(/^\s*✦\s*/, '').trim()).filter(Boolean);
-  /* 이미지를 뺄 때 대신 남기는 자리. 이미지만 있던 메시지가 통째로 사라지지 않게 한다. */
-  function shotStub(){ const d = document.createElement('div'); d.className = 'noshot'; d.textContent = '[이미지]'; return d; }
-  function figure(src){ const f=document.createElement('figure'); f.className='shot'; const i=document.createElement('img'); i.src=src; i.alt='삽입 이미지'; i.loading='lazy'; f.appendChild(i); const c=document.createElement('figcaption'); c.textContent='이미지'; f.appendChild(c); return f; }
   function paras(el, arr){ arr.forEach(p => { const x=document.createElement('p'); x.textContent=p; el.appendChild(x); }); }
-  const fullOf = m => cleanParas(m.paras).join(' ') || (m.shots.length ? '(이미지)' : '');
+  const fullOf = m => cleanParas(m.paras).join(' ');
   const excerptOf = m => { const t = fullOf(m); return t.length > 42 ? t.slice(0, 42) + '…' : t; };
   /* 정보탭 카드 — 시간 순서상 제자리에 앉히되, 어느 탭에서 왔는지는 남긴다 */
   function infoCard(m, P, opts){
@@ -1200,9 +1800,22 @@
     const tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = m.tab || '정보'; lbl.appendChild(tag);
     w.appendChild(lbl);
     if(P.length){ const b = document.createElement('div'); b.className = 'body'; paras(b, isSys(m) ? sysLines(P) : P); w.appendChild(b); }
-    m.shots.forEach(src => w.appendChild(opts.noImages ? shotStub() : figure(src)));
     /* 자리 옮기기 버튼은 앱 전용이라, 저장 HTML·게시판 HTML에는 실리지 않는다 */
     const mv = document.createElement('div'); mv.className = 'mv app-only';
+    const who = m.name || m.tab || '정보';
+    const grip = document.createElement('button'); grip.type = 'button'; grip.className = 'grip';
+    grip.dataset.pick = '1'; grip.textContent = '⠿';
+    grip.title = '자리 옮기기 — 끌어 놓거나, 누른 뒤 자리를 고릅니다 (↑↓ 이동 · Enter 확정 · Esc 취소)';
+    grip.setAttribute('aria-label', who + ' 메시지 자리 옮기기');
+    mv.appendChild(grip);
+    /* 손댄 카드에만 제자리 단추를 낸다 — 평소에는 툴바를 늘리지 않는다 */
+    if(moveState[midOf(m)]){
+      const hm = document.createElement('button'); hm.type = 'button'; hm.className = 'home';
+      hm.dataset.home = '1'; hm.textContent = '↺';
+      hm.title = '이 카드만 자동 배치로';
+      hm.setAttribute('aria-label', who + ' 메시지를 자동 배치로 되돌리기');
+      mv.appendChild(hm);
+    }
     [['-1', '↑', '한 칸 위로'], ['1', '↓', '한 칸 아래로']].forEach(([d, t, lab]) => {
       const b = document.createElement('button'); b.type = 'button'; b.dataset.mv = d; b.textContent = t;
       b.title = lab; b.setAttribute('aria-label', (m.name || m.tab || '정보') + ' 메시지를 ' + lab);
@@ -1215,6 +1828,57 @@
     w.appendChild(mv);
     return w;
   }
+  /* 판정 한 줄을 고른 모양대로 짓는다. 네 모양이 모두 같은 재료를 쓰므로
+     가르는 자리는 한 곳뿐이고, 모양마다 놓는 자리만 다르다. */
+  function rollBlock(m, P, opts){
+    const style = rollStyleOf(opts);
+    if(!style) return null;
+    const flat = P.join(' ');
+    const R = rollParts(flat);
+    if(!R) return null;
+    const g = rollGrade(R.out);
+    const center = !!(opts.align && m.name && opts.align[m.name] === 'center');
+    const w = document.createElement('div');
+    w.className = 'rollx rs-' + style + (g.kind ? ' ' + g.kind : '') + (g.crit ? ' crit' : '') + (center ? ' center' : '');
+    const sp = (cls, txt) => { const e = document.createElement('span'); e.className = cls; if(txt != null) e.textContent = txt; return e; };
+    const dv = (cls, txt) => { const e = document.createElement('div'); e.className = cls; if(txt != null) e.textContent = txt; return e; };
+    const name = m.name || '';
+    /* 결과 자리 — 판정이면 낱말, 수치만 나온 굴림이면 그 내역을 곁들인다 */
+    const tail = () => R.out ? sp('rx-out', R.out) : (R.sub ? sp('rx-sub', R.sub) : null);
+
+    if(style === 'ticket'){
+      const top = dv('rx-top');
+      top.appendChild(sp('rx-lbl', R.out ? '판정' : '주사위'));
+      if(name) top.appendChild(sp('rx-nm', name));
+      top.appendChild(sp('rx-expr', R.expr));
+      const bot = dv('rx-bot');
+      bot.appendChild(sp('rx-num', R.num));
+      const t = tail(); if(t) bot.appendChild(t);
+      w.append(top, bot);
+    } else if(style === 'tile'){
+      const tile = dv('rx-tile');
+      tile.append(sp('rx-num', R.num), sp('rx-die', R.die));
+      const col = dv('rx-col');
+      if(name) col.appendChild(dv('rx-nm', name));
+      /* 결과 낱말이 없으면 굴림 내역을, 그것도 없으면 식을 그 자리에 세운다 */
+      col.appendChild(R.out ? dv('rx-out', R.out) : dv('rx-sub', R.sub || R.expr));
+      if(R.out || R.sub) col.appendChild(sp('rx-expr', R.expr));
+      w.append(tile, col);
+    } else if(style === 'band'){
+      if(name) w.appendChild(sp('rx-nm', name));
+      w.appendChild(sp('rx-expr', R.expr));
+      const right = dv('rx-right');
+      right.appendChild(sp('rx-num', R.num));
+      const t = tail(); if(t) right.appendChild(t);
+      w.appendChild(right);
+    } else {
+      w.appendChild(sp('rx-dot'));
+      if(name) w.appendChild(sp('rx-nm', name));
+      w.append(sp('rx-expr', R.expr), sp('rx-ar', '＞'), sp('rx-num', R.num));
+      const t = tail(); if(t) w.append(sp('rx-ar', '＞'), t);
+    }
+    return w;
+  }
   function sysNote(lines, label){
     const w = document.createElement('div'); w.className = 'sysmsg';
     if(label){ const l = document.createElement('span'); l.className = 'lbl'; l.textContent = label; w.appendChild(l); }
@@ -1224,13 +1888,52 @@
   const luma = hex => { const m=/^#?([0-9a-f]{6})$/i.exec((hex||'').trim()); if(!m) return null; const n=parseInt(m[1],16); const r=(n>>16)&255,g=(n>>8)&255,b=n&255; return (0.2126*r+0.7152*g+0.0587*b)/255; };
 
   let lastMessages = null, lastOpts = null, alignState = {};
+  /* 자동 보관이 용량에 걸렸다는 알림은 한 로그에 한 번만 띄운다 */
+  let draftWarned = false;
   /* 캐릭터별 설정: 이름 → {focus, zoom}. 손댄 캐릭터만 담기고, 나머지는 전체 설정을 따른다. */
   let avState = {}, avNames = [], avIdx = new Map(), avPicsAll = new Map();
   /* 그림 한 장만 따로 정한 값(주소 → 설정). 크기가 다른 그림은 캐릭터 설정으로 덮이지 않는다. */
   let avImgState = {}, avImgs = [], avImgIdx = new Map();
   const avDim = new Map();   /* 그림 주소 → {w,h} · 한 번 재면 다시 재지 않는다 */
+  /* ── 안 쓰는 그림 놓아 주기 ──
+     사전에서 푼 blob:은 탭이 살아 있는 동안 계속 메모리를 붙들고 있다. 한 탭에서 로그를
+     여러 번 갈아 끼우면 지나간 세션의 그림이 고스란히 쌓인다.
+     남길 것은 '지금 로그가 언젠가 쓸 수 있는 그림' 전부다 — 화면에 그려진 것만 남기면 안 된다.
+     발화를 합쳐 놓아 지금은 안 보이는 그림도, '캐릭터 이미지가 바뀌면 다시 보여 주기'를
+     켜는 순간 필요해지기 때문이다. 그래서 DOM이 아니라 원본 메시지를 근거로 삼는다.
+     반드시 렌더가 끝난 뒤에 부른다 — 그 전에 거두면 화면이 걸어 놓은 주소가 죽는다. */
+  function sweepPics(){
+    const pics = window.__pics;
+    if(!pics || !rawMessages) return;
+    const keep = new Set();
+    rawMessages.forEach(m => { if(m.avatar) keep.add(m.avatar); });
+    let freed = 0;
+    pics.blob.forEach((url, key) => {
+      if(keep.has(key)) return;
+      try{ URL.revokeObjectURL(url); }catch(e){}
+      pics.blob.delete(key); pics.data.delete(key); freed++;
+    });
+    avDim.forEach((v, src) => { if(!keep.has(src)) avDim.delete(src); });
+    return freed;
+  }
   /* 정보 카드를 옮길 때는 화면을 위로 튕기거나 패널을 접지 않는다 */
   let quietRender = false;
+  /* 화면에 놓인 순서대로 [{el, mid}] — 놓을 자리를 셈하는 유일한 근거다 */
+  let bookSlots = [];
+  /* 집어 든 카드 · 잰 자리들 · 지금 가리키는 자리 번호 · 그려 둔 줄 */
+  let holdMid = null, holdSlots = null, holdGap = -1, holdLine = null;
+  /* 손잡이를 끌 때: 누른 자리 · 끌기로 넘어갔는지 · 마지막 포인터 높이 · 끝난 뒤 삼킬 click */
+  let dragFrom = null, dragOn = false, lastY = null, eatUntil = 0;
+  /* 같은 시:분 띠 · 집은 카드의 시각 */
+  let holdBand = null, holdClock = -1;
+  /* 화면 가장자리 자동 스크롤 */
+  let edgeV = 0, edgeRAF = 0;
+  /* 직전 상태를 통째로 쌓아 둔다. 배치는 적은 순서까지 뜻이 있으므로,
+     값만 베끼지 않고 통째로 베껴야 순서까지 따라온다. */
+  let undoStack = [];
+
+  /* 이미지가 없는 저널의 이미지 칸 — 'gap'(빈 자리로 둔다) · 'solid'(단색으로 채운다) · 'hide'(통째로 접는다) */
+  const blankMode = o => (o && o.noImgSlot === 'hide') ? 'hide' : ((o && o.noImgSlot === 'solid') ? 'solid' : 'gap');
 
   /* ── 캐릭터 이미지·판정 표시 설정 (저장 HTML에도 그대로 실려 간다) ── */
   function applyDisplay(o){
@@ -1241,6 +1944,7 @@
     root.style.setProperty('--av-focus', o.avFocus === 'center' ? 'center' : 'top');
     root.setAttribute('data-roll', o.rollHighlight ? 'on' : 'off');
     root.setAttribute('data-img', o.noImages ? 'off' : 'on');
+    root.setAttribute('data-avblank', blankMode(o));
     applyAvPer();
   }
 
@@ -1305,11 +2009,47 @@
     noteAvatar(m);
     if(m.name) box.dataset.avk = avIdx.get(m.name);
     if(m.avatar) box.dataset.avi = avImgIdx.get(m.avatar);
-    const img = document.createElement('img'); img.src = m.avatar; img.alt = (m.name || '') + ' 캐릭터 이미지'; img.loading = 'lazy';
+    const img = document.createElement('img'); img.src = localize(m.avatar); img.alt = (m.name || '') + ' 캐릭터 이미지'; img.loading = 'lazy';
+    /* 저장할 때 사전과 이어 붙일 실. blob:은 파일을 떠나면 죽으므로 원래 주소를 함께 적어 둔다. */
+    if(m.avatar) img.dataset.pic = m.avatar;
     box.appendChild(img); return box;
+  }
+  /* 이미지가 없는 저널의 이미지 칸. 어떻게 보일지는 CSS(data-avblank)가 정하므로 여기서는 자리만 만든다.
+     이어지는 줄은 그림이 있을 때와 똑같이 빈 자리로 둔다 — 한 덩어리 안에서 글머리가 흔들리면 안 된다. */
+  function blankBox(cont){
+    const b = document.createElement('span');
+    b.className = cont ? 'av-space blank' : 'av blank';
+    return b;
+  }
+
+  /* 숨긴 줄을 알리는 한 줄. 앱에서만 보이므로(app-only) 저장 HTML·게시판 HTML에는 실리지 않는다.
+     ‘모두 보기’는 해당 설정만 켜고 다시 그린다 — 무엇이 빠졌는지 그 자리에서 확인할 수 있다. */
+  function hiddenNote(nDice, nStat){
+    const w = document.createElement('div');
+    w.className = 'hiddenbar app-only';
+    const t = document.createElement('span'); t.className = 'htxt';
+    const parts = [];
+    if(nDice) parts.push('주사위·판정 ' + nDice + '줄');
+    if(nStat) parts.push('스테이터스 ' + nStat + '줄');
+    t.textContent = parts.join(' · ') + '을 숨겼습니다';
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'btn'; b.textContent = '모두 보기';
+    b.title = '자동 판별이 틀렸을 수 있습니다 — 켜서 직접 확인하세요';
+    b.addEventListener('click', () => {
+      if(nDice && $('#optNoise')) $('#optNoise').checked = true;
+      if(nStat && $('#optStatus')) $('#optStatus').checked = true;
+      syncRollEnabled();
+      recompose();
+      toast('숨겼던 줄을 모두 폈습니다');
+    });
+    w.append(t, b);
+    return w;
   }
 
   function render(messages, opts){
+    /* composeLog이 방금 만들어 둔 '지운 것까지 포함한 전체'를 한 번만 이어 쓰고 비운다.
+       비워 두어야 다음 렌더가 남의 로그 것을 잘못 물려받지 않는다. */
+    const allForTune = lastAll; lastAll = null;
     lastMessages = messages; lastOpts = opts;
     if(opts.avPer && opts.avPer !== avState) avState = Object.assign({}, opts.avPer);
     if(opts.avImg && opts.avImg !== avImgState) avImgState = Object.assign({}, opts.avImg);
@@ -1320,14 +2060,20 @@
     if(dt) dt.textContent = title;
     document.title = title + ' · 코코포리아 로그 백업';
 
+    /* 무엇을 몇 줄 뺐는지 반드시 센다. 아카이브 도구에서 가장 나쁜 실패는 오류가 아니라
+       말없는 누락이다. 자동 판별은 언제든 틀릴 수 있으므로, 틀렸을 때 알아볼 자리를 남긴다. */
+    let nStat = 0, nDice = 0;
     const shown = messages.filter(m => {
-      if(m.status) return !!opts.showStatus;
-      if(m.dice) return !opts.hideNoise;
+      if(m.status){ if(opts.showStatus) return true; nStat++; return false; }
+      if(m.dice){ if(!opts.hideNoise) return true; nDice++; return false; }
       return true;
     });
-    const shot = src => opts.noImages ? shotStub() : figure(src);
-
+    if(holdMid) cancelHold(true);   /* 다시 그리면 집어 든 자리 계산이 헛것이 된다 */
     const book = document.getElementById('book'); book.innerHTML = '';
+    /* 놓인 차례대로 '이 자리는 어느 메시지인가'를 적어 둔다. 놓을 자리를 셈할 때 DOM을
+       되짚지 않아도 되고, data-mid를 줄마다 박지 않으니 저장 HTML도 그대로다. */
+    bookSlots = [];
+    const slot = (el, m) => { if(el) bookSlots.push({ el: el, mid: midOf(m) }); };
     let prevName = null, prevAv = '', curNarr = null;
     const alignOf = name => (name && opts.align && opts.align[name] === 'center') ? 'center' : 'left';
     const narrators = narratorSet(opts); const isNarr = m => narrators.has(normName(m.name));
@@ -1336,23 +2082,29 @@
     shown.forEach(m => {
       const noise = m.dice;
       const P = cleanParas(m.paras);
-      if(!P.length && !m.shots.length && !m.name) return;
+      /* 남는 글이 없으면 통째로 접는다. 코코포리아가 붙이는 '[편집 완료]' 표식만 있던 줄은
+         표식을 떼고 나면 아무것도 남지 않아, 놔두면 이름표만 붙은 빈 말풍선이 된다.
+         본문에 그림을 싣지 않으므로 글이 없다는 것은 보여 줄 것이 없다는 뜻이다. */
+      if(!P.length) return;
 
       if(isInfo(m) && opts.infoCard !== false){
         prevName = null; curNarr = null;
-        book.appendChild(infoCard(m, P, opts));
+        const el = infoCard(m, P, opts);
+        book.appendChild(el); slot(el, m);
         return;
       }
       if(m.status){
         prevName = null; curNarr = null;
         let lines = P; if(m.name && !P.some(t => t.includes(m.name))) lines = [m.name].concat(P);
-        book.appendChild(sysNote(lines, ''));
+        const el = sysNote(lines, '');
+        book.appendChild(el); slot(el, m);
         return;
       }
       const asNarr = isSys(m) && !noise && !!opts.sysNarr;
-      if(isSys(m) && !noise && !asNarr && !m.shots.length){
+      if(isSys(m) && !noise && !asNarr){
         prevName = null; curNarr = null;
-        book.appendChild(sysNote(sysLines(P), ''));
+        const el = sysNote(sysLines(P), '');
+        book.appendChild(el); slot(el, m);
         return;
       }
       if((isNarr(m) || asNarr) && !noise){
@@ -1363,10 +2115,24 @@
           const b = document.createElement('div'); b.className = 'body'; curNarr.appendChild(b); book.appendChild(curNarr);
         }
         const b = curNarr.querySelector('.body');
-        paras(b, asNarr ? sysLines(P) : P); m.shots.forEach(s => b.appendChild(shot(s)));
+        /* 내레이션은 여러 줄이 한 덩어리로 뭉치므로, 이 줄이 새로 만든 문단을 자리로 삼는다.
+           덩어리를 통째로 자리로 삼으면 그 중심이 뒷줄보다 아래로 내려가 자리 순서가 뒤엉킨다.
+           글이 한 줄도 안 생겼으면 자리를 남기지 않는다 — 보이지 않는 것은 자리도 아니다. */
+        const at = b.childElementCount;
+        paras(b, asNarr ? sysLines(P) : P);
+        if(b.children[at]) slot(b.children[at], m);
         return;
       }
       curNarr = null;
+
+      /* 모양을 골라 두었으면 대사 줄 대신 그 모양으로 짓는다. 못 알아본 줄이면
+         빈손으로 돌아오고, 아래의 흐린 한 줄이 원문을 그대로 받는다.
+         prevName은 건드리지 않는다 — 굴린 사람이 그 대사의 주인과 같으므로,
+         판정 뒤에 이어지는 말은 이름을 다시 적지 않고 한 덩어리로 읽힌다. */
+      if(noise && opts.rollHighlight){
+        const rb = rollBlock(m, P, opts);
+        if(rb){ book.appendChild(rb); slot(rb, m); return; }
+      }
 
       const same = opts.merge && m.name && m.name === prevName;
       /* 합쳐 놓았더라도 서 있는 그림이 바뀐 자리에서는 캐릭터 이미지를 한 번 더 낸다.
@@ -1380,25 +2146,34 @@
       if(m.color) turn.style.setProperty('--speaker', m.color);
 
       if(!opts.noImages && m.avatar) noteAvatar(m);   /* 합쳐서 안 그려질 그림도 설정 목록에는 남긴다 */
+      /* 이 덩어리가 기대는 그림. 이어지는 줄은 제 그림이 없어도 첫 줄의 그림을 따라간다.
+         비어 있으면 ‘이미지가 없는 저널’ — 칸을 어떻게 할지는 고급 설정이 정한다. */
+      const cont = same && !avSwap;
+      const slotAv = m.avatar || (same ? prevAv : '');
       if(opts.noImages){ /* 캐릭터 이미지를 아예 그리지 않고 자리도 접는다 */ }
       else if(center){
-        if((!same || avSwap) && m.avatar) turn.appendChild(avatarBox(m));
-      } else if((same && !avSwap) || (!m.avatar)){ const sp = document.createElement('div'); sp.className = 'av-space'; turn.appendChild(sp); }
+        if(!cont && m.avatar) turn.appendChild(avatarBox(m));
+        else if(!cont && !slotAv) turn.appendChild(blankBox(false));
+      }
+      else if(!slotAv) turn.appendChild(blankBox(cont));
+      else if(cont){ const sp = document.createElement('div'); sp.className = 'av-space'; turn.appendChild(sp); }
       else turn.appendChild(avatarBox(m));
 
       const content = document.createElement('div'); content.className = 'content';
       if(!same && m.name){ const head = document.createElement('div'); head.className='head'; const who=document.createElement('span'); who.className='who'; who.textContent=m.name; head.appendChild(who); content.appendChild(head); }
       if(P.length){ const b=document.createElement('div'); b.className='body'; paras(b, P); content.appendChild(b); }
-      m.shots.forEach(s => content.appendChild(shot(s)));
       turn.appendChild(content);
-      book.appendChild(turn);
-      if(m.name){ prevName = m.name; prevAv = m.avatar || ''; }
+      book.appendChild(turn); slot(turn, m);
+      /* 덩어리 안에서 한 줄만 그림이 빠져도 그 덩어리가 쓰던 그림은 잊지 않는다 */
+      if(m.name){ if(m.avatar) prevAv = m.avatar; else if(m.name !== prevName) prevAv = ''; prevName = m.name; }
     });
+
+    if(nStat || nDice) book.insertBefore(hiddenNote(nDice, nStat), book.firstChild);
 
     populateAvPer();
     applyAvPer();
     populateJournalAlign(messages);
-    populateInfoTune(rawMessages ? composeAll(rawMessages, opts) : messages);
+    populateInfoTune(rawMessages && allForTune ? allForTune : messages);
     if(window.__resetSearch) window.__resetSearch();
 
     if(!quietRender){
@@ -1413,15 +2188,47 @@
       window.scrollTo(0, 0);
     }
     if(!opts._demo && !opts._restore) saveDraft(messages, opts, title);
+    refreshChip();
   }
 
   /* ── 자동 보관 ── */
   const KEY = 'ccfolia:v2:last';
-  function saveDraft(messages, opts, title){
+  /* 보관함 자체를 못 쓰는 자리도 있다 — 파일로 바로 열었거나, 사생활 보호 모드이거나.
+     그건 용량 문제가 아니므로 실패했을 때 다르게 알려야 한다. */
+  const storageOK = (() => {
+    try{ localStorage.setItem(KEY + ':probe', '1'); localStorage.removeItem(KEY + ':probe'); return true; }
+    catch(e){ return false; }
+  })();
+  function writeDraft(messages, opts, title){
     /* 병합 결과가 아니라 원본을 담는다. 배치 보정(mv)만 따로 얹으면 언제든 되살아난다. */
-    try{ localStorage.setItem(KEY, JSON.stringify({ t:title, o:{merge:opts.merge, avChange:opts.avChange, hideNoise:opts.hideNoise, avatarKey:opts.avatarKey, showStatus:opts.showStatus, align:opts.align, narrators:opts.narrators, avShape:opts.avShape, avSize:opts.avSize, avZoom:opts.avZoom, avFocus:opts.avFocus, avPer:avState, avImg:avImgState, rollHighlight:opts.rollHighlight, sysNarr:opts.sysNarr, withInfo:opts.withInfo, infoCard:opts.infoCard, infoFirst:opts.infoFirst, noImages:opts.noImages}, m:(rawMessages && rawMessages.length ? rawMessages : messages), mv:moveState, dl:delState, at:Date.now() })); }
-    catch(e){ /* 용량 초과 등은 조용히 무시 */ }
+    try{
+      localStorage.setItem(KEY, JSON.stringify({ t:title, o:{merge:opts.merge, avChange:opts.avChange, hideNoise:opts.hideNoise, avatarKey:opts.avatarKey, showStatus:opts.showStatus, align:opts.align, narrators:opts.narrators, avShape:opts.avShape, avSize:opts.avSize, avZoom:opts.avZoom, avFocus:opts.avFocus, avPer:avState, avImg:avImgState, rollHighlight:opts.rollHighlight, rollStyle:opts.rollStyle, sysNarr:opts.sysNarr, withInfo:opts.withInfo, infoCard:opts.infoCard, infoFirst:opts.infoFirst, noImages:opts.noImages, noImgSlot:opts.noImgSlot}, m:(rawMessages && rawMessages.length ? rawMessages : messages), mv:moveState, dl:delState, at:Date.now() }));
+    }catch(e){
+      /* 대개 용량 초과다. 조용히 넘기면 '자동 보관됩니다'라는 첫 화면의 약속이
+         큰 세션에서만 말없이 깨지고, 사용자는 새로고침한 뒤에야 알게 된다.
+         한 로그에 한 번만 알린다 — 렌더마다 띄우면 잔소리가 된다. */
+      if(!draftWarned){
+        draftWarned = true;
+        toast(storageOK ? '이 세션은 너무 커서 자동 보관에 실패했습니다 · ‘저장’으로 파일에 남겨 주세요'
+                        : '이 브라우저에서는 자동 보관을 쓸 수 없습니다 · ‘저장’으로 파일에 남겨 주세요');
+      }
+    }
   }
+  /* 보관은 로그 전체를 문자열로 만드는 일이라 가볍지 않다. 슬라이더를 끌거나 카드를
+     연달아 옮기는 동안 매번 부르지 않도록 잠깐 모았다가 한 번만 쓴다. */
+  let draftTimer = null;
+  function saveDraft(messages, opts, title){
+    clearTimeout(draftTimer);
+    draftTimer = setTimeout(() => { draftTimer = null; writeDraft(messages, opts, title); }, 500);
+  }
+  /* 탭을 덮거나 떠나면 미뤄 둔 것을 곧바로 쓴다 — 마지막 한 번을 잃지 않게 */
+  addEventListener('visibilitychange', () => {
+    if(document.visibilityState === 'hidden' && draftTimer && lastMessages){
+      clearTimeout(draftTimer); draftTimer = null;
+      const dt = document.getElementById('docTitle');
+      writeDraft(lastMessages, lastOpts || {}, (dt ? dt.textContent.trim() : '') || '클릭하여 세션 제목을 입력해 주세요.');
+    }
+  });
   function showResume(){
     let raw; try{ raw = localStorage.getItem(KEY); }catch(e){ return; }
     if(!raw) return;
@@ -1432,11 +2239,26 @@
     const ago = when.toLocaleDateString('ko-KR',{month:'long',day:'numeric'}) + ' ' + when.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
     slot.innerHTML = '';
     const box = document.createElement('div'); box.className='resume';
+    /* 제목은 사람이 친 글이다. innerHTML로 엮으면 '<'만 겨우 막게 되고 '&'는 뭉개진다.
+       조각을 만들어 붙이면 무엇이 들어와도 글자 그대로 보인다. */
     const txt = document.createElement('div'); txt.className='rtxt';
-    txt.innerHTML = '이어보기 · <b>'+ (d.t||'클릭하여 세션 제목을 입력해 주세요.').replace(/</g,'&lt;') +'</b> <span style="color:var(--faint)">('+ d.m.length +'개 · '+ ago +')</span>';
+    const head = document.createTextNode('이어보기 · ');
+    const nameEl = document.createElement('b');
+    nameEl.textContent = d.t || '클릭하여 세션 제목을 입력해 주세요.';
+    const metaEl = document.createElement('span');
+    metaEl.style.color = 'var(--faint)';
+    metaEl.textContent = ' (' + d.m.length + '개 · ' + ago + ')';
+    txt.append(head, nameEl, metaEl);
     const open = document.createElement('button'); open.className='btn btn-primary'; open.textContent='열기';
     const del = document.createElement('button'); del.className='btn'; del.textContent='지우기';
-    open.onclick = () => {
+    open.onclick = () => { try{ restore(); }catch(e){
+      /* 스키마가 바뀐 옛 보관본이면 여기서 터진다. 예전에는 화면이 그대로 멎어
+         '열기를 눌러도 아무 일이 없는' 상태가 됐다. 무엇이 잘못됐는지 알리고 길을 터 준다. */
+      console.error('[ccfolia] 보관본 복원 실패', e);
+      toast('보관된 세션을 열지 못했습니다 · 파일을 다시 불러와 주세요');
+    } };
+    function restore(){
+      if(d.o && d.o.narrators && !Array.isArray(d.o.narrators)) d.o.narrators = null;
       if(d.o && d.o.align) alignState = Object.assign({}, d.o.align);
       avState = (d.o && d.o.avPer && typeof d.o.avPer === 'object') ? Object.assign({}, d.o.avPer) : {};
       avImgState = (d.o && d.o.avImg && typeof d.o.avImg === 'object') ? Object.assign({}, d.o.avImg) : {};
@@ -1444,11 +2266,13 @@
       if(d.o && d.o.narrators && $('#narrNames')) $('#narrNames').value = d.o.narrators.join(', ');
       if(d.o && $('#optNoise')) $('#optNoise').checked = !d.o.hideNoise;
       if(d.o && $('#optRoll')) $('#optRoll').checked = !!d.o.rollHighlight;
+      if(d.o) ROLL_PICKS.forEach(x => { const e = $(x[0]); if(e) e.checked = (d.o.rollStyle === x[1]); });
       if(d.o && $('#optSysNarr')) $('#optSysNarr').checked = !!d.o.sysNarr;
       if($('#optInfo')) $('#optInfo').checked = !(d.o && d.o.withInfo === false);
       if($('#optInfoCard')) $('#optInfoCard').checked = !(d.o && d.o.infoCard === false);
       if($('#optInfoFirst')) $('#optInfoFirst').checked = !(d.o && d.o.infoFirst === false);
       if($('#optNoImg')) $('#optNoImg').checked = !!(d.o && d.o.noImages);
+      setBlank((d.o && d.o.noImgSlot) || 'gap');
       if($('#optAvChange')) $('#optAvChange').checked = !!(d.o && d.o.avChange);
       moveState = (d.mv && typeof d.mv === 'object') ? Object.assign({}, d.mv) : {};
       delState = (d.dl && typeof d.dl === 'object') ? Object.assign({}, d.dl) : {};
@@ -1458,9 +2282,9 @@
       if(d.o && d.o.avFocus) document.querySelectorAll('[data-av-focus]').forEach(x => x.setAttribute('aria-pressed', x.dataset.avFocus === d.o.avFocus ? 'true' : 'false'));
       syncRollEnabled(); syncImgEnabled(); syncAvChangeEnabled();
       const o = Object.assign({merge:true,hideNoise:true,avatarKey:'avatar',title:d.t}, d.o||{}, {_restore:true, align:alignState, avPer:avState, avImg:avImgState});
-      adoptRaw(stampSeq(d.m));
+      adoptRaw(stampSeq(d.m), true);   /* 보관해 둔 보정을 방금 얹었다 — 지문 검사로 지우면 안 된다 */
       render(composeLog(d.m, o), o);
-    };
+    }
     del.onclick = () => { try{ localStorage.removeItem(KEY); }catch(e){} slot.innerHTML=''; toast('보관된 세션을 지웠습니다'); };
     box.append(txt, open, del); slot.appendChild(box);
   }
@@ -1475,14 +2299,23 @@
 
   /* 그림 크기는 한 번만 재고 기억해 둔다 — '크기가 다른 그림'을 골라내는 유일한 근거다.
      로그에 이미 떠 있는 그림이라 대개 캐시에서 즉시 돌아온다. */
+  /* 그림 하나가 도착할 때마다 목록 전체를 다시 맞추면, 캐릭터가 200명일 때
+     200 × 200번을 맞추게 된다. 한 프레임에 한 번으로 모아 준다. */
+  let avSyncQueued = false;
+  function syncAvRowsSoon(){
+    if(avSyncQueued) return;
+    avSyncQueued = true;
+    const go = () => { avSyncQueued = false; syncAvRows(); };
+    if(typeof requestAnimationFrame === 'function') requestAnimationFrame(go); else setTimeout(go, 16);
+  }
   function measurePics(){
     avImgs.forEach(src => {
       if(avDim.has(src)) return;
       avDim.set(src, null);
       const im = new Image();
-      im.onload  = () => { avDim.set(src, { w: im.naturalWidth, h: im.naturalHeight }); syncAvRows(); };
-      im.onerror = () => syncAvRows();
-      im.src = src;
+      im.onload  = () => { avDim.set(src, { w: im.naturalWidth, h: im.naturalHeight }); syncAvRowsSoon(); };
+      im.onerror = () => syncAvRowsSoon();
+      im.src = localize(src);
     });
   }
 
@@ -1497,7 +2330,7 @@
     pimg.addEventListener('load', () => updatePick(row));
     const win = document.createElement('span'); win.className = 'win';
     pick.append(pimg, win);
-    if(src) pimg.src = src;
+    if(src) pimg.src = localize(src);
     const lab = document.createElement('span'); lab.className = sub ? 'sz' : 'jname';
     if(!sub){ lab.textContent = name; lab.title = name; }
     const seg = document.createElement('span'); seg.className = 'seg';
@@ -1649,12 +2482,20 @@
     if(cnt) cnt.textContent = '· ' + infos.length + '개'
       + (moved ? ' · ' + moved + '개 손봄' : '') + (gone ? ' · ' + gone + '개 지움' : '');
     const undoAll = $('#infoUndel'); if(undoAll) undoAll.classList.toggle('hidden', !gone);
+    /* 앵커('↳ 누구 뒤')는 한 번만 훑어 미리 적어 둔다. 예전에는 카드마다 목록 전체를
+       indexOf로 되짚고 다시 거꾸로 훑어서, 카드 1000개 × 3만 줄이면 렌더 한 번에
+       수천만 번을 비교했다. 화살표 한 번에 화면이 멎던 원인이 여기였다.
+       앵커는 '보이는' 메시지로 잡는다 — 지운 카드를 가리키면 헷갈린다. */
+    const prevOf = new Map();
+    let lastSeen = null;
+    list.forEach(m => {
+      if(isInfo(m)) prevOf.set(m, lastSeen);
+      else if(!isGone(m)) lastSeen = m;
+    });
     box.innerHTML = '';
     infos.forEach(m => {
       const dead = isGone(m);
-      const i = list.indexOf(m);
-      let prev = null;   /* 앵커는 '보이는' 메시지로 잡는다. 지운 카드를 가리키면 헷갈린다. */
-      for(let k = i - 1; k >= 0; k--){ if(!isInfo(list[k]) && !isGone(list[k])){ prev = list[k]; break; } }
+      const prev = prevOf.get(m) || null;
       const row = document.createElement('div'); row.className = 'irow' + (dead ? ' gone' : '');
       row.dataset.mid = midOf(m);
       const at = document.createElement('span'); at.className = 'iat'; at.textContent = m.time || '--:--';
@@ -1687,27 +2528,38 @@
     const opts = lastOpts || currentOpts();
     const arr = composeAll(rawMessages, opts);   /* 자리 계산은 지운 것까지 포함한 원래 틀에서 한다 */
     const i = arr.findIndex(m => midOf(m) === id); if(i < 0) return;
-    const vis = m => !isGone(m) && (m.status ? !!opts.showStatus : (m.dice ? !opts.hideNoise : true));
+    /* 화면에 실제로 그려지는 줄만 한 칸으로 센다 — 글이 없어 접힌 줄까지 세면 ↑↓가 헛걸음한다 */
+    const vis = m => !isGone(m) && cleanParas(m.paras).length > 0
+                  && (m.status ? !!opts.showStatus : (m.dice ? !opts.hideNoise : true));
     let j = i + dir;
     while(j > 0 && j < arr.length - 1 && !vis(arr[j])) j += dir;
     if(j < 0 || j >= arr.length){ toast('더 옮길 곳이 없습니다'); return; }
-    moveState[id] = (moveState[id] || 0) + (j - i);
+    pushUndo();
+    /* 옮겨 갈 자리를 '누구 뒤'로 적는다. 아래로 갈 때는 넘어선 메시지 뒤,
+       위로 갈 때는 그 앞자리 메시지 뒤 — 맨 앞으로 갔다면 앵커가 없다. */
+    const anchor = dir > 0 ? arr[j] : (j > 0 ? arr[j - 1] : null);
+    /* 같은 메시지 뒤를 가리키는 카드가 둘이면 늦게 적은 쪽이 앵커에 더 붙는다.
+       키를 덮어써도 적힌 순서는 그대로이므로, 지웠다 다시 적어 맨 뒤로 보낸다.
+       이걸 빼먹으면 두 장이 나란히 붙었을 때 ↑가 아무 일도 하지 않는다. */
+    delete moveState[id];
+    moveState[id] = { after: anchor ? midOf(anchor) : null };
     quietRender = true;
     try{ render(composeLog(rawMessages, opts), opts); } finally { quietRender = false; }
     if(focus){
-      const el = document.querySelector('#book [data-mid="' + id + '"]');
+      const el = document.querySelector('#book ' + midSel(id));
       if(el){
         el.scrollIntoView({block: 'center', behavior: 'smooth'});
         if(el.animate) el.animate([{opacity: .3}, {opacity: 1}], 300);
       }
     } else {
-      const el = document.querySelector('#infoTune .irow[data-mid="' + id + '"] button[data-mv="' + dir + '"]');
+      const el = document.querySelector('#infoTune .irow' + midSel(id) + ' button[data-mv="' + dir + '"]');
       if(el) el.focus();
     }
   }
   /* 정보 카드 지우기·되살리기. 원본은 그대로 두고 표시에서만 뺀다. */
   function dropInfo(id, on){
     if(!rawMessages) return;
+    pushUndo();
     if(on) delState[id] = 1; else delete delState[id];
     recompose();
     toast(on ? '정보 카드를 지웠습니다 · 미세조정 목록에서 되살릴 수 있습니다' : '정보 카드를 되살렸습니다');
@@ -1716,6 +2568,11 @@
     const host0 = e.target.closest('[data-mid]');
     const d = e.target.closest('button[data-del]');
     if(d && host0){ e.preventDefault(); dropInfo(host0.dataset.mid, d.dataset.del === '1'); return; }
+    /* 손잡이·제자리 단추는 본문 카드에만 달린다. 미세조정 목록에는 없으므로 그냥 지나간다. */
+    const pk = e.target.closest('button[data-pick]');
+    if(pk && host0){ e.preventDefault(); pickUp(host0.dataset.mid); return; }
+    const hm = e.target.closest('button[data-home]');
+    if(hm && host0){ e.preventDefault(); homeInfo(host0.dataset.mid); return; }
     const b = e.target.closest('button[data-mv]'); if(!b) return;
     const host = b.closest('[data-mid]'); if(!host) return;
     e.preventDefault(); nudgeInfo(host.dataset.mid, +b.dataset.mv, focus);
@@ -1735,11 +2592,349 @@
   }
   $('#infoReset') && $('#infoReset').addEventListener('click', () => {
     if(!rawMessages) return;
-    moveState = {}; recompose(); toast('정보 카드를 자동 배치로 되돌렸습니다');
+    pushUndo(); moveState = {}; recompose(); toast('정보 카드를 자동 배치로 되돌렸습니다');
   });
   $('#infoUndel') && $('#infoUndel').addEventListener('click', () => {
     if(!rawMessages) return;
-    delState = {}; recompose(); toast('지운 정보 카드를 모두 되살렸습니다');
+    pushUndo(); delState = {}; recompose(); toast('지운 정보 카드를 모두 되살렸습니다');
+  });
+
+  /* ── 자리 고르기 ──
+     카드를 '집어 든' 다음 놓을 자리를 고른다. 집은 동안에도 화면은 평소처럼 굴러가므로
+     스크롤도 검색도 그대로 쓸 수 있다 — 세 시간 뒤 장면으로 보내는 일이 검색 한 번으로 끝난다. */
+  const slow = () => !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+  function pushUndo(){
+    undoStack.push({ mv: Object.assign({}, moveState), dl: Object.assign({}, delState) });
+    if(undoStack.length > 30) undoStack.shift();
+  }
+  function undoLast(){
+    const u = undoStack.pop();
+    if(!u){ toast('되돌릴 것이 없습니다'); return; }
+    moveState = u.mv; delState = u.dl;
+    recompose(); toast('직전 변경을 되돌렸습니다');
+  }
+  function flashCard(id){
+    const el = document.querySelector('#book ' + midSel(id));
+    if(!el) return;
+    el.scrollIntoView({ block: 'center', behavior: slow() ? 'smooth' : 'auto' });
+    if(el.animate) el.animate([{opacity: .3}, {opacity: 1}], 300);
+  }
+  function homeInfo(id){
+    if(!moveState[id]){ toast('이미 자동 배치입니다'); return; }
+    pushUndo(); delete moveState[id];
+    recompose(); flashCard(id); toast('이 카드를 자동 배치로 되돌렸습니다');
+  }
+
+  /* 자리들을 문서 좌표로 한 번만 잰다. 스크롤해도 다시 재지 않아도 된다. */
+  /* mid → 시:분. 자리를 잴 때 한 번만 훑는다. */
+  let clockBook = {};
+  function readClocks(){
+    clockBook = {};
+    if(!rawMessages) return;
+    composeAll(rawMessages, lastOpts || currentOpts()).forEach(m => { clockBook[midOf(m)] = m.time || ''; });
+  }
+  function slotFrames(){
+    const book = $('#book'); if(!book || !bookSlots.length) return null;
+    const sy = window.scrollY || 0, sx = window.scrollX || 0;
+    const br = book.getBoundingClientRect();
+    const cs = getComputedStyle(document.documentElement);
+    const num = v => parseFloat(cs.getPropertyValue(v)) || 0;
+    /* 정보 카드가 들여 쓰는 만큼 줄도 들여 쓴다 — .infocard 의 margin-left 와 같은 셈이다 */
+    const pad = document.documentElement.getAttribute('data-img') === 'off' ? 0 : num('--av') + num('--gap');
+    return {
+      left: br.left + sx + pad, width: Math.max(40, br.width - pad),
+      rows: monotone(bookSlots.map(v => {
+        const r = v.el.getBoundingClientRect();
+        return { mid: v.mid, clock: clockOf(clockBook[v.mid]), top: r.top + sy,
+                 cy: r.top + sy + r.height / 2, bot: r.top + sy + r.height };
+      }))
+    };
+  }
+  /* 반씩 좁혀 찾으려면 중심 높이가 내림 없이 늘어서야 한다. 렌더가 바뀌어도 그 약속이 깨지지 않게 눌러 둔다. */
+  function monotone(rows){
+    let prev = -Infinity;
+    rows.forEach(r => { if(r.cy < prev) r.cy = prev; else prev = r.cy; });
+    return rows;
+  }
+  /* 자리 번호 = 이 높이보다 위에 있는 줄의 개수. 줄은 위에서 아래로 늘어서 있으므로 반씩 좁혀 찾는다. */
+  function gapAt(y){
+    const rows = holdSlots.rows;
+    let lo = 0, hi = rows.length;
+    while(lo < hi){ const k = (lo + hi) >> 1; if(rows[k].cy < y) lo = k + 1; else hi = k; }
+    return lo;
+  }
+  /* '19:02' → 분으로. 코코포리아가 알려 주는 것이 시:분까지라, 어긋남도 이 단위로 생긴다. */
+  function clockOf(t){
+    const m = /^(\d{1,2}):([0-5]\d)$/.exec(t || '');
+    return m ? (+m[1]) * 60 + (+m[2]) : -1;
+  }
+  /* 지금 가리키는 자리를 말로 적어 둔다. 눈으로도 읽히고, 안내 바가 aria-live 라 소리로도 읽힌다. */
+  function posText(gap){
+    if(!holdSlots) return '';
+    if(gap <= 0) return '맨 앞';
+    if(gap >= holdSlots.rows.length) return '맨 뒤';
+    const v = bookSlots[gap - 1];
+    const t = v ? (v.el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 20) : '';
+    return t ? '‘' + t + '’ 뒤' : (gap + '번째 자리');
+  }
+  function showPos(){
+    const bar = $('#moveBar'); if(!bar) return;
+    const el = bar.querySelector('.mpos'); if(!el) return;
+    el.textContent = holdGap < 0 ? '' : posText(holdGap);
+  }
+  /* 같은 시:분에 걸린 자리들을 한 덩어리로 묶어 옅게 깔아 준다 */
+  function drawBand(){
+    if(holdBand){ holdBand.remove(); holdBand = null; }
+    if(holdClock < 0 || !holdSlots) return;
+    const rows = holdSlots.rows;
+    let lo = -1, hi = -1;
+    for(let i = 0; i < rows.length; i++){
+      const c = rows[i].clock;
+      if(c < 0 || Math.abs(c - holdClock) > 1) continue;
+      if(lo < 0) lo = i;
+      hi = i;
+    }
+    if(lo < 0 || hi <= lo) return;   /* 저 혼자면 굳이 깔지 않는다 */
+    holdBand = document.createElement('div');
+    holdBand.className = 'samemin app-only';
+    const lab = document.createElement('span');
+    const hh = Math.floor(holdClock / 60), mm = holdClock % 60;
+    lab.textContent = '같은 시각 ' + (hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm + ' 언저리';
+    holdBand.appendChild(lab);
+    holdBand.style.left   = Math.round(holdSlots.left) + 'px';
+    holdBand.style.width  = Math.round(holdSlots.width) + 'px';
+    holdBand.style.top    = Math.round(rows[lo].top - 6) + 'px';
+    holdBand.style.height = Math.round(rows[hi].bot - rows[lo].top + 12) + 'px';
+    document.body.appendChild(holdBand);
+  }
+  /* 키보드로 자리를 옮긴다. 제자리와 같은 뜻인 자리는 건너뛴다. */
+  function stepGap(d){
+    if(!holdSlots) return;
+    const n = holdSlots.rows.length;
+    const self = holdSlots.rows.findIndex(r => r.mid === holdMid);
+    let g = (holdGap < 0 ? (self < 0 ? 0 : self) : holdGap) + d;
+    if(self >= 0 && (g === self || g === self + 1)) g += d;
+    g = Math.max(0, Math.min(n, g));
+    if(g === holdGap) return;
+    holdGap = g; drawLine(g); showPos(); scrollLineIn();
+  }
+  function scrollLineIn(){
+    if(!holdLine) return;
+    const y = parseFloat(holdLine.style.top) || 0;
+    const top = window.scrollY || 0, h = window.innerHeight;
+    if(y > top + 90 && y < top + h - 90) return;
+    window.scrollTo({ top: Math.max(0, y - h / 2), behavior: slow() ? 'smooth' : 'auto' });
+  }
+  function drawLine(gap){
+    if(!holdSlots) return;
+    if(!holdLine){
+      holdLine = document.createElement('div');
+      holdLine.className = 'dropline app-only';
+      document.body.appendChild(holdLine);
+    }
+    const rows = holdSlots.rows, n = rows.length;
+    const y = gap <= 0 ? rows[0].top - 9
+            : (gap >= n ? rows[n - 1].bot + 9 : (rows[gap - 1].bot + rows[gap].top) / 2);
+    holdLine.style.left  = Math.round(holdSlots.left) + 'px';
+    holdLine.style.width = Math.round(holdSlots.width) + 'px';
+    holdLine.style.top   = Math.round(y) + 'px';
+  }
+  function showBar(id){
+    const bar = $('#moveBar'); if(!bar) return;
+    const arr = rawMessages ? composeAll(rawMessages, lastOpts || currentOpts()) : [];
+    const m = arr.find(x => midOf(x) === id);
+    const t = m ? (excerptOf(m) || (m.tab || '정보')) : '정보';
+    bar.querySelector('.mtxt').textContent = '‘' + t + '’ — 놓을 자리를 누르세요';
+    bar.querySelector('[data-mact="home"]').classList.toggle('hidden', !moveState[id]);
+    bar.classList.remove('hidden');
+  }
+  function pickUp(id){
+    if(!rawMessages) return;
+    if(holdMid) cancelHold(true);
+    readClocks();
+    const frames = slotFrames();
+    if(!frames){ toast('옮길 자리가 없습니다'); return; }
+    holdMid = id; holdSlots = frames; holdGap = -1;
+    holdClock = clockOf(clockBook[id]);
+    drawBand();
+    document.documentElement.dataset.moving = '1';
+    const card = document.querySelector('#book ' + midSel(id));
+    if(card){
+      /* 방금 한 칸 옮겨 깜빡이던 중이면 그 애니메이션이 흐릿함을 덮어쓴다. 먼저 끊는다. */
+      if(card.getAnimations) card.getAnimations().forEach(a => a.cancel());
+      card.classList.add('picked');
+    }
+    showBar(id);
+  }
+  function cancelHold(quiet){
+    stopEdge();
+    if(!holdMid) return;
+    const card = document.querySelector('#book .infocard.picked');
+    if(card) card.classList.remove('picked');
+    document.documentElement.removeAttribute('data-moving');
+    if(holdLine){ holdLine.remove(); holdLine = null; }
+    if(holdBand){ holdBand.remove(); holdBand = null; }
+    const bar = $('#moveBar'); if(bar) bar.classList.add('hidden');
+    holdMid = null; holdSlots = null; holdGap = -1; holdClock = -1;
+    if(!quiet) toast('자리 옮기기를 그만두었습니다');
+  }
+  function dropHere(gap){
+    const id = holdMid, frames = holdSlots;
+    if(!id || !frames) return;
+    const rows = frames.rows;
+    const self = rows.findIndex(r => r.mid === id);
+    cancelHold(true);
+    /* 제 앞뒤 자리는 '그대로 두기'와 같다. 괜히 다시 그리지 않는다. */
+    if(self >= 0 && (gap === self || gap === self + 1)){ toast('자리가 그대로입니다'); return; }
+    pushUndo();
+    delete moveState[id];   /* 늦게 적은 쪽이 앵커에 더 붙는다 — 순서를 새로 매긴다 */
+    moveState[id] = { after: gap > 0 ? rows[gap - 1].mid : null };
+    recompose(); flashCard(id); toast('카드를 옮겼습니다 — 되돌리려면 Ctrl+Z');
+  }
+
+  /* 손본 것이 있을 때만 나오는 알림 */
+  function refreshChip(){
+    const chip = $('#tuneChip'); if(!chip) return;
+    const out = $('#output');
+    const live = !!rawMessages && out && !out.classList.contains('hidden');
+    const moved = Object.keys(moveState).filter(k => moveState[k]).length;
+    const gone  = Object.keys(delState).filter(k => delState[k]).length;
+    if(!live || (!moved && !gone && !undoStack.length)){ chip.classList.add('hidden'); return; }
+    const bits = [];
+    if(moved) bits.push('자리 옮김 ' + moved + '개');
+    if(gone)  bits.push('지움 ' + gone + '개');
+    chip.querySelector('.ctxt').textContent = '정보 카드' + (bits.length ? ' · ' + bits.join(' · ') : '');
+    chip.querySelector('[data-cact="undo"]').disabled = !undoStack.length;
+    chip.querySelector('[data-cact="reset"]').classList.toggle('hidden', !moved);
+    chip.querySelector('[data-cact="undel"]').classList.toggle('hidden', !gone);
+    chip.classList.remove('hidden');
+  }
+
+  /* 화면 끝에 다다르면 알아서 흘러간다. 멀리 보낼 때는 그래도 느리므로, 그때는 집어 두고
+     검색으로 건너뛰는 편이 빠르다 — 두 길을 다 열어 두는 이유다. */
+  function aimAt(y){
+    if(!holdSlots) return;
+    const g = gapAt(y + (window.scrollY || 0));
+    if(g !== holdGap){ holdGap = g; drawLine(g); showPos(); }
+  }
+  function edgeScroll(y){
+    const h = window.innerHeight, band = 90;
+    edgeV = y < band ? -(band - y) / 5 : (y > h - band ? (y - (h - band)) / 5 : 0);
+    if(edgeV && !edgeRAF) edgeRAF = requestAnimationFrame(tickEdge);
+  }
+  function tickEdge(){
+    edgeRAF = 0;
+    if(!holdMid || !edgeV) return;
+    window.scrollBy(0, edgeV);
+    if(lastY != null) aimAt(lastY);   /* 흘러간 만큼 가리키는 자리도 달라진다 */
+    edgeRAF = requestAnimationFrame(tickEdge);
+  }
+  function stopEdge(){ edgeV = 0; if(edgeRAF){ cancelAnimationFrame(edgeRAF); edgeRAF = 0; } }
+  function endDrag(){
+    if(dragFrom){ try{ dragFrom.el.releasePointerCapture(dragFrom.id); }catch(err){} }
+    dragFrom = null; dragOn = false; stopEdge();
+    document.documentElement.removeAttribute('data-dragging');
+  }
+
+  /* ── 집은 동안의 손짓 ── */
+  const bookEl = $('#book');
+  if(bookEl){
+    /* 손잡이를 누른 채 움직이면 끌기, 그냥 놓으면 집기 — 입구만 둘이고 나머지는 같은 길이다.
+       손가락은 끌기로 넘기지 않는다. 화면 넘기기와 다투는 데다, 멀리 보낼 때는 집기가 낫다. */
+    bookEl.addEventListener('pointerdown', e => {
+      if(holdMid) return;
+      if(e.pointerType === 'touch') return;
+      if(e.button != null && e.button !== 0) return;
+      const g = e.target.closest('button[data-pick]'); if(!g) return;
+      const host = g.closest('[data-mid]'); if(!host) return;
+      dragFrom = { x: e.clientX, y: e.clientY, mid: host.dataset.mid, id: e.pointerId, el: g };
+      dragOn = false;
+      try{ g.setPointerCapture(e.pointerId); }catch(err){}
+    });
+    /* 집은 동안에는 본문 아무 데나 눌러도 '여기에 놓기'다. 카드 단추는 그동안 잠겨 있다. */
+    bookEl.addEventListener('click', e => {
+      const now = window.performance ? performance.now() : Date.now();
+      if(eatUntil && now < eatUntil){ eatUntil = 0; e.preventDefault(); e.stopPropagation(); return; }
+      eatUntil = 0;
+      if(!holdMid) return;
+      e.preventDefault(); e.stopPropagation();
+      /* detail 이 0이면 키보드가 만든 click 이다 — 좌표가 없으므로 가리키던 자리를 쓴다 */
+      dropHere(e.detail === 0 ? (holdGap < 0 ? -1 : holdGap) : gapAt(e.clientY + (window.scrollY || 0)));
+    }, true);
+  }
+  /* 손이 본문 밖(머리말·창 바깥)으로 나가도 놓기를 놓치지 않도록 창에서 듣는다.
+     포인터 붙잡기가 되는 자리에서는 어차피 다 오지만, 안 되는 자리를 위한 그물이다. */
+  addEventListener('pointermove', e => {
+    if(!dragFrom && !holdMid) return;
+    lastY = e.clientY;
+    if(dragFrom && !dragOn){
+      if(Math.abs(e.clientY - dragFrom.y) + Math.abs(e.clientX - dragFrom.x) < 5) return;
+      dragOn = true;
+      document.documentElement.dataset.dragging = '1';
+      pickUp(dragFrom.mid);
+    }
+    if(!holdMid) return;
+    aimAt(e.clientY);
+    if(dragOn) edgeScroll(e.clientY);
+  });
+  addEventListener('pointerup', e => {
+    if(!dragFrom) return;
+    const was = dragOn, gap = holdGap;
+    endDrag();
+    if(!was) return;                    /* 끌지 않았다 — 뒤따르는 click 이 집기를 맡는다 */
+    e.preventDefault();
+    /* 끌고 놓으면 곧바로 click 이 뒤따른다. 그 한 번만 삼키되, 안 올 수도 있으므로
+       깃발 대신 시한을 둔다 — 안 그러면 한참 뒤의 엉뚱한 click 이 대신 먹힌다. */
+    eatUntil = (window.performance ? performance.now() : Date.now()) + 400;
+    if(!holdMid) return;
+    if(gap < 0) cancelHold();
+    else dropHere(gap);
+  });
+  addEventListener('pointercancel', () => { const was = dragOn; endDrag(); if(was) cancelHold(true); });
+  addEventListener('resize', () => {
+    if(!holdMid) return;
+    holdSlots = slotFrames();
+    drawBand();
+    if(holdSlots && holdGap >= 0) drawLine(holdGap);
+  });
+  addEventListener('keydown', e => {
+    if(holdMid){
+      /* 집은 동안에는 화살표가 자리를 고르고, Enter 가 확정한다.
+         Enter 를 여기서 막지 않으면 손잡이에 얹힌 포커스가 click 을 한 번 더 쏘아
+         좌표 없는(0,0) 클릭이 되어 카드가 맨 앞으로 튄다. */
+      if(e.key === 'Escape'){ e.preventDefault(); cancelHold(); return; }
+      if(e.key === 'ArrowUp' || e.key === 'ArrowDown'){ e.preventDefault(); stepGap(e.key === 'ArrowUp' ? -1 : 1); return; }
+      if(e.key === 'Home'){ e.preventDefault(); holdGap = 1; stepGap(-1); return; }
+      if(e.key === 'End'){ e.preventDefault(); holdGap = holdSlots.rows.length - 1; stepGap(1); return; }
+      if(e.key === 'Enter' || e.key === ' '){
+        e.preventDefault();
+        if(holdGap < 0) stepGap(1);
+        else dropHere(holdGap);
+        return;
+      }
+    }
+    if(!(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey) return;
+    if(e.key !== 'z' && e.key !== 'Z') return;
+    const out = $('#output'); if(!out || out.classList.contains('hidden')) return;
+    const t = e.target;
+    if(t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+    e.preventDefault(); undoLast();
+  });
+  $('#moveBar') && $('#moveBar').addEventListener('click', e => {
+    const b = e.target.closest('button[data-mact]'); if(!b) return;
+    const id = holdMid;
+    if(b.dataset.mact === 'home'){ cancelHold(true); if(id) homeInfo(id); }
+    else cancelHold();
+  });
+  $('#tuneChip') && $('#tuneChip').addEventListener('click', e => {
+    const b = e.target.closest('button[data-cact]'); if(!b || b.disabled) return;
+    const a = b.dataset.cact;
+    if(a === 'undo'){ undoLast(); return; }
+    if(!rawMessages) return;
+    pushUndo();
+    if(a === 'reset'){ moveState = {}; recompose(); toast('정보 카드를 자동 배치로 되돌렸습니다'); }
+    else if(a === 'undel'){ delState = {}; recompose(); toast('지운 정보 카드를 모두 되살렸습니다'); }
   });
   ['#optInfo', '#optInfoCard', '#optInfoFirst'].forEach(sel => {
     const el = $(sel); if(el) el.addEventListener('change', recompose);
@@ -1786,11 +2981,25 @@
   const avShapeNow = () => { const b = document.querySelector('[data-av-shape][aria-pressed="true"]'); return b ? b.dataset.avShape : 'square'; };
   const avFocusNow = () => { const b = document.querySelector('[data-av-focus][aria-pressed="true"]'); return b ? b.dataset.avFocus : 'top'; };
   const chk = (sel, dflt) => { const e = $(sel); return e ? e.checked : dflt; };
+  /* 둘 다 켜는 건 말이 안 된다 — 칸을 접으면 채울 자리도 없다. 접기가 이긴다. */
+  /* 빈 칸 설정은 원래부터 'gap·solid·hide' 셋 중 하나였다(저장되는 값도 그것 하나뿐이다).
+     예전에는 그것을 체크상자 두 개로 흉내 내느라 '둘 다 켜면?' 같은 없는 경우를 다뤄야 했다.
+     캐릭터 이미지 설정으로 옮기면서 모양·기준점과 같은 세그먼트 한 줄로 바꾼다 —
+     보이는 방식만 달라졌을 뿐, 담기는 값도 읽는 곳도 그대로다. */
+  const blankPick = () => {
+    const b = document.querySelector('[data-av-blank][aria-pressed="true"]');
+    const v = b ? b.dataset.avBlank : 'gap';
+    return (v === 'hide' || v === 'solid') ? v : 'gap';
+  };
+  /* 판정 모양 네 가지. 목록에 적힌 차례대로 보고 먼저 켜진 것을 따른다 —
+     체크박스를 서로 끄게 묶어 두었으므로 실제로는 한 개만 켜져 있다. */
+  const ROLL_PICKS = [['#optRsTicket', 'ticket'], ['#optRsTile', 'tile'], ['#optRsBand', 'band'], ['#optRsNote', 'note']];
+  const rollPick = () => { const f = ROLL_PICKS.filter(x => chk(x[0], false))[0]; return f ? f[1] : ''; };
   const currentOpts = () => ({ avatarKey: 'avatar', merge: $('#optMerge').checked, avChange: chk('#optAvChange', false),
     withInfo: chk('#optInfo', true), infoCard: chk('#optInfoCard', true), infoFirst: chk('#optInfoFirst', true),
-    noImages: chk('#optNoImg', false), hideNoise: !$('#optNoise').checked, showStatus: $('#optStatus') ? $('#optStatus').checked : false, align: alignState, narrators: parseNarr($('#narrNames') ? $('#narrNames').value : 'GM'), title: '',
+    noImages: chk('#optNoImg', false), noImgSlot: blankPick(), hideNoise: !$('#optNoise').checked, showStatus: $('#optStatus') ? $('#optStatus').checked : false, align: alignState, narrators: parseNarr($('#narrNames') ? $('#narrNames').value : 'GM'), title: '',
     avShape: avShapeNow(), avSize: parseInt(($('#avSize') ? $('#avSize').value : 55), 10) || 55,
-    avFocus: avFocusNow(), avZoom: parseInt(($('#avZoom') ? $('#avZoom').value : 100), 10) || 100, avPer: avState, avImg: avImgState, rollHighlight: !!($('#optRoll') && $('#optRoll').checked), sysNarr: !!($('#optSysNarr') && $('#optSysNarr').checked) });
+    avFocus: avFocusNow(), avZoom: parseInt(($('#avZoom') ? $('#avZoom').value : 100), 10) || 100, avPer: avState, avImg: avImgState, rollHighlight: !!($('#optRoll') && $('#optRoll').checked), rollStyle: rollPick(), sysNarr: !!($('#optSysNarr') && $('#optSysNarr').checked) });
 
   /* 캐릭터 이미지·판정 설정은 ‘변환’을 기다리지 않고 곰바로 반영된다 */
   document.querySelectorAll('[data-av-shape]').forEach(b => b.addEventListener('click', () => {
@@ -1803,9 +3012,50 @@
     applyDisplay(currentOpts());
   }));
   $('#avZoom') && $('#avZoom').addEventListener('input', () => { $('#avZoomVal').textContent = $('#avZoom').value + '%'; applyDisplay(currentOpts()); });
-  $('#optRoll') && $('#optRoll').addEventListener('change', () => applyDisplay(currentOpts()));
-  /* 판정 강조는 주사위 로그를 포함해야 보이므로, 꺼져 있으면 비활성으로 알린다 */
-  function syncRollEnabled(){ const r = $('#optRoll'); if(!r) return; const on = $('#optNoise').checked; r.disabled = !on; const f = r.closest('.field'); if(f) f.style.opacity = on ? '' : '.45'; }
+  $('#optRoll') && $('#optRoll').addEventListener('change', () => {
+    syncRollEnabled();
+    const o = currentOpts();
+    applyDisplay(o);
+    /* 모양을 골라 두었으면 줄의 생김새가 통째로 달라지므로 본문을 다시 그린다 */
+    if(rollStyleOf(o) && rawMessages) recompose();
+  });
+  /* 이미지 칸은 CSS 한 줄로 갈리므로 본문을 다시 그리지 않는다. 대신 이어보기에 남는 값만 손봐 둔다. */
+  function persistOpts(){
+    if(!lastMessages) return;
+    lastOpts = Object.assign({}, lastOpts || {}, currentOpts());
+    const dt = document.getElementById('docTitle');
+    saveDraft(lastMessages, lastOpts, (dt ? dt.textContent.trim() : '') || '클릭하여 세션 제목을 입력해 주세요.');
+  }
+  /* 세그먼트는 하나만 눌린다 — 서로 끄고 켜 줄 일이 없다.
+     본문을 다시 그릴 필요도 없다. 어떻게 보일지는 CSS(data-avblank)가 정하므로
+     applyDisplay 한 번이면 끝나고, 이어보기에 남을 값만 따로 손봐 둔다. */
+  function setBlank(v){
+    document.querySelectorAll('[data-av-blank]').forEach(x =>
+      x.setAttribute('aria-pressed', x.dataset.avBlank === v ? 'true' : 'false'));
+  }
+  document.querySelectorAll('[data-av-blank]').forEach(b => b.addEventListener('click', () => {
+    setBlank(b.dataset.avBlank);
+    applyDisplay(currentOpts()); persistOpts();
+  }));
+  /* 판정 강조는 주사위 로그를 포함해야 보이므로, 꺼져 있으면 비활성으로 알린다.
+     모양 고르기는 강조를 켜야 뜻이 있으므로 한 계단 더 안에서 함께 잠근다. */
+  function syncRollEnabled(){
+    const r = $('#optRoll'); if(!r) return;
+    const on = $('#optNoise').checked;
+    r.disabled = !on; const f = r.closest('.field'); if(f) f.style.opacity = on ? '' : '.45';
+    const styleOn = on && r.checked;
+    const w = $('#rollStyleWrap'); if(w) w.style.opacity = styleOn ? '' : '.45';
+    ROLL_PICKS.forEach(x => { const e = $(x[0]); if(e) e.disabled = !styleOn; });
+  }
+  /* 네 가지 모양은 서로 배타적이다 — 하나를 켜면 나머지가 꺼진다.
+     아무것도 켜지 않으면 지금까지처럼 글자색만 바뀐다. */
+  ROLL_PICKS.forEach(x => {
+    const e = $(x[0]); if(!e) return;
+    e.addEventListener('change', () => {
+      if(e.checked) ROLL_PICKS.forEach(y => { if(y[0] !== x[0]){ const o = $(y[0]); if(o) o.checked = false; } });
+      if(rawMessages) recompose(); else persistOpts();
+    });
+  });
   $('#optNoise') && $('#optNoise').addEventListener('change', syncRollEnabled);
   syncRollEnabled();
   /* 합치기를 끄면 어차피 매번 캐릭터 이미지가 나오므로, 이 설정은 잠가 둔다 */
@@ -1820,7 +3070,7 @@
   /* 이미지를 빼면 캐릭터 이미지 모양·크기 설정은 의미가 없으므로 함께 잠근다 */
   function syncImgEnabled(){
     const off = chk('#optNoImg', false);
-    const marks = ['[data-av-shape]', '#avSize', '#avZoom', '[data-av-focus]'];
+    const marks = ['[data-av-shape]', '#avSize', '#avZoom', '[data-av-focus]', '[data-av-blank]'];
     marks.forEach(sel => document.querySelectorAll(sel).forEach(el => {
       el.disabled = off;
       const f = el.closest('.field'); if(f) f.style.opacity = off ? '.45' : '';
@@ -1833,15 +3083,41 @@
     if(rawMessages){ quietRender = true; try{ render(composeLog(rawMessages, o), o); } finally { quietRender = false; } }
   });
   syncImgEnabled();
+  /* 실패는 반드시 눈에 보여야 한다. #msg는 접혀 있는 ‘고급 설정’ 안에 있어서,
+     그냥 적어 두기만 하면 파일을 놓아도 아무 일도 안 일어난 것처럼 보였다.
+     서랍을 펴고, 그 자리로 데려가고, 토스트로도 알린다. 글자는 textContent로 넣는다. */
+  function showErr(text, hint){
+    const msg = $('#msg'); if(!msg) return;
+    msg.innerHTML = '';
+    const s = document.createElement('span'); s.className = 'err'; s.textContent = text;
+    msg.appendChild(s);
+    /* 이미 세션을 보고 있었다면 패널이 통째로 접혀 있다. 그 상태에서는 적어 봐야 보이지 않으므로
+       패널을 도로 펴 준다. 보고 있던 본문은 건드리지 않는다 — 아래에 그대로 남는다. */
+    const panel = $('#pastePanel');
+    if(panel && panel.classList.contains('hidden')){
+      panel.classList.remove('hidden');
+      panel.classList.remove('mode-edit');   /* 파일을 다시 고르러 온 것이니 수집 안내를 편다 */
+    }
+    const box = $('#advBox'); if(box) box.open = true;
+    toast(hint || text);
+    if(msg.scrollIntoView) msg.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
   function run(html){
     const msg = $('#msg');
     try{
       const o = currentOpts();
       const raw = parse(html, o);
-      if(!raw.length){ msg.innerHTML = '<span class="err">메시지를 찾지 못했습니다. 로그 전체를 담은 HTML인지 확인해 주세요.</span>'; return; }
+      if(!raw.length){
+        showErr('메시지를 찾지 못했습니다. 로그 전체를 담은 HTML인지 확인해 주세요.', '메시지를 찾지 못했습니다');
+        return;
+      }
+      if(msg) msg.innerHTML = '';
       adoptRaw(raw);
       render(composeLog(raw, o), o);
-    }catch(e){ msg.innerHTML = '<span class="err">오류: ' + e.message + '</span>'; }
+      sweepPics();   /* 렌더가 끝난 뒤라야 안전하다 */
+    }catch(e){
+      showErr('오류: ' + (e && e.message ? e.message : e), '변환하지 못했습니다 · 고급 설정을 확인하세요');
+    }
   }
 
   $('#convertBtn').onclick = () => {
@@ -1852,7 +3128,9 @@
     else run(s);
   };
   $('#editBtn').onclick = () => {
-    $('#output').classList.add('hidden'); $('#pastePanel').classList.remove('hidden');
+    cancelHold(true);
+    $('#output').classList.add('hidden');
+    refreshChip();   /* 조회 화면을 떠나면 알림도 함께 접는다 */ $('#pastePanel').classList.remove('hidden');
     if($('#charPanel')) $('#charPanel').classList.remove('hidden');
     $('#saveBtn').classList.add('hidden'); $('#exportBtn').classList.add('hidden'); $('#editBtn').classList.add('hidden');
     $('#findWidget').classList.add('hidden');
@@ -1898,16 +3176,45 @@
 
   $('#saveBtn').onclick = () => {
     const clone = document.documentElement.cloneNode(true);
+    clone.removeAttribute('data-moving');   /* 옮기는 중에 저장해도 표식은 따라가지 않는다 */
     clone.querySelectorAll('.app-only').forEach(n => n.remove());
     const appS = clone.querySelector('#app'); if(appS) appS.remove();
     clone.querySelectorAll('#exOverlay, #exBtn, #dropzone, #toast').forEach(n => n.remove());
     const fw = clone.querySelector('#findWidget'); if(fw){ fw.classList.remove('hidden'); const qi=fw.querySelector('#q'); if(qi) qi.value=''; }
     clone.querySelectorAll('mark.hit').forEach(m => m.replaceWith(document.createTextNode(m.textContent)));
     const out = clone.querySelector('#output'); if(out) out.classList.remove('hidden');
+    /* 담아 온 캐릭터 이미지는 사전 한 벌로만 싣는다. 말풍선마다 data:를 박으면 같은 그림이
+       수천 번 복사되어 파일이 수백 MB로 부푼다. 말풍선의 src(blob:)는 떼어 둔다 —
+       파일을 떠나면 죽는 주소라, 남겨 두면 여는 순간 엑박이 한 번 스친다.
+       런타임이 사전을 풀어 다시 걸어 준다. */
+    const pics = window.__pics ? window.__pics.data : null;
+    if(pics && pics.size){
+      const used = [];
+      clone.querySelectorAll('#book img[data-pic]').forEach(im => {
+        const k = im.getAttribute('data-pic');
+        if(!pics.has(k)) return;
+        im.removeAttribute('src');
+        if(used.indexOf(k) === -1) used.push(k);
+      });
+      if(used.length){
+        const tpl = document.createElement('template');
+        tpl.id = 'ccfolia-pics';
+        used.forEach(k => { const im = document.createElement('img');
+          im.setAttribute('data-pic', k); im.setAttribute('src', pics.get(k)); tpl.content.appendChild(im); });
+        const body = clone.querySelector('body'); if(body) body.appendChild(tpl);
+      }
+    }
     const html = '<!DOCTYPE html>\n' + clone.outerHTML;
-    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([html], {type:'text/html'}));
+    /* 앵커는 문서에 붙여야 하고, 주소는 곧바로 거두면 안 된다 —
+       브라우저가 내려받기를 시작하기도 전에 주소가 죽어 조용히 취소되는 판이 있다.
+       수집기 쪽은 이미 이 방식이었는데 여기만 달랐다. */
+    const url = URL.createObjectURL(new Blob([html], {type:'text/html'}));
+    const a = document.createElement('a'); a.href = url;
     const t = (document.getElementById('docTitle').textContent || 'ccfolia-archive').trim() || 'ccfolia-archive';
-    a.download = t + '.html'; a.click(); URL.revokeObjectURL(a.href);
+    /* 제목이 그대로 파일 이름이 된다. 경로로 읽힐 글자는 걷어 낸다. */
+    a.download = (t.replace(/[\\\/:*?"<>|\r\n]+/g, ' ').trim().slice(0, 80) || 'ccfolia-archive') + '.html';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
     toast('아카이브 HTML로 저장했습니다');
   };
 
@@ -1915,16 +3222,22 @@
   /* 색은 전부 인라인에 싣되, 값은 var(--ccf-*, light-dark(밝은색, 어두운색))으로 적는다.
      ① <style>이 살아남는 편집기(티스토리 HTML 모드 등)에서는 스킨의 다크·라이트 표식을 따라가고
      ② <style>이 잘려 나가도 light-dark()가 브라우저·OS 다크모드를 따라간다.
-     ③ 둘 다 안 통하면 예전처럼 밝은 테마로 굳는다. */
+     ③ 둘 다 안 통하면 — <style>도 잘리고 light-dark()도 모르는 옛 브라우저 —
+        var()가 값을 못 내어 그 선언이 통째로 무효가 된다. 글자색은 스킨 색을 물려받고
+        테두리는 currentColor로 그려져, '밝은 테마로 굳는' 것이 아니라 '멋만 빠진 채 읽히는' 상태가 된다.
+        읽는 데 지장은 없지만, 가장 눈에 띄는 바깥 칸만은 아래에서 예전 방식 색을 한 번 더 적어 둔다 —
+        같은 속성을 두 번 적으면 옛 브라우저는 앞의 것을, 새 브라우저는 뒤의 것을 쓴다. */
   const esc = s => (s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
   /* 테마에 따라 갈리는 색만 추린다. 키 이름이 그대로 --ccf-<키>가 된다. */
   const THEME_VARS = {ink:'--ink', ink2:'--ink-2', muted:'--muted', faint:'--faint',
-    line:'--line', ok:'--ok', ng:'--ng', paper:'--paper', narr:'--narr-bg'};
+    line:'--line', line2:'--line-2', ok:'--ok', ng:'--ng', paper:'--paper', narr:'--narr-bg'};
   /* '배경색 넣기'를 끄면 빠지는 키. 배경을 비우면 게시판 스킨 배경이 그대로 비친다. */
   const BG_KEYS = ['paper', 'narr'];
   /* 배경을 뺐을 때 내레이션 블록에 대신 얹는 틴트. 글자색에서 뽑으므로 어떤 스킨 위에서도 겉돌지 않는다. */
   const NARR_TINT = 'color-mix(in srgb,currentColor 6%,transparent)';
+  /* 이미지가 없는 저널을 단색으로 채울 때 쓰는 색. 역시 글자색에서 뽑으므로 배경을 빼도 겉돌지 않는다. */
+  const BLANK_TINT = 'color-mix(in srgb,currentColor 9%,transparent)';
   /* 블로그 스킨이 다크·라이트를 표시하는 흔한 방식들. 수동 토글까지 따라가려는 목록이다. */
   const DARK_SEL  = ['[data-theme="dark"]','[data-color-scheme="dark"]','[data-dark-mode="true"]','html.dark','body.dark','html.dark-mode','body.dark-mode','.theme-dark'];
   const LIGHT_SEL = ['[data-theme="light"]','[data-color-scheme="light"]','[data-dark-mode="false"]','html.light','body.light','html.light-mode','body.light-mode','.theme-light'];
@@ -1946,10 +3259,12 @@
     const cs = getComputedStyle(root);
     const v = (n, d) => ((cs.getPropertyValue(n) || '').trim() || d);
     const outEl = document.getElementById('output');
+    /* 본명조를 골랐는지 — 게시판용 행간을 화면과 맞추는 데 쓴다 */
+    const serif = root.getAttribute('data-font') === 'serif';
     /* 폰트는 실제 적용된 스택을 그대로 쓴다. 속성값이므로 큰따옴표는 작은따옴표로 */
     const font = (outEl ? getComputedStyle(outEl).fontFamily : "Pretendard, sans-serif").replace(/"/g, "'");
     return {
-      light: light, dark: dark, font: font,
+      light: light, dark: dark, font: font, serif: serif,
       fs: parseFloat(v('--fs', '15px')) || 15,
       lh: v('--lh', '1.66'),
       av: parseFloat(v('--av', '55px')) || 55,
@@ -1964,6 +3279,8 @@
   function buildPostHTML(messages, opts, cfg){
     const X = palette();
     const FS = X.fs, LH = X.lh, noImg = !!opts.noImages;
+    /* 본명조를 골랐을 때 읽는 글의 행간. 화면의 calc(var(--lh) + .26)과 같은 값이다. */
+    const MLH = X.serif ? (parseFloat(LH) + .26).toFixed(2) : LH;
     const AVG = noImg ? 0 : Math.round(X.av + X.gap);   /* 캐릭터 이미지를 빼면 들여쓰기도 함께 접는다 */
     /* 테마를 타는 색 한 칸 */
     const C = k => 'var(--ccf-' + k + ',light-dark(' + X.light[k] + ',' + X.dark[k] + '))';
@@ -1979,9 +3296,8 @@
       + scoped(DARK_SEL, X.dark) + scoped(LIGHT_SEL, X.light)
       + '.ccf-post>*:first-child{margin-top:0;padding-top:0}.ccf-post img{max-width:100%;height:auto}</style>';
 
-    const pHTML = (arr, color, fs, lh, tail) => arr.map((t, i) =>
-      '<p style="margin:0 0 ' + ((!tail && i === arr.length - 1) ? '0' : '10px') + ';font-size:' + (fs || FS) + 'px;line-height:' + (lh || LH) + ';color:' + color + ';">' + esc(t) + '</p>').join('');
-    const figHTML = src => '<figure style="margin:11px 0;"><img src="' + esc(src) + '" alt="" style="max-width:100%;height:auto;border:1px solid ' + C('line') + ';display:block;"></figure>';
+    const pHTML = (arr, color, fs, lh) => arr.map((t, i) =>
+      '<p style="margin:0 0 ' + (i === arr.length - 1 ? '0' : '10px') + ';font-size:' + (fs || FS) + 'px;line-height:' + (lh || LH) + ';color:' + color + ';">' + esc(t) + '</p>').join('');
     const avHTML = (src, dim, name) => {
       const ov = (src && avImgState[src]) || (name && avState[name]);
       const f = ov ? focusCSS(avOf(name, src)) : X.avf;
@@ -1991,10 +3307,16 @@
       + '<img src="' + esc(src) + '" alt="" style="width:100%;height:100%;object-fit:cover;object-position:' + f + ';display:block;'
       + (z !== 1 ? 'transform:scale(' + z + ');transform-origin:' + f + ';' : '') + '"></div>';
     };
-    /* 이미지를 뺄 때는 <img>를 만들지 않는다. CDN 주소가 결과물에 남지 않아야 한다. */
-    const shotHTML = src => noImg
-      ? '<div style="font-size:12px;color:' + C('faint') + ';letter-spacing:.06em;margin:9px 0;">[이미지]</div>'
-      : figHTML(src);
+    /* 이미지가 없는 저널의 이미지 칸 — 화면과 같은 세 갈래를 인라인 스타일로 옮긴다 */
+    const bmode = blankMode(opts);
+    const spacerHTML = '<div style="width:' + X.av + 'px;flex:0 0 ' + X.av + 'px;"></div>';
+    const blankHTML = first => {
+      if(bmode === 'hide') return '';
+      if(bmode === 'solid' && first)
+        return '<div style="width:' + X.av + 'px;height:' + X.av + 'px;flex:0 0 ' + X.av + 'px;overflow:hidden;border-radius:' + X.avr
+          + ';box-shadow:0 0 0 1px ' + C('line') + ';background:' + BLANK_TINT + ';"></div>';
+      return spacerHTML;
+    };
     const sysP = arr => arr.map((t, i) => '<p style="margin:0 0 ' + (i === arr.length - 1 ? '0' : '4px') + ';">' + esc(t) + '</p>').join('');
     const sysBlock = (lines, label) => '<div style="max-width:460px;margin:28px auto;text-align:center;color:' + C('muted')
       + ';padding:15px 0;border-top:1px solid ' + C('line') + ';border-bottom:1px solid ' + C('line') + ';">'
@@ -2013,8 +3335,8 @@
 
     const flush = () => {
       if(narr && narr.length){
-        const inner = narr.map((it, i) => it.img ? shotHTML(it.img)
-          : '<p style="margin:0 0 ' + (i === narr.length - 1 ? '0' : '10px') + ';font-size:' + FS + 'px;line-height:' + LH
+        const inner = narr.map((it, i) =>
+          '<p style="margin:0 0 ' + (i === narr.length - 1 ? '0' : '10px') + ';font-size:' + FS + 'px;line-height:' + MLH
             + ';color:' + C('ink2') + ';">' + esc(it.p) + '</p>').join('');
         const style = 'margin:16px 0' + (narrCenter ? '' : ' 16px ' + AVG + 'px') + ';padding:13px 16px;background:' + narrBg + ';'
           + (narrCenter ? 'text-align:center;' : '');
@@ -2027,16 +3349,98 @@
       const center = alignOf(m.name) === 'center';
       const head = '<div style="margin-bottom:7px;"><span style="font-size:10px;letter-spacing:.24em;'
         + 'text-transform:uppercase;color:' + C('faint') + ';">' + esc(m.tab || '정보') + '</span></div>';
-      const body = P.length ? pHTML(isSys(m) ? sysLines(P) : P, C('ink2'), FS, LH, m.shots.length > 0) : '';
+      const body = P.length ? pHTML(isSys(m) ? sysLines(P) : P, C('ink2'), FS, MLH) : '';
       return '<div style="margin:18px 0 18px ' + (center ? '0' : AVG + 'px') + ';padding:12px 15px;border:1px solid ' + C('line')
-        + ';border-left:2px solid ' + (m.color || C('line')) + ';' + (center ? 'text-align:center;' : '') + '">'
-        + head + body + m.shots.map(shotHTML).join('') + '</div>';
+        + ';border-left:2px solid ' + esc(m.color || C('line')) + ';' + (center ? 'text-align:center;' : '') + '">'
+        + head + body + '</div>';
+    };
+
+    /* 판정 로그 네 가지 모양 — 화면의 .rollx 규칙을 인라인 스타일로 옮긴다.
+       색면은 currentColor에서 뽑는다. 글자색에서 뽑는 색이라 게시판 스킨이 무슨 색이든
+       겉돌지 않고, 밝은·어두운 값을 따로 실을 필요도 없다.
+       못 알아본 줄에는 빈 문자열을 돌려주고, 부르는 쪽이 지금까지의 흐린 한 줄로 되돌린다. */
+    const RX_MONO = 'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
+    const rollBlockHTML = (m, P) => {
+      const style = rollStyleOf(opts);
+      if(!style) return '';
+      const R = rollParts(P.join(' '));
+      if(!R) return '';
+      const g = rollGrade(R.out);
+      const rc = g.kind === 'ok' ? C('ok') : (g.kind === 'ng' ? C('ng') : C('line2'));
+      const rt = g.kind === 'ok' ? C('ok') : (g.kind === 'ng' ? C('ng') : C('muted'));
+      const ind = alignOf(m.name) === 'center' ? 0 : AVG;
+      const nm = esc(m.name || ''), ex = esc(R.expr), nu = esc(R.num), ou = esc(R.out), sb = esc(R.sub);
+      const eS = 'font-family:' + RX_MONO + ';font-size:12.5px;color:' + C('faint') + ';';
+      const sS = 'font-family:' + RX_MONO + ';font-size:12px;color:' + C('faint') + ';';
+      const nS = 'font-variant-numeric:tabular-nums;letter-spacing:-.02em;';
+
+      if(style === 'ticket'){
+        const tail = ou
+          ? (g.crit
+            ? '<span style="margin-left:auto;font-size:13px;font-weight:700;letter-spacing:.08em;padding:4px 9px;background:' + rc + ';color:' + C('paper') + ';">' + ou + '</span>'
+            : '<span style="margin-left:auto;font-size:13px;font-weight:700;letter-spacing:.1em;color:' + rt + ';">' + ou + '</span>')
+          : (sb ? '<span style="margin-left:auto;' + sS + '">' + sb + '</span>' : '');
+        return '<div style="margin:14px 0 14px ' + ind + 'px;padding:10px 14px 11px;border:1px solid ' + C('line')
+          + ';border-left:' + (g.crit ? 4 : 2) + 'px solid ' + rc + ';">'
+          + '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:5px;">'
+          + '<span style="font-size:10px;letter-spacing:.24em;color:' + C('faint') + ';">' + (ou ? '판정' : '주사위') + '</span>'
+          + (nm ? '<span style="font-size:11.5px;font-weight:600;color:' + C('muted') + ';">' + nm + '</span>' : '')
+          + '<span style="margin-left:auto;' + eS + '">' + ex + '</span></div>'
+          + '<div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;">'
+          + '<span style="font-size:27px;font-weight:700;line-height:1;' + nS + 'color:' + C('ink') + ';">' + nu + '</span>'
+          + tail + '</div></div>';
+      }
+      if(style === 'tile'){
+        const tc = g.crit ? C('paper') : rt;
+        /* 이미지를 뺐으면 타일도 함께 접는다 — 화면과 같은 규칙이다 */
+        const tile = noImg ? ''
+          : '<div style="width:' + X.av + 'px;height:' + X.av + 'px;flex:0 0 ' + X.av + 'px;display:flex;'
+            + 'flex-direction:column;align-items:center;justify-content:center;gap:1px;border:1px solid ' + rc
+            + ';color:' + rt + ';background:' + (g.crit ? rc : 'color-mix(in srgb,currentColor 9%,transparent)') + ';">'
+            + '<span style="font-size:19px;font-weight:700;line-height:1;' + nS + 'color:' + tc + ';">' + nu + '</span>'
+            + '<span style="font-family:' + RX_MONO + ';font-size:8.5px;letter-spacing:.06em;color:' + tc + ';opacity:.8;">' + esc(R.die) + '</span></div>';
+        const main = ou
+          ? '<div style="font-size:15px;font-weight:700;letter-spacing:.04em;line-height:1.3;color:' + rt + ';">' + ou + '</div>'
+          : '<div style="font-family:' + RX_MONO + ';font-size:13.5px;color:' + rt + ';">' + (sb || ex) + '</div>';
+        return '<div style="display:flex;gap:' + X.gap + 'px;padding:15px 0;">' + tile
+          + '<div style="flex:1;min-width:0;padding-top:3px;">'
+          + (nm ? '<div style="font-size:11.5px;font-weight:600;color:' + C('muted') + ';margin-bottom:4px;">' + nm + '</div>' : '')
+          + main + ((ou || sb) ? '<span style="display:block;margin-top:3px;' + eS + '">' + ex + '</span>' : '')
+          + '</div></div>';
+      }
+      if(style === 'band'){
+        const tail = ou
+          ? '<span style="font-size:12.5px;font-weight:700;letter-spacing:.1em;color:' + rt + ';">' + ou + '</span>'
+          : (sb ? '<span style="' + sS + '">' + sb + '</span>' : '');
+        return '<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:14px 0;padding:11px 15px;color:' + rt
+          + ';border-left:' + (g.crit ? 5 : 3) + 'px solid ' + rc
+          + ';background:color-mix(in srgb,currentColor ' + (g.crit ? 15 : 7) + '%,transparent);">'
+          + (nm ? '<span style="font-size:13px;font-weight:700;color:' + C('ink') + ';">' + nm + '</span>' : '')
+          + '<span style="font-family:' + RX_MONO + ';font-size:12.5px;color:' + C('muted') + ';">' + ex + '</span>'
+          + '<div style="margin-left:auto;display:flex;align-items:baseline;gap:11px;">'
+          + '<span style="font-size:19px;font-weight:700;line-height:1;' + nS + 'color:' + C('ink') + ';">' + nu + '</span>'
+          + tail + '</div></div>';
+      }
+      const ar = '<span style="color:' + C('line') + ';">＞</span>';
+      const tail = ou
+        ? ar + '<span style="font-weight:600;letter-spacing:.04em;color:' + rt + ';">' + ou + '</span>'
+        : (sb ? ar + '<span style="' + sS + '">' + sb + '</span>' : '');
+      return '<div style="margin:10px 0 10px ' + ind + 'px;padding:2px 0 2px 11px;border-left:1px solid ' + C('line')
+        + ';display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-size:12.5px;line-height:1.5;">'
+        + '<span style="width:6px;height:6px;flex:0 0 6px;border:1px solid ' + rc + ';' + (g.crit ? 'background:' + rc + ';' : '') + '"></span>'
+        + (nm ? '<span style="color:' + C('faint') + ';">' + nm + '</span>' : '')
+        + '<span style="' + eS + '">' + ex + '</span>' + ar
+        + '<span style="font-family:' + RX_MONO + ';font-size:12.5px;font-weight:700;' + nS + 'color:' + C('ink2') + ';">' + nu + '</span>'
+        + tail + '</div>';
     };
 
     shown.forEach(m => {
       const noise = m.dice;
       const P = cleanParas(m.paras);
-      if(!P.length && !m.shots.length && !m.name) return;
+      /* 남는 글이 없으면 통째로 접는다. 코코포리아가 붙이는 '[편집 완료]' 표식만 있던 줄은
+         표식을 떼고 나면 아무것도 남지 않아, 놔두면 이름표만 붙은 빈 말풍선이 된다.
+         본문에 그림을 싣지 않으므로 글이 없다는 것은 보여 줄 것이 없다는 뜻이다. */
+      if(!P.length) return;
 
       if(isInfo(m) && opts.infoCard !== false){
         flush(); prevName = null;
@@ -2050,7 +3454,7 @@
         return;
       }
       const asNarr = isSys(m) && !noise && !!opts.sysNarr;
-      if(isSys(m) && !noise && !asNarr && !m.shots.length){
+      if(isSys(m) && !noise && !asNarr){
         flush(); prevName = null;
         parts.push(sysBlock(sysP(sysLines(P)), ''));
         return;
@@ -2059,38 +3463,52 @@
         prevName = null;
         const who = asNarr ? narrLead : (m.name || 'GM');
         if(!narr){ narr = []; narrCenter = alignOf(who) === 'center'; }
-        (asNarr ? sysLines(P) : P).forEach(p => narr.push({p})); m.shots.forEach(s => narr.push({img:s}));
+        (asNarr ? sysLines(P) : P).forEach(p => narr.push({p}));
         return;
       }
       flush();
 
+      /* 화면에서 고른 모양을 게시판용에도 그대로 옮긴다. 못 알아본 줄이면 빈손으로
+         돌아오고, 아래의 흐린 한 줄이 원문을 그대로 받는다. */
+      if(noise && opts.rollHighlight){
+        const rb = rollBlockHTML(m, P);
+        if(rb){ parts.push(rb); return; }
+      }
+
       const same = opts.merge && m.name && m.name === prevName;
       const avSwap = !!(same && opts.avChange && m.avatar && prevAv && m.avatar !== prevAv);
+      const cont = same && !avSwap;
+      const slotAv = m.avatar || (same ? prevAv : '');
       const center = alignOf(m.name) === 'center';
       const roll = noise ? rollOutcome(P.join(' ')) : '';
       const rollC = (opts.rollHighlight && roll) ? (roll === 'ok' ? C('ok') : C('ng')) : '';
       const bodyC = rollC || (noise ? C('faint') : C('ink2'));
       const nameC = rollC || m.color || C('ink');
-      const bFs = (noise && !opts.rollHighlight) ? 13 : FS, bLh = (noise && !opts.rollHighlight) ? '1.5' : LH;
+      const bFs = (noise && !opts.rollHighlight) ? 13 : FS;
+      /* 일반 메시지만 본명조에서 행간을 벌린다 — 화면의 규칙을 그대로 옮긴다 */
+      const bLh = !noise ? MLH : (opts.rollHighlight ? LH : '1.5');
 
       const head = (!same && m.name)
-        ? '<div style="font-weight:700;font-size:15px;letter-spacing:-.01em;color:' + nameC + ';margin-bottom:5px;">' + esc(m.name) + '</div>' : '';
-      const body = P.length ? pHTML(P, bodyC, bFs, bLh, m.shots.length > 0) : '';
-      const shots = m.shots.map(shotHTML).join('');
-      const pad = (same && !avSwap) ? '2px' : '15px';
+        ? '<div style="font-weight:700;font-size:15px;letter-spacing:-.01em;color:' + esc(nameC) + ';margin-bottom:5px;">' + esc(m.name) + '</div>' : '';
+      const body = P.length ? pHTML(P, bodyC, bFs, bLh) : '';
+      const pad = cont ? '2px' : '15px';
 
       if(center){
-        const avc = (!noImg && (!same || avSwap) && m.avatar)
-          ? '<div style="display:flex;justify-content:center;margin-bottom:8px;">' + avHTML(m.avatar, noise, m.name) + '</div>' : '';
-        parts.push('<div style="text-align:center;padding:' + pad + ' 0;">' + avc + head + body + shots + '</div>');
+        const mid = inner => '<div style="display:flex;justify-content:center;margin-bottom:8px;">' + inner + '</div>';
+        const avc = noImg || cont ? ''
+          : m.avatar ? mid(avHTML(m.avatar, noise, m.name))
+          : (!slotAv && bmode === 'solid') ? mid(blankHTML(true)) : '';
+        parts.push('<div style="text-align:center;padding:' + pad + ' 0;">' + avc + head + body + '</div>');
       } else {
         const av = noImg ? ''
-          : ((same && !avSwap) || !m.avatar) ? '<div style="width:' + X.av + 'px;flex:0 0 ' + X.av + 'px;"></div>'
+          : !slotAv ? blankHTML(!cont)
+          : cont ? spacerHTML
           : avHTML(m.avatar, noise, m.name);
         parts.push('<div style="display:flex;align-items:flex-start;gap:' + X.gap + 'px;padding:' + pad + ' 0;">'
-          + av + '<div style="flex:1;min-width:0;padding-top:2px;">' + head + body + shots + '</div></div>');
+          + av + '<div style="flex:1;min-width:0;padding-top:2px;">' + head + body + '</div></div>');
       }
-      if(m.name){ prevName = m.name; prevAv = m.avatar || ''; }
+      /* 덩어리 안에서 한 줄만 그림이 빠져도 그 덩어리가 쓰던 그림은 잊지 않는다 */
+      if(m.name){ if(m.avatar) prevAv = m.avatar; else if(m.name !== prevName) prevAv = ''; prevName = m.name; }
     });
     flush();
 
@@ -2100,8 +3518,13 @@
         + '<div style="font-size:30px;font-weight:700;letter-spacing:-.025em;color:' + C('ink') + ';line-height:1.22;">' + esc(cfg.title) + '</div></div>';
     }
     /* color-scheme을 직접 걸어야 <style>이 잘린 상황에서도 light-dark()가 동작한다 */
-    return styleTag + '<div class="ccf-post" style="max-width:' + X.wrap + 'px;margin:0 auto;box-sizing:border-box;padding:18px clamp(16px,5vw,28px) 34px;color-scheme:light dark' + wrapBg
-      + ';font-family:' + X.font + ';font-size:' + FS + 'px;line-height:' + LH + ';color:' + C('ink')
+    /* 바깥 칸의 글자색·배경은 옛 방식(밝은 테마 색)을 먼저 적고 새 방식을 뒤에 적는다.
+       옛 브라우저는 앞의 것만 알아듣고, 새 브라우저는 뒤의 것으로 덮어쓴다. */
+    const fallbackBg = withBg ? ';background:' + X.light.paper : '';
+    return styleTag + '<div class="ccf-post" style="max-width:' + X.wrap + 'px;margin:0 auto;box-sizing:border-box;padding:18px clamp(16px,5vw,28px) 34px;color-scheme:light dark'
+      + fallbackBg + wrapBg
+      + ';color:' + X.light.ink + ';color:' + C('ink')
+      + ';font-family:' + X.font + ';font-size:' + FS + 'px;line-height:' + LH
       + ';letter-spacing:-.01em;word-break:keep-all;overflow-wrap:break-word;">' + header + parts.join('') + '</div>';
   }
 
@@ -2118,11 +3541,32 @@
   $('#expTitle').addEventListener('change', refreshExport);
   $('#expBg').addEventListener('change', refreshExport);
   exportOv.addEventListener('click', e => { if(e.target === exportOv || e.target.id === 'exportClose') exportOv.classList.remove('open'); });
+  /* ── 클립보드에 담기 ──
+     두 길이 있다. 새 방식(navigator.clipboard)이 막히면 옛 방식(execCommand)으로 내려간다.
+     문제는 둘 다 실패해도 예전에는 '복사됨 ✓'이 떴다는 것이다 — execCommand가 돌려주는
+     성공·실패를 아무도 안 봤다. 붙여넣을 것이 없는 채로 편집기에 가서야 알게 된다.
+     된 것만 됐다고 말하고, 안 되면 직접 고를 수 있게 칸을 잡아 준다. */
+  async function copyText(text, el){
+    try{
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    }catch(e){ /* 아래 옛 방식으로 */ }
+    try{
+      el.focus(); el.select();
+      if(el.setSelectionRange) el.setSelectionRange(0, (el.value || '').length);   /* iOS는 select()만으로는 안 잡힌다 */
+      return !!document.execCommand('copy');
+    }catch(e){ return false; }
+  }
   $('#exportCopy').addEventListener('click', async () => {
     const ta = $('#exportOut'); const html = ta.value || refreshExport();
-    try{ await navigator.clipboard.writeText(html); }catch(e){ ta.select(); document.execCommand('copy'); }
-    const b = $('#exportCopy'), t = b.textContent; b.textContent = '복사됨 ✓'; setTimeout(()=>b.textContent=t, 1400);
-    toast('게시판용 HTML을 복사했습니다');
+    const b = $('#exportCopy'), t = b.textContent;
+    const ok = await copyText(html, ta);
+    b.textContent = ok ? '복사됨 ✓' : '복사 실패';
+    setTimeout(()=>b.textContent=t, 1600);
+    if(ok) toast('게시판용 HTML을 복사했습니다');
+    else { ta.focus(); ta.select(); toast('복사가 막혔습니다 · 아래 칸이 선택돼 있으니 Ctrl+C(⌘C)로 복사해 주세요'); }
   });
   $('#exportPreview').addEventListener('click', () => {
     const html = $('#exportOut').value || refreshExport();
@@ -2140,8 +3584,18 @@
   addEventListener('drop', e => {
     if(!hasFile(e)) return;
     e.preventDefault(); dragDepth = 0; dz.classList.remove('on');
-    const picked = [...e.dataTransfer.files].filter(f => /\.html?$/i.test(f.name) || f.type === 'text/html');
-    loadFiles(picked.length ? picked : [...e.dataTransfer.files]);
+    const all = [...e.dataTransfer.files];
+    const picked = all.filter(f => /\.html?$/i.test(f.name) || f.type === 'text/html');
+    /* 이름으로 못 고르면 예전에는 '놓은 것 전부'를 글자로 읽었다. 실수로 동영상 하나만
+       떨어뜨려도 그대로 메모리에 올라간다. 글로 읽을 만한 것만 받고, 아니면 알린다. */
+    const MAX_BYTES = 300 * 1024 * 1024;
+    const readable = f => (!f.type || /^text\//i.test(f.type)) && f.size <= MAX_BYTES;
+    const use = picked.length ? picked : all.filter(readable);
+    if(!use.length){
+      toast(all.length ? 'HTML 파일이 아닙니다 · 수집한 ccfolia-log.html을 놓아 주세요' : '파일을 읽지 못했습니다');
+      return;
+    }
+    loadFiles(use);
   });
 
   /* ── 로그 수집 스크립트 · 북마클릿 ── */
@@ -2258,6 +3712,7 @@
     if (/今日|오늘|today/i.test(s)) return mk(Y, M, D);
     if (/一昨日|그저께|그제/.test(s)) return mk(Y, M, D - 2);
     if (/昨日|어제|yesterday/i.test(s)) return mk(Y, M, D - 1);
+    if (/明日|내일|tomorrow/i.test(s)) return mk(Y, M, D + 1);
     const rest = s.replace(CLOCK, ' ');
     const d3 = /(\\d{4})\\s*[\\/\\-.]\\s*(\\d{1,2})\\s*[\\/\\-.]\\s*(\\d{1,2})/.exec(rest);
     if (d3) return mk(+d3[1], +d3[2] - 1, +d3[3]);
@@ -2266,6 +3721,18 @@
       let t = mk(Y, +d2[1] - 1, +d2[2]);
       if (t > now.getTime() + 864e5) t = mk(Y - 1, +d2[1] - 1, +d2[2]);   /* 해를 넘긴 로그 */
       return t;
+    }
+    /* 며칠 안쪽은 숫자 대신 요일로 적힌다 — '先週 水曜日 15:13' · '水曜日 15:13'.
+       닷새 폭 안에 같은 요일은 한 번뿐이라 요일만으로 날짜가 정해진다. */
+    const WD = ['日曜|일요|sunday|sun', '月曜|월요|monday|mon', '火曜|화요|tuesday|tue',
+                '水曜|수요|wednesday|wed', '木曜|목요|thursday|thu', '金曜|금요|friday|fri',
+                '土曜|토요|saturday|sat'];
+    for (let i = 0; i < 7; i++) {
+      if (!new RegExp(WD[i], 'i').test(rest)) continue;
+      const back = /先週|지난\\s*주|last/i.test(rest), dow = now.getDay();
+      let k = back ? ((dow - i + 7) % 7) : ((i - dow + 7) % 7);
+      if (k === 0) k = 7;
+      return mk(Y, M, D + (back ? -k : k));
     }
     return 0;   /* 날짜 단서가 없으면 리더가 시:분으로 병합한다 */
   };
@@ -2345,11 +3812,15 @@
   /* 진짜 빗장은 이쪽이다 — 이만큼 아무 진전이 없으면 뭔가 잘못된 것이다.
      반대로 조금씩이라도 나아가는 중이면 위의 총 시간까지는 끝까지 기다린다. */
   const STALL_MS = 60 * 1000;
+  /* 훑는 도중 줄 번호가 다시 매겨진 횟수의 총합. 0이 아니면 결과를 확인하라고 알린다. */
+  let shaky = 0;
+  /* 끝까지 못 올라간 탭 이름. 여기 담기면 그 탭의 옛 로그가 덜 실렸을 수 있다. */
+  const partial = [];
   const harvest = async (name) => {
     let list = findList(); if (!list) return [];
     let sc = findScroller(list);
     const store = new Map();
-    let minIdx = Infinity;
+    let minIdx = Infinity, renum = 0;
     const grab = () => all(list, '[data-index]').forEach(el => {
       const i = Number(el.getAttribute('data-index'));
       if (Number.isNaN(i)) return;
@@ -2358,7 +3829,14 @@
          예전에는 '한 줄에 한 번이면 족하다'며 그 번호에서 처음 본 값을 붙들어 뒀다.
          그런데 코코포리아는 옛 글을 불러올 때 data-index를 다시 매긴다. 번호는 그대로인데
          가리키는 글만 바뀌니, 맨 앞줄에 맨 뒷줄의 시각이 남아 로그가 통째로 뒤엉켰다. */
-      store.set(i, { html: el.outerHTML, c: stampToMs(capOf(el)) });
+      /* 같은 번호에 다른 글이 들어앉는 순간을 센다. 이 수가 0이 아니면 훑는 도중에
+         번호가 다시 매겨졌다는 뜻이고, 그때는 결과를 그대로 믿으면 안 된다.
+         고칠 수는 없어도 — 코코포리아가 메시지마다 고유한 표를 주지 않는다 —
+         적어도 '믿어도 되는지'는 알려 줄 수 있다. */
+      const t = clean(el.textContent).slice(0, 120);
+      const old = store.get(i);
+      if (old && old.t !== t) renum++;
+      store.set(i, { html: el.outerHTML, c: stampToMs(capOf(el)), t: t });
     });
     const fire = () => sc.dispatchEvent(new Event('scroll'));
     /* 목록이 통째로 갈아 끼워지는 일은 아주 흔하다 — 앱이 옛 글을 끼워 넣을 때마다 React가 다시 그린다.
@@ -2417,10 +3895,16 @@
       + (minIdx === Infinity ? '-' : minIdx) + ' · 모은 ' + store.size + '줄 · 높이 '
       + Math.round(Number(sc.scrollHeight) || 0) + ' · 위치 ' + Math.round(Number(sc.scrollTop) || 0)
       + ' · 목록 갈아끼움 ' + swaps + '회 · ' + Math.round(up() / 1000) + '초 · ' + g + '회전');
-    if (why !== '더 없음') console.warn('[ccfolia] ' + name + ' · 끝까지 못 올라갔을 수 있습니다 (' + why + ')');
+    if (why !== '더 없음') { partial.push(name + '(' + why + ')'); console.warn('[ccfolia] ' + name + ' · 끝까지 못 올라갔을 수 있습니다 (' + why + ')'); }
 
     /* ── 아래로 ──
        위로 훑는 데 시간을 다 써도 아래로 훑기는 반드시 돌아야 한다. 그래서 시계를 따로 잰다. */
+    /* 위로 올라가는 동안 담아 둔 '번호 → 글'은 도중에 뜻이 바뀐다 — 옛 글을 불러올 때마다
+       번호가 밀리기 때문이다. 아래로 훑기는 번호가 더 이상 흔들리지 않는 상태에서
+       처음부터 끝까지 다시 지나가므로, 그때 읽은 것을 정본으로 삼는다.
+       위에서 모은 것은 버리지 않고 갈무리해 두었다가, 아래로 훑기가 끝내 못 본 자리
+       — 중단했거나 시간이 다한 경우 — 만 메우는 데 쓴다. */
+    const pre = new Map(store); store.clear(); minIdx = Infinity;
     sc.scrollTop = 0; fire(); await step(400); grab();
     /* 지금 화면에 그려져 있는 줄 번호의 범위. 이게 뚝 건너뛰면 그 사이를 놓친 것이다. */
     const shownRange = () => {
@@ -2516,9 +4000,18 @@
       if (store.size === before) break;   /* 더 안 메워지면 그만 — 원래 없는 번호일 수 있다 */
     }
 
+    /* 아래로 훑기가 못 본 자리만 위에서 모은 것으로 메운다 */
+    let carried = 0;
+    pre.forEach((v, k) => { if (!store.has(k)) { store.set(k, v); carried++; } });
+    if (carried) console.warn('[ccfolia] ' + name + ' · 아래로 훑기가 못 본 ' + carried
+      + '줄은 위로 훑을 때 모은 것으로 채웠습니다 (번호가 밀렸다면 순서가 어긋날 수 있습니다)');
+
     /* 맨 위에 세워 둔 채 끝내면 앱이 옛 로그를 계속 불러온다. 반드시 아래로 돌려놓는다. */
     sc.scrollTop = sc.scrollHeight; fire(); await wait(150);
+    if (renum) console.warn('[ccfolia] ' + name + ' · 훑는 도중 줄 번호가 ' + renum
+      + '번 다시 매겨졌습니다 · 빠지거나 겹친 줄이 있을 수 있으니 결과를 한 번 확인하세요');
     console.log('[ccfolia] ' + name + ' · ' + store.size + '줄 모음');
+    shaky += renum + carried;
     return Array.from(store.keys()).sort((a, b) => a - b)
       .map(i => ({ html: store.get(i).html, c: store.get(i).c }));
   };
@@ -2537,6 +4030,18 @@
     if (noText && ADD_RE.test(lab)) return true;
     const ic = t.querySelector('[data-testid]');
     return !!(noText && ic && /add|plus|create/i.test(ic.getAttribute('data-testid') || ''));
+  };
+  /* ── 눌러선 안 될 버튼 ──
+     후보가 진짜 탭인지는 '눌러 보고 채팅이 바뀌는가'로 가린다. 그런데 그 판별은 클릭 뒤에 온다.
+     대화상자를 띄우지 않는 버튼 — 나가기·삭제·초기화 같은 것 — 이라면 알아차렸을 때는 이미 늦다.
+     그래서 이름만으로도 수상한 것은 목록에서 지우지 않고 '꺼진 채로' 띄운다.
+     지우지 않는 이유는, 방 주인이 탭 이름을 '설정'이라 지었을 수도 있기 때문이다 —
+     사람이 보고 켜면 그때 누른다. role=tab이 붙은 것은 진짜 탭이 거의 확실하므로 그물에서 뺀다. */
+  const DENY_RE = /(나가기|나감|퇴장|삭제|지우기|초기화|탈퇴|로그아웃|로그인|환경설정|내보내기|불러오기|업로드|공유|초대|신고|차단|결제|구독|계정|프로필|退室|退出|削除|初期化|設定|書き出|読み込|ログアウト|共有|招待|通報|課金|leave|exit|quit|delete|remove|reset|log\\s*out|sign\\s*out|setting|preference|export|import|upload|share|invite|report|block|billing|subscribe|account|profile)/i;
+  const isDanger = t => {
+    if (t.getAttribute('role') === 'tab') return false;
+    const s = clean(t.textContent) + ' ' + (t.getAttribute('aria-label') || '') + ' ' + (t.getAttribute('title') || '');
+    return DENY_RE.test(s);
   };
   const CLICKABLE = '[role="tab"], button, [role="button"]';
   /* 숨긴 채 DOM에 남겨 두는 대화상자가 흔하다. 붙어 있는 개수가 아니라 실제로 그려졌는지를 본다. */
@@ -2581,8 +4086,10 @@
   cands = cands.filter((t, i) => cands.indexOf(t) === i);   /* 같은 버튼이 두 번 들어오면 같은 탭을 두 번 긁는다 */
 
   /* 진단은 항상 남긴다. 탭을 못 찾았을 때 이 줄들만 있으면 원인을 짚을 수 있다. */
-  const desc = t => JSON.stringify(clean(t.textContent).slice(0, 24)) + '/' + JSON.stringify(t.getAttribute('aria-label'))
-    + (t.getAttribute('aria-selected') === 'true' ? '/선택됨' : '') + (isAdder(t) ? '/추가버튼' : '');
+  /* 진단 줄은 사용자가 그대로 복사해 공유하기도 한다. 원인을 짚을 만큼만 남기고 짧게 자른다. */
+  const desc = t => JSON.stringify(clean(t.textContent).slice(0, 12)) + '/' + JSON.stringify(t.getAttribute('aria-label'))
+    + (t.getAttribute('aria-selected') === 'true' ? '/선택됨' : '') + (isAdder(t) ? '/추가버튼' : '')
+    + (isDanger(t) ? '/수상함' : '');
   const bars = all(document, '[role="tablist"]');
   console.log('[ccfolia] 진단 · tablist ' + bars.length + '개 · role=tab ' + document.querySelectorAll('[role="tab"]').length
     + '개 · 후보 ' + cands.length + '개' + (skipped.length ? ' · 추가버튼 ' + skipped.length + '개 제외' : ''));
@@ -2594,16 +4101,23 @@
      '잡담'처럼 본편과 상관없는 탭까지 긁으면 시간도 오래 걸리고 결과도 지저분해진다.
      어느 탭이 잡담인지는 방마다 다르니 규칙으로 정하지 않는다. 찾은 이름을 그대로 보여 주고 고르게 한다.
      끈 탭은 아예 눌러 보지도 않는다. 고른 내용은 이 방에서 다음에도 그대로 뜬다. */
-  const SKIP_KEY = 'ccfolia:harvest:skip';
+  /* 방마다 탭 구성이 다르다. 예전에는 열쇠 하나를 도메인 전체가 나눠 써서,
+     A방에서 끈 '잡담' 때문에 B방의 진짜 '잡담'까지 말없이 건너뛰었다. 방 번호를 붙인다.
+     (열쇠가 바뀌므로 예전에 골라 둔 것은 한 번 잊힌다 — 기본값인 '메인·정보'로 돌아온다.) */
+  const ROOM_ID = (String(location.pathname).split('/rooms/')[1] || '').split('/')[0].replace(/[^A-Za-z0-9_-]/g, '');
+  const SKIP_KEY = 'ccfolia:harvest:skip' + (ROOM_ID ? ':' + ROOM_ID : '');
   /* 저장된 적이 없으면 null. '아무것도 안 뺐다'와 '아직 고른 적 없다'를 구별해야 기본값을 쓸 수 있다. */
   const readSkip = () => { try { const v = localStorage.getItem(SKIP_KEY); return v ? JSON.parse(v) : null; } catch (e) { return null; } };
   /* 기본은 '메인·정보만'. 잡담 같은 곁가지 탭은 꺼진 채로 뜬다.
      이름을 하나도 못 알아본 방이라면 아무것도 안 켜져 빈손이 되니, 그때만 전부 켠다. */
   const CORE = ['메인', '정보'];
-  const askTabs = names => new Promise(resolve => {
+  /* warn[i] = '이름이 수상해서 탭이 아닐 수 있다'. 그런 줄은 저장해 둔 선택과 무관하게
+     언제나 꺼진 채로 띄운다 — 사람이 보고 켜야만 눌린다. */
+  const askTabs = (names, warn) => new Promise(resolve => {
     const off = readSkip();
-    const anyCore = names.some(n => CORE.indexOf(n) >= 0);
-    const dflt = n => off ? off.indexOf(n) < 0 : (anyCore ? CORE.indexOf(n) >= 0 : true);
+    const anyCore = names.some((n, i) => !warn[i] && CORE.indexOf(n) >= 0);
+    const dflt = (n, i) => warn[i] ? false
+      : (off ? off.indexOf(n) < 0 : (anyCore ? CORE.indexOf(n) >= 0 : true));
 
     const ov = document.createElement('div');
     ov.style.cssText = 'position:fixed;inset:0;z-index:2147483646;display:flex;align-items:center;justify-content:center;'
@@ -2648,7 +4162,7 @@
       const tick = document.createElement('span');
       tick.textContent = '✓';
       tick.style.cssText = 'font-size:11.5px;font-weight:700;line-height:1;color:' + UI.paper + ';pointer-events:none';
-      const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = dflt(n);
+      const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = dflt(n, i);
       cb.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer';
       box.appendChild(tick); box.appendChild(cb);
       const nm = document.createElement('span');
@@ -2660,7 +4174,7 @@
         + 'letter-spacing:.1em;color:' + UI.faint;
       row.appendChild(box); row.appendChild(nm); row.appendChild(tag);
       list.appendChild(row);
-      rows.push({ cb: cb, box: box, tick: tick, nm: nm, tag: tag });
+      rows.push({ cb: cb, box: box, tick: tick, nm: nm, tag: tag, warn: !!warn[i] });
       cb.addEventListener('change', paint);
       /* 키보드로 옮겨 온 자리만 테를 두른다. 마우스로 누른 자리까지 테가 남으면 지저분하다. */
       cb.addEventListener('focus', () => {
@@ -2718,12 +4232,13 @@
         r.box.style.borderColor = c ? UI.ink : UI.line2;
         r.tick.style.visibility = c ? 'visible' : 'hidden';
         r.nm.style.color = c ? UI.ink : UI.faint;
-        r.tag.textContent = c ? '' : '건너뜀';
+        r.tag.textContent = c ? '' : (r.warn ? '탭 아닐 수 있음' : '건너뜀');
       });
       cnt.textContent = names.length + '개 탭 중 ' + on + '개 수집';
     }
 
-    bAll.onclick = () => { boxes.forEach(b => { b.checked = true; }); paint(); };
+    /* '전체 선택'도 수상한 줄까지 켜지는 않는다. 그건 사람이 하나씩 켜야 한다. */
+    bAll.onclick = () => { boxes.forEach((b, i) => { b.checked = !warn[i]; }); paint(); };
     bNone.onclick = () => { boxes.forEach(b => { b.checked = false; }); paint(); };
     const done = out => { document.removeEventListener('keydown', esc, true); ov.remove(); resolve(out); };
     function esc(e) { if (e.key === 'Escape') done(null); }
@@ -2741,8 +4256,12 @@
   });
 
   const tabNames = cands.map(tabName);
+  const tabWarn = cands.map(isDanger);
+  if (tabWarn.some(Boolean))
+    console.warn('[ccfolia] 탭이 아닐 수 있는 버튼은 꺼진 채로 띄웁니다 → '
+      + tabNames.filter((n, i) => tabWarn[i]).join(' , '));
   say('수집할 탭을 고르세요');
-  const picked = await askTabs(tabNames);
+  const picked = await askTabs(tabNames, tabWarn);
   if (!picked) { console.log('[ccfolia] 취소했습니다.'); return; }
   if (!picked.some(Boolean)) { alert('고른 탭이 없습니다. 하나 이상 골라 주세요.'); return; }
   console.log('[ccfolia] 수집할 탭 → ' + tabNames.filter((n, i) => picked[i]).join(' , ')
@@ -2804,7 +4323,7 @@
     for (let k = 0; k < 5 && box && box.parentElement; k++) box = box.parentElement;
     const btns = all(box, 'button, [role="button"], [role="tab"]')
       .filter(b => lst && !lst.contains(b) && !badge.contains(b)).slice(0, 40)
-      .map(b => JSON.stringify(clean(b.textContent).slice(0, 18)) + '/' + JSON.stringify(b.getAttribute('aria-label')));
+      .map(b => JSON.stringify(clean(b.textContent).slice(0, 12)) + '/' + JSON.stringify(b.getAttribute('aria-label')));
     console.log('[ccfolia] 진단 · 채팅 주변 클릭 요소 ' + btns.length + '개 → ' + btns.join(' , '));
   }
 
@@ -2834,6 +4353,106 @@
   const rowsAll = packs.reduce((a, p) => a.concat(p.rows), []);
   if (!rowsAll.length) { alert('수집된 메시지가 없습니다. 룸 채팅창이 열려 있는지 확인하세요.'); return; }
 
+  /* ── 캐릭터 이미지 담기 ──
+     주소만 적어 두면 원본이 지워지는 순간 로그도 같이 빈다. 룸 페이지에서는 그림이 아직 살아 있으니
+     여기서 바이트를 받아 파일 안에 넣는다. 코코포리아 CDN은 Access-Control-Allow-Origin을 열어 두어
+     fetch로 그대로 받을 수 있다.
+     같은 그림은 한 번만 담고, 파일에는 사전 한 벌로 넣는다 — 줄마다 박으면 같은 그림이
+     수천 번 복사된다. 줄의 src는 원래 주소 그대로 두고, 리더가 사전과 이어 붙인다. */
+  const PIC_ONE = 4 * 1024 * 1024;      /* 한 장이 이보다 크면 주소로만 남긴다 */
+  const PIC_ALL = 32 * 1024 * 1024;     /* 다 합쳐 이만큼까지만 담는다 */
+  const IMG_TAG = /<img\\b[^>]*>/gi, SRC_AT = /\\ssrc\\s*=\\s*"([^"]*)"/i;
+  const isAvTag = t => /alt\\s*=\\s*"avatar"/i.test(t) || /MuiAvatar-img/.test(t);
+  const picList = [];
+  rowsAll.forEach(r => {
+    const tags = (r.html || '').match(IMG_TAG);
+    if (!tags) return;
+    tags.forEach(t => {
+      if (!isAvTag(t)) return;
+      const m = SRC_AT.exec(t); if (!m) return;
+      const u = (m[1] || '').trim();
+      if (/^https?:\\/\\//i.test(u) && picList.indexOf(u) === -1) picList.push(u);
+    });
+  });
+
+  /* ── 담기 전에 줄인다 ──
+     원본 서 있는 그림은 800×1200을 예사로 넘겨, 그대로 담으면 한 장에 수백 KB가 실린다.
+     WebP로 다시 구워 줄이되, 자르는 기준은 '긴 변'이 아니라 '짧은 변'이다 —
+     칸은 정사각이고 object-fit:cover는 짧은 변을 칸에 맞춘 뒤 나머지를 잘라 내기 때문이다.
+     2:3짜리 그림을 긴 변 512로 줄이면 짧은 변이 341밖에 안 남아서,
+     칸 88px·확대 250%·고해상도 화면이 겹치면 1.29배로 늘려 그리게 된다. 그때 흐려진다.
+     짧은 변을 512로 잡으면 그 최악의 조건에서도 0.86배 — 여전히 줄여 그린다.
+     한쪽만 유난히 긴 그림이 커지지 않게 긴 변에도 빗장을 하나 걸어 둔다. 투명한 배경은 그대로 산다.
+     움직이는 그림과 SVG는 다시 구우면 잃는 것이 있어 손대지 않고,
+     다시 구운 쪽이 더 크면 원본을 쓴다. 어느 쪽이든 원본보다 커지는 일은 없다. */
+  const PIC_SHORT = 512, PIC_LONG = 1536, PIC_Q = 0.82, PIC_Q_NATIVE = 0.92;
+  const PIC_KEEP = /^image\\/(gif|svg\\+xml)$/i;
+  const shrinkPic = async (blob) => {
+    if (PIC_KEEP.test(blob.type || '')) return null;
+    let bmp = null;
+    try { bmp = await createImageBitmap(blob); } catch (e) { return null; }
+    try {
+      const lo = Math.min(bmp.width, bmp.height), hi = Math.max(bmp.width, bmp.height);
+      const s = Math.min(1, PIC_SHORT / lo, PIC_LONG / hi);
+      /* 이미 작고 가벼우면 그냥 둔다 — 다시 굽는다고 나아지지 않고 화질만 깎인다 */
+      if (s === 1 && blob.size <= 48 * 1024) return null;
+      const cv = document.createElement('canvas');
+      cv.width = Math.max(1, Math.round(bmp.width * s));
+      cv.height = Math.max(1, Math.round(bmp.height * s));
+      const g = cv.getContext('2d');
+      g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+      g.drawImage(bmp, 0, 0, cv.width, cv.height);
+      /* 줄여 그릴 때는 0.82로 족하다 — 축소가 압축 자국을 함께 지워 준다.
+         반대로 원본이 애초에 작아 줄일 것이 없으면, 그 그림은 화면에서 되레 늘려 그려질 수 있다.
+         늘리면 압축 자국도 같이 커지므로 그런 그림만 좀 더 곱게 굽는다. */
+      /* WebP를 못 굽는 브라우저는 조용히 PNG를 돌려준다. 그건 대개 원본보다 크니 아래에서 걸러진다. */
+      return await new Promise(r => cv.toBlob(r, 'image/webp', s < 1 ? PIC_Q : PIC_Q_NATIVE));
+    } catch (e) { return null; }
+    finally { if (bmp && bmp.close) bmp.close(); }
+  };
+  const toDataURL = blob => new Promise((ok, no) => {
+    const fr = new FileReader();
+    fr.onload = () => ok(String(fr.result || ''));
+    fr.onerror = () => no(new Error('read'));
+    fr.readAsDataURL(blob);
+  });
+
+  const pics = [];
+  let picBytes = 0, picRaw = 0, picBig = 0, picBad = 0, picDone = 0;
+  if (picList.length) {
+    say('캐릭터 이미지 담는 중 · 0/' + picList.length);
+    let cursor = 0;
+    const grabPic = async () => {
+      while (cursor < picList.length && !ABORT) {
+        const u = picList[cursor++];
+        try {
+          const res = await fetch(u);
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          let blob = await res.blob();
+          const raw = blob.size;
+          const small = await shrinkPic(blob);
+          if (small && small.size < blob.size) blob = small;
+          /* 예산을 넘긴 그림은 조용히 빼지 않는다 — 아래 진단과 알림에 몇 장을 왜 뺐는지 남긴다 */
+          if (blob.size > PIC_ONE || picBytes + blob.size > PIC_ALL) picBig++;
+          else {
+            const d = await toDataURL(blob);
+            if (!/^data:image\\//i.test(d)) throw new Error('not an image');
+            pics.push({ url: u, data: d }); picBytes += blob.size; picRaw += raw;
+          }
+        } catch (e) { picBad++; console.warn('[ccfolia] 캐릭터 이미지를 못 담았습니다 · ' + u + ' · ' + (e && e.message ? e.message : e)); }
+        picDone++;
+        say('캐릭터 이미지 담는 중 · ' + picDone + '/' + picList.length);
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(4, picList.length) }, grabPic));
+    const mb = n => (n / 1048576).toFixed(1) + 'MB';
+    console.log('[ccfolia] 캐릭터 이미지 ' + pics.length + '/' + picList.length + '장 담음 · ' + mb(picBytes)
+      + (picRaw > picBytes ? ' (원본 ' + mb(picRaw) + ' → ' + (picRaw / Math.max(1, picBytes)).toFixed(1) + '배 줄임)' : '')
+      + (picBig ? ' · 용량이 커서 주소로 남긴 ' + picBig + '장' : '')
+      + (picBad ? ' · 못 받은 ' + picBad + '장' : ''));
+    say('저장하는 중…');
+  }
+
   /* 한 줄이라도 날짜를 못 읽으면 전부 버린다. 반쪽짜리 절대시각을 섞으면 병합이 되레 어긋난다.
      그 경우 리더가 시:분만 보고 '앞으로만 훑는 병합'으로 처리한다. */
   const nC = rowsAll.filter(r => r.c).length, useC = nC === rowsAll.length;
@@ -2848,13 +4467,30 @@
   }).join('\\n'));
 
   const names = packs.map(p => p.name), counts = packs.map(p => p.rows.length);
-  const html = '<div id="ccfolia-log" data-tabs="' + esc(names.join(',')) + '" data-ccf-now="' + Date.now() + '">\\n' + blocks.join('\\n') + '\\n</div>';
+  /* 사전은 <template>에 담는다. 화면에 그려지지도 미리 받아지지도 않으므로,
+     리더가 줄을 훑을 때 이 그림들이 로그 메시지로 잘못 읽힐 일이 없다. */
+  const picDict = pics.length
+    ? '\\n<template id="ccfolia-pics">\\n'
+      + pics.map(p => '<img data-pic="' + esc(p.url) + '" src="' + p.data + '">').join('\\n')
+      + '\\n</template>'
+    : '';
+  const html = '<div id="ccfolia-log" data-tabs="' + esc(names.join(',')) + '" data-ccf-now="' + Date.now() + '">\\n' + blocks.join('\\n') + '\\n</div>' + picDict;
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
   a.download = 'ccfolia-log.html';
   document.body.appendChild(a); a.click(); a.remove();
   console.log('[ccfolia] 수집 완료:', names.map((n, i) => n + ' ' + counts[i] + '개').join(' / '));
   alert((ABORT ? '중단함 · 여기까지 모았습니다 · ' : '수집 완료 · ') + names.map((n, i) => n + ' ' + counts[i] + '개').join(' · ')
+    + (picList.length ? '\\n캐릭터 이미지 ' + pics.length + '/' + picList.length + '장을 파일에 담았습니다 ('
+        + (picBytes / 1048576).toFixed(1) + 'MB'
+        + (picRaw > picBytes ? ', 원본 ' + (picRaw / 1048576).toFixed(1) + 'MB에서 줄임' : '') + ') — 원본이 지워져도 남습니다.'
+        + (picBig + picBad ? '\\n' + (picBig + picBad) + '장은 담지 못해 주소로만 남았습니다.' : '') : '')
+    + (partial.length ? '\\n\\n[주의] ' + partial.join(', ') + ' 탭은 맨 위까지 올라가지 못했습니다.'
+        + '\\n그 탭의 옛 로그가 덜 실렸을 수 있으니, 로그 맨 앞이 실제 시작인지 확인해 주세요.' : '')
+    + (useC ? '' : '\\n\\n[알림] 화면에 시각이 없는 줄이 있어, 시간 순서는 리더가 어림잡아 배치합니다.'
+        + '\\n정보탭 카드의 자리가 어긋나면 리더의 ‘배치 미세조정’에서 손볼 수 있습니다.')
+    + (shaky ? '\\n\\n[주의] 훑는 도중 코코포리아가 줄 번호를 다시 매겼습니다(' + shaky + '회).'
+        + '\\n빠지거나 겹친 줄이 있을 수 있으니, 변환한 뒤 처음과 끝을 확인해 주세요.' : '')
     + '\\nccfolia-log.html로 저장했습니다.\\n이제 이 파일을 코코포리아 로그 백업으로 끌어다 놓으세요.'
     + (packs.length > 1 ? '' : '\\n\\n탭을 하나만 건졌습니다. 다른 탭을 열고 한 번 더 실행한 뒤, 받은 파일들을 함께 놓으세요.'
       + '\\n(F12 → Console의 [ccfolia] 진단 줄을 모두 복사해 두시면 원인을 짚을 수 있습니다.)'));
@@ -2871,11 +4507,44 @@
 })();`;
   const hb = $('#harvest'); if(hb) hb.value = HARVEST;
   $('#copyHarvest') && $('#copyHarvest').addEventListener('click', async () => {
-    try{ await navigator.clipboard.writeText(HARVEST); }catch(e){ hb.select(); document.execCommand('copy'); }
-    const b = $('#copyHarvest'), t = b.textContent; b.textContent = '복사됨'; setTimeout(() => b.textContent = t, 1200);
+    const b = $('#copyHarvest'), t = b.textContent;
+    const ok = await copyText(HARVEST, hb);
+    b.textContent = ok ? '복사됨' : '복사 실패';
+    setTimeout(() => b.textContent = t, 1600);
+    if(!ok){ hb.focus(); hb.select(); toast('복사가 막혔습니다 · 위 칸이 선택돼 있으니 Ctrl+C(⌘C)로 복사해 주세요'); }
   });
 
-  const BMK = 'javascript:' + encodeURIComponent('(function(){' + HARVEST + '})();');
+  /* ── 북마클릿 주소에서는 주석을 뺀다 ──
+     한글 주석 한 글자가 encodeURIComponent를 거치면 아홉 글자가 된다. 그대로 실으면
+     설명이 코드보다 무거워지고, 아주 긴 javascript: 주소는 브라우저나 북마크 동기화가
+     잘라 버린다 — 잘린 북마클릿은 오류도 없이 그냥 아무 일도 하지 않는다.
+     지우는 것은 '줄 전체가 주석인 줄'뿐이라, 문자열이나 정규식 안을 건드릴 일이 없다.
+     콘솔용 소스(#harvest)는 주석을 그대로 둔다 — 그쪽은 읽으라고 있는 것이므로. */
+  function stripComments(src){
+    const out = [];
+    let inBlock = false;
+    src.split('\n').forEach(line => {
+      const t = line.trim();
+      if(inBlock){
+        const end = line.indexOf('*/');
+        if(end < 0) return;                                  /* 아직 주석 안 */
+        inBlock = false;
+        const rest = line.slice(end + 2);
+        if(rest.trim()) out.push(rest);                      /* 주석 뒤에 코드가 붙어 있으면 살린다 */
+        return;
+      }
+      if(t.startsWith('//')) return;
+      if(t.startsWith('/*')){
+        const end = t.indexOf('*/', 2);
+        if(end < 0){ inBlock = true; return; }                /* 여러 줄 주석의 첫 줄 */
+        if(!t.slice(end + 2).trim()) return;                  /* 주석뿐인 줄 */
+        out.push(line); return;                               /* 뒤에 코드가 있으면 손대지 않는다 */
+      }
+      out.push(line);
+    });
+    return out.join('\n');
+  }
+  const BMK = 'javascript:' + encodeURIComponent('(function(){' + stripComments(HARVEST) + '})();');
   const bmk = $('#bmk'); if(bmk) bmk.setAttribute('href', BMK);
   if(bmk) bmk.addEventListener('click', e => { e.preventDefault(); toast('이 버튼은 북마크바로 드래그하세요'); });
 
