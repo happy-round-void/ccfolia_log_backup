@@ -22,6 +22,32 @@
     --accent:#18181B; --on-accent:#FFFFFF; --accent-soft:#F4F4F5;
     --hit:#E4E4E7; --hit-cur:#C7C7CC; --narr-bg:#F3F3F5;
     --fs:15px; --lh:1.66; --wrap:730px; --radius:0px; --av:55px; --av-radius:0px; --av-zoom:1; --av-focus:top; --gap:16px;
+    /* 정보탭 카드의 치수 한 벌. 화면의 .infocard 규칙과 게시판용 HTML을 짓는 infoBlock()이
+       이것만 읽는다. 예전에는 같은 숫자를 CSS와 자바스크립트에 따로 적어 두었고,
+       그래서 문단 사이가 화면에서는 9px, 붙여 넣은 글에서는 10px로 갈라져 있어도
+       아무도 알아채지 못했다. 고칠 자리를 하나로 두어 그 어긋남을 없앤다. */
+    --info-gap-y:18px; --info-pad:12px 15px; --info-lbl-gap:7px;
+    --info-tag-fs:10px; --info-tag-ls:.24em; --info-p-gap:9px; --info-rule:2px;
+    /* 시스템 노트도 같은 방식이다 — .sysmsg 규칙과 sysBlock()이 이 한 벌만 읽는다 */
+    --sys-wrap:460px; --sys-gap-y:28px; --sys-pad:15px 0; --sys-fs:14px; --sys-lh:1.6;
+    --sys-p-gap:4px; --sys-lbl-fs:10.5px; --sys-lbl-ls:.28em; --sys-lbl-gap:6px;
+    /* 판정 로그 네 모양의 치수 — .rollx 규칙과 rollBlockHTML()이 이 한 벌만 읽는다.
+       네 모양이 '식 ＞ 숫자 ＞ 결과'라는 같은 재료를 쓰므로 공통 역할을 먼저 적고,
+       모양마다 다른 것만 그 아래에 둔다. tk=티켓 tl=타일 bd=밴드 nt=여백표기 */
+    --rx-expr-fs:12.5px; --rx-expr-ls:.01em; --rx-sub-fs:12px;
+    --rx-num-ls:-.02em; --rx-num-lh:1; --rx-lbl-fs:10px; --rx-lbl-ls:.24em;
+    --rx-tk-gap-y:14px; --rx-tk-pad:10px 14px 11px; --rx-tk-rule:2px; --rx-tk-rule-crit:4px;
+    --rx-tk-top-gap:10px; --rx-tk-top-mb:5px; --rx-tk-bot-gap:12px; --rx-tk-nm-fs:11.5px;
+    --rx-tk-num-fs:27px; --rx-tk-out-fs:13px; --rx-tk-out-ls:.1em; --rx-tk-out-ls-crit:.08em; --rx-tk-out-pad:4px 9px;
+    --rx-tl-pad:15px 0; --rx-tl-in-gap:1px; --rx-tl-tint:9%; --rx-tl-num-fs:19px;
+    --rx-tl-die-fs:8.5px; --rx-tl-die-ls:.06em; --rx-tl-die-op:.75; --rx-tl-die-op-crit:.8;
+    --rx-tl-col-pt:3px; --rx-tl-nm-fs:11.5px; --rx-tl-nm-mb:4px;
+    --rx-tl-out-fs:15px; --rx-tl-out-ls:.04em; --rx-tl-out-lh:1.3; --rx-tl-sub-fs:13.5px; --rx-tl-expr-mt:3px;
+    --rx-bd-gap:14px; --rx-bd-gap-y:14px; --rx-bd-pad:11px 15px;
+    --rx-bd-rule:3px; --rx-bd-rule-crit:5px; --rx-bd-tint:7%; --rx-bd-tint-crit:15%;
+    --rx-bd-nm-fs:13px; --rx-bd-right-gap:11px; --rx-bd-num-fs:19px; --rx-bd-out-fs:12.5px; --rx-bd-out-ls:.1em;
+    --rx-nt-gap-y:10px; --rx-nt-pad:2px 0 2px 11px; --rx-nt-gap:9px; --rx-nt-fs:12.5px; --rx-nt-lh:1.5;
+    --rx-nt-dot:6px; --rx-nt-num-fs:12.5px; --rx-nt-out-ls:.04em;
     --ok:#2F7D5B; --ng:#B04A42;
     --sans:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
     --serif:var(--sans);
@@ -356,18 +382,18 @@
   .narr.center{margin-left:0;text-align:center;}
 
   /* 시스템 메시지 → 조용한 에디토리얼 노트 */
-  .sysmsg{max-width:460px;margin:28px auto;text-align:center;color:var(--muted);padding:15px 0;
+  .sysmsg{max-width:var(--sys-wrap);margin:var(--sys-gap-y) auto;text-align:center;color:var(--muted);padding:var(--sys-pad);
     border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
-  .sysmsg .lbl{display:block;font-size:10.5px;letter-spacing:.28em;color:var(--faint);text-transform:uppercase;margin-bottom:6px;}
-  .sysmsg .txt{font-size:14px;line-height:1.6;} .sysmsg .txt p{margin:0 0 4px;} .sysmsg .txt p:last-child{margin:0;}
+  .sysmsg .lbl{display:block;font-size:var(--sys-lbl-fs);letter-spacing:var(--sys-lbl-ls);color:var(--faint);text-transform:uppercase;margin-bottom:var(--sys-lbl-gap);}
+  .sysmsg .txt{font-size:var(--sys-fs);line-height:var(--sys-lh);} .sysmsg .txt p{margin:0 0 var(--sys-p-gap);} .sysmsg .txt p:last-child{margin:0;}
 
   /* 정보탭 → 본문 흐름에 끼워 넣는 구분 카드 */
-  .infocard{position:relative;margin:18px 0 18px calc(var(--av) + var(--gap));padding:12px 15px;
-    border:1px solid var(--line);border-left:2px solid var(--speaker,var(--line-2));}
-  .infocard > .lbl{margin-bottom:7px;}
-  .infocard > .lbl .tag{font-size:10px;letter-spacing:.24em;color:var(--faint);text-transform:uppercase;}
+  .infocard{position:relative;margin:var(--info-gap-y) 0 var(--info-gap-y) calc(var(--av) + var(--gap));padding:var(--info-pad);
+    border:1px solid var(--line);border-left:var(--info-rule) solid var(--speaker,var(--line-2));}
+  .infocard > .lbl{margin-bottom:var(--info-lbl-gap);}
+  .infocard > .lbl .tag{font-size:var(--info-tag-fs);letter-spacing:var(--info-tag-ls);color:var(--faint);text-transform:uppercase;}
   .infocard .body{color:var(--ink-2);}
-  .infocard .body p{margin:0 0 9px;} .infocard .body p:last-child{margin-bottom:0;}
+  .infocard .body p{margin:0 0 var(--info-p-gap);} .infocard .body p:last-child{margin-bottom:0;}
   .infocard.center{margin-left:0;text-align:center;}
   /* 자리 옮기기 — 앱에서만 보이고 저장 HTML·게시판 HTML에는 실리지 않는다 */
   .infocard .mv{position:absolute;top:-1px;right:-1px;display:flex;opacity:0;transition:opacity .15s;}
@@ -432,60 +458,60 @@
   .rollx{--rc:var(--line-2);--rt:var(--muted);}
   .rollx.ok{--rc:var(--ok);--rt:var(--ok);}
   .rollx.ng{--rc:var(--ng);--rt:var(--ng);}
-  .rollx .rx-expr{font-family:var(--mono);font-size:12.5px;letter-spacing:.01em;color:var(--faint);}
-  .rollx .rx-sub{font-family:var(--mono);font-size:12px;color:var(--faint);}
-  .rollx .rx-num{font-variant-numeric:tabular-nums;letter-spacing:-.02em;}
+  .rollx .rx-expr{font-family:var(--mono);font-size:var(--rx-expr-fs);letter-spacing:var(--rx-expr-ls);color:var(--faint);}
+  .rollx .rx-sub{font-family:var(--mono);font-size:var(--rx-sub-fs);color:var(--faint);}
+  .rollx .rx-num{font-variant-numeric:tabular-nums;letter-spacing:var(--rx-num-ls);}
   /* 미세 라벨만은 본문 서체를 따르지 않는다 — 10px에 자간을 벌린 글자는 명조에서 뭉갠다 */
-  .rollx .rx-lbl{font-family:var(--sans);font-size:10px;letter-spacing:.24em;color:var(--faint);}
+  .rollx .rx-lbl{font-family:var(--sans);font-size:var(--rx-lbl-fs);letter-spacing:var(--rx-lbl-ls);color:var(--faint);}
 
   /* 판정 티켓 — 정보 카드와 같은 어법의 작은 표 */
-  .rollx.rs-ticket{margin:14px 0 14px calc(var(--av) + var(--gap));padding:10px 14px 11px;
-    border:1px solid var(--line);border-left:2px solid var(--rc);background:var(--surface);}
-  .rollx.rs-ticket.crit{border-left-width:4px;}
-  .rollx.rs-ticket .rx-top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:5px;}
-  .rollx.rs-ticket .rx-nm{font-size:11.5px;font-weight:600;color:var(--muted);}
+  .rollx.rs-ticket{margin:var(--rx-tk-gap-y) 0 var(--rx-tk-gap-y) calc(var(--av) + var(--gap));padding:var(--rx-tk-pad);
+    border:1px solid var(--line);border-left:var(--rx-tk-rule) solid var(--rc);background:var(--surface);}
+  .rollx.rs-ticket.crit{border-left-width:var(--rx-tk-rule-crit);}
+  .rollx.rs-ticket .rx-top{display:flex;align-items:baseline;gap:var(--rx-tk-top-gap);flex-wrap:wrap;margin-bottom:var(--rx-tk-top-mb);}
+  .rollx.rs-ticket .rx-nm{font-size:var(--rx-tk-nm-fs);font-weight:600;color:var(--muted);}
   .rollx.rs-ticket .rx-top .rx-expr{margin-left:auto;}
-  .rollx.rs-ticket .rx-bot{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
-  .rollx.rs-ticket .rx-num{font-size:27px;font-weight:700;line-height:1;color:var(--ink);}
-  .rollx.rs-ticket .rx-out{margin-left:auto;font-size:13px;font-weight:700;letter-spacing:.1em;color:var(--rt);}
-  .rollx.rs-ticket.crit .rx-out{background:var(--rc);color:var(--paper);padding:4px 9px;letter-spacing:.08em;}
+  .rollx.rs-ticket .rx-bot{display:flex;align-items:baseline;gap:var(--rx-tk-bot-gap);flex-wrap:wrap;}
+  .rollx.rs-ticket .rx-num{font-size:var(--rx-tk-num-fs);font-weight:700;line-height:var(--rx-num-lh);color:var(--ink);}
+  .rollx.rs-ticket .rx-out{margin-left:auto;font-size:var(--rx-tk-out-fs);font-weight:700;letter-spacing:var(--rx-tk-out-ls);color:var(--rt);}
+  .rollx.rs-ticket.crit .rx-out{background:var(--rc);color:var(--paper);padding:var(--rx-tk-out-pad);letter-spacing:var(--rx-tk-out-ls-crit);}
   .rollx.rs-ticket .rx-sub{margin-left:auto;}
 
   /* 주사위 타일 — 캐릭터 이미지 칸을 주사위 눈으로 바꾸어 글머리를 그대로 둔다 */
-  .rollx.rs-tile{display:flex;gap:var(--gap);padding:15px 0;}
+  .rollx.rs-tile{display:flex;gap:var(--gap);padding:var(--rx-tl-pad);}
   .rollx.rs-tile .rx-tile{width:var(--av);height:var(--av);flex:0 0 var(--av);
-    display:grid;place-items:center;align-content:center;gap:1px;
-    border:1px solid var(--rc);background:color-mix(in srgb,var(--rc) 9%,transparent);}
+    display:grid;place-items:center;align-content:center;gap:var(--rx-tl-in-gap);
+    border:1px solid var(--rc);background:color-mix(in srgb,var(--rc) var(--rx-tl-tint),transparent);}
   .rollx.rs-tile.crit .rx-tile{background:var(--rc);}
-  .rollx.rs-tile .rx-tile .rx-num{font-size:19px;font-weight:700;line-height:1;color:var(--rt);}
-  .rollx.rs-tile .rx-die{font-family:var(--mono);font-size:8.5px;letter-spacing:.06em;color:var(--rt);opacity:.75;}
+  .rollx.rs-tile .rx-tile .rx-num{font-size:var(--rx-tl-num-fs);font-weight:700;line-height:var(--rx-num-lh);color:var(--rt);}
+  .rollx.rs-tile .rx-die{font-family:var(--mono);font-size:var(--rx-tl-die-fs);letter-spacing:var(--rx-tl-die-ls);color:var(--rt);opacity:var(--rx-tl-die-op);}
   .rollx.rs-tile.crit .rx-tile .rx-num{color:var(--paper);}
-  .rollx.rs-tile.crit .rx-die{color:var(--paper);opacity:.8;}
-  .rollx.rs-tile .rx-col{flex:1;min-width:0;padding-top:3px;}
-  .rollx.rs-tile .rx-nm{font-size:11.5px;font-weight:600;color:var(--muted);margin-bottom:4px;}
-  .rollx.rs-tile .rx-out{font-size:15px;font-weight:700;letter-spacing:.04em;color:var(--rt);line-height:1.3;}
-  .rollx.rs-tile .rx-sub{display:block;font-size:13.5px;color:var(--rt);}
-  .rollx.rs-tile .rx-expr{display:block;margin-top:3px;}
+  .rollx.rs-tile.crit .rx-die{color:var(--paper);opacity:var(--rx-tl-die-op-crit);}
+  .rollx.rs-tile .rx-col{flex:1;min-width:0;padding-top:var(--rx-tl-col-pt);}
+  .rollx.rs-tile .rx-nm{font-size:var(--rx-tl-nm-fs);font-weight:600;color:var(--muted);margin-bottom:var(--rx-tl-nm-mb);}
+  .rollx.rs-tile .rx-out{font-size:var(--rx-tl-out-fs);font-weight:700;letter-spacing:var(--rx-tl-out-ls);color:var(--rt);line-height:var(--rx-tl-out-lh);}
+  .rollx.rs-tile .rx-sub{display:block;font-size:var(--rx-tl-sub-fs);color:var(--rt);}
+  .rollx.rs-tile .rx-expr{display:block;margin-top:var(--rx-tl-expr-mt);}
 
   /* 하이라이트 밴드 — 읽는 폭 전체를 가로질러 리듬을 끊는다 */
-  .rollx.rs-band{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:14px 0;padding:11px 15px;
-    border-left:3px solid var(--rc);background:color-mix(in srgb,var(--rc) 7%,var(--paper));}
-  .rollx.rs-band.crit{border-left-width:5px;background:color-mix(in srgb,var(--rc) 15%,var(--paper));}
-  .rollx.rs-band .rx-nm{font-size:13px;font-weight:700;color:var(--ink);}
+  .rollx.rs-band{display:flex;align-items:center;gap:var(--rx-bd-gap);flex-wrap:wrap;margin:var(--rx-bd-gap-y) 0;padding:var(--rx-bd-pad);
+    border-left:var(--rx-bd-rule) solid var(--rc);background:color-mix(in srgb,var(--rc) var(--rx-bd-tint),var(--paper));}
+  .rollx.rs-band.crit{border-left-width:var(--rx-bd-rule-crit);background:color-mix(in srgb,var(--rc) var(--rx-bd-tint-crit),var(--paper));}
+  .rollx.rs-band .rx-nm{font-size:var(--rx-bd-nm-fs);font-weight:700;color:var(--ink);}
   .rollx.rs-band .rx-expr{color:var(--muted);}
-  .rollx.rs-band .rx-right{margin-left:auto;display:flex;align-items:baseline;gap:11px;}
-  .rollx.rs-band .rx-num{font-size:19px;font-weight:700;line-height:1;color:var(--ink);}
-  .rollx.rs-band .rx-out{font-size:12.5px;font-weight:700;letter-spacing:.1em;color:var(--rt);}
+  .rollx.rs-band .rx-right{margin-left:auto;display:flex;align-items:baseline;gap:var(--rx-bd-right-gap);}
+  .rollx.rs-band .rx-num{font-size:var(--rx-bd-num-fs);font-weight:700;line-height:var(--rx-num-lh);color:var(--ink);}
+  .rollx.rs-band .rx-out{font-size:var(--rx-bd-out-fs);font-weight:700;letter-spacing:var(--rx-bd-out-ls);color:var(--rt);}
 
   /* 여백 표기 — 상자 없이 얇은 세로선과 네모 하나로만 */
-  .rollx.rs-note{margin:10px 0 10px calc(var(--av) + var(--gap));padding:2px 0 2px 11px;
-    border-left:1px solid var(--line);display:flex;align-items:center;gap:9px;flex-wrap:wrap;
-    font-size:12.5px;line-height:1.5;}
-  .rollx.rs-note .rx-dot{width:6px;height:6px;flex:0 0 6px;border:1px solid var(--rc);}
+  .rollx.rs-note{margin:var(--rx-nt-gap-y) 0 var(--rx-nt-gap-y) calc(var(--av) + var(--gap));padding:var(--rx-nt-pad);
+    border-left:1px solid var(--line);display:flex;align-items:center;gap:var(--rx-nt-gap);flex-wrap:wrap;
+    font-size:var(--rx-nt-fs);line-height:var(--rx-nt-lh);}
+  .rollx.rs-note .rx-dot{width:var(--rx-nt-dot);height:var(--rx-nt-dot);flex:0 0 var(--rx-nt-dot);border:1px solid var(--rc);}
   .rollx.rs-note.crit .rx-dot{background:var(--rc);}
   .rollx.rs-note .rx-nm{color:var(--faint);}
-  .rollx.rs-note .rx-num{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--ink-2);}
-  .rollx.rs-note .rx-out{font-weight:600;letter-spacing:.04em;color:var(--rt);}
+  .rollx.rs-note .rx-num{font-family:var(--mono);font-size:var(--rx-nt-num-fs);font-weight:700;color:var(--ink-2);}
+  .rollx.rs-note .rx-out{font-weight:600;letter-spacing:var(--rx-nt-out-ls);color:var(--rt);}
   .rollx.rs-note .rx-ar{color:var(--line-2);}
 
   /* 결과를 못 알아본 줄은 색 대신 앱의 옅은 바탕으로 둔다.
@@ -612,7 +638,7 @@
 <div class="panes app-only" id="editPanes">
 <section class="panel app-only" id="pastePanel">
   <!-- 파일을 고칠 때마다 이 날짜를 함께 바꾼다. 빌드 과정이 없는 단일 HTML이라 손으로 적어 둔다. -->
-  <div class="stamp collect-only">업데이트 2026-08-21 12:34</div>
+  <div class="stamp collect-only">업데이트 2026-08-22 13:07</div>
   <div class="alert collect-only" role="status">
     <span class="mk" aria-hidden="true">!</span>
     <div class="atxt">
@@ -1269,6 +1295,17 @@
     return '';
   }
 
+  /* 봇이 내놓은 답을 가르는 표. BCDice는 시스템을 가리지 않고 '식 ＞ 결과'로 적고,
+     코코포리아는 그것을 그대로 화면에 올린다. 그래서 이 글자 하나가 '여기서부터 봇의 답'이다. */
+  const ROLL_SEP = /[＞＝]/;
+  /* 결과 앞에 한 번 더 적히는 명령 — '(1D100<=65)＞', '(SG@12#2)＞'.
+     띄어쓰기를 걷어 낸 줄에서 찾으므로 괄호와 ＞ 사이는 붙어 있다.
+     괄호 안은 명령이 쓰는 글자만 받는다. '(웃음) ＞ 3명은 왔어' 같은 평범한 대사가
+     괄호와 ＞를 나란히 갖췄다는 이유만으로 주사위 로그가 되어 숨겨지면,
+     이 도구에서 가장 나쁜 실패인 말없는 누락이 된다. 좁게 잡고, 못 알아본 것은
+     대사로 남긴다 — 봇이 붙인 span이 살아 있는 로그는 어차피 그쪽에서 잡힌다. */
+  const ROLL_ECHO = /\([0-9A-Za-z<>=+\-*/#@,.\[\]]{1,60}\)[＞＝]/;
+
   /* 판정 결과: 실패 계열을 먼저 본다 (‘대실패’가 ‘실패’를 포함).
      한글·일본어·영어를 한 목록에 담는다 — 코코포리아 방은 시스템에 따라 셋이 섞여 나온다. */
   const ROLL_NG = /(대실패|치명적\s*실패|실패|펌블|팜블|ファンブル|大失敗|致命的失敗|失敗|fumble|botch|failure)/i;
@@ -1319,7 +1356,7 @@
      부르는 쪽은 그때 지금까지의 흐린 한 줄로 되돌린다 — 못 알아본 줄을 말없이 지우는 것이
      이 도구에서 가장 나쁜 실패다. */
   function rollParts(flat){
-    const seg = String(flat || '').split(/[＞＝]/).map(x => x.trim()).filter(Boolean);
+    const seg = String(flat || '').split(ROLL_SEP).map(x => x.trim()).filter(Boolean);
     if(seg.length < 2) return null;
     /* 결과 낱말은 보통 맨 끝에 오지만, 명령이 이어 붙은 줄에서는 가운데 놓이기도 한다.
        그래서 뒤에서부터 찾는다. 숫자로도 읽히는 조각은 낱말이 아니다. */
@@ -1335,6 +1372,15 @@
     const sub = seg.filter((x, i) => i !== 0 && i !== ni && i !== wi).join(' ');
     return { expr: rollExpr(seg[0]), num: num, out: wi > -1 ? seg[wi] : '', sub: sub, die: rollDie(flat) };
   }
+
+  /* 흐린 한 줄로 떨어진 판정에 입힐 색.
+     네 모양(rollSpec)은 성패를 rollGrade(R.out)으로 매긴다 — 줄 전체가 아니라
+     rollParts()가 골라낸 결과 낱말 하나만 본다. 그런데 흐린 한 줄 쪽만 줄 전체를 보고 있었다.
+     그래서 시노비가미 변조표처럼 규칙 설명에 「成功」이 섞인 표가 통째로 초록이 됐다
+     (`WT 変調表(1) ＞ 故障:…成功するとこの変調は無効化される。`). 굴린 수가 없어
+     rollParts()가 판정으로 알아보지도 못한 줄인데 성패만 칠해진 셈이다.
+     두 자리가 같은 것을 보게 맞춘다 — 판정으로 갈리지 않은 줄에는 색을 주지 않는다. */
+  const rollTint = flat => { const R = rollParts(flat); return R ? rollOutcome(R.out) : ''; };
 
   /* ── 파싱 ── */
   /* 그림 주소는 화면에 적혀 있던 그대로만 받는다.
@@ -1446,14 +1492,22 @@
     const paras = paragraphsFrom(ps.map(textWithBreaks).join('\n'));
     if(!name && !paras.length) return null;
     const flat = paras.join(' ');
-    const rollSpan = ps.some(x => x.querySelector('span[class*="ucj"]'));
+    /* 봇이 되돌려 준 결과는 명령을 적은 <p> 안에 <span> 하나로 얹혀 온다.
+       예전에는 그 span을 클래스 이름(css-ucj12)으로 찾았다. 그런데 그 이름은 코코포리아가
+       스타일마다 지어내는 해시라, 성공·실패·보통이 저마다 다른 색을 쓰는 순간 이름도 셋으로
+       갈라진다. 그래서 색이 붙지 않은 판정만 주사위로 잡히고, 성공이나 실패로 끝난 판정은
+       그냥 대사로 남았다. 이름 대신 생김새로 찾는다 — 봇이 되돌려 준 답에는 언제나 ＞가 있다. */
+    const rollSpan = ps.some(x => [...x.querySelectorAll('span')].some(s => ROLL_SEP.test(s.textContent || '')));
     const system = !avatar && !name;
     /* 주사위 로그는 '식 ＞ 결과' 꼴이다. 예전에는 줄 어딘가에 ＞와 NdM이 있기만 하면
        주사위로 봤고, 그래서 ‘3d6 굴린다고? ＞ 아니’ 같은 대사까지 숨겨졌다.
-       식이 먼저 오고 ＞ 뒤에 숫자가 오는 것까지 확인한다. */
+       식이 먼저 오고 ＞ 뒤에 숫자가 오는 것까지 확인한다.
+       다만 NdM만 찾으면 시노비가미의 SG처럼 명령에 주사위 수가 드러나지 않는 시스템이
+       통째로 빠진다. 코코포리아는 시스템이 무엇이든 결과 앞에 명령을 괄호로 한 번 더
+       적어 주므로('(1D100<=65)＞', '(SG@12#2)＞'), 그 되받아 적기도 같이 본다. */
     const flatNS = flat.replace(/\s/g, '');
     const dice = !!rollSpan
-      || (/\d*[dD]\d+[^＞＝]*[＞＝]/.test(flatNS) && /[＞＝][^＞＝]*\d/.test(flatNS));
+      || ((ROLL_ECHO.test(flatNS) || /\d*[dD]\d+[^＞＝]*[＞＝]/.test(flatNS)) && /[＞＝][^＞＝]*\d/.test(flatNS));
     const status = detectStatus(flat);
     return { avatar, name, color, paras, system, dice, status,
              time: timeOf(row, h6), stamp: cap,
@@ -1783,23 +1837,42 @@
   const narratorSet = opts => new Set(((opts && Array.isArray(opts.narrators)) ? opts.narrators : ['GM']).map(normName).filter(Boolean));
   const stripEdit = s => s.replace(/\s*\[편집 완료\]/g, '').trim();
   const cleanParas = arr => arr.map(stripEdit).filter(Boolean);
-  const isSys = m => !!m.system || (m.paras.length && m.paras[0].trimStart().startsWith('✦'));
-  const sysLines = arr => arr.map(p => p.replace(/^\s*✦\s*/, '').trim()).filter(Boolean);
+  /* 시스템 메시지는 화자가 없는 줄뿐이다(m.system — 이름도 캐릭터 이미지도 없다).
+     예전에는 ✦로 시작하는 줄도 시스템으로 보고 그 표식을 벗겨 냈는데, 그러면 ✦를
+     글머리로 쓰는 사람의 대사가 통째로 가운데 시스템 블록이 되어 버렸다. 이제 ✦는
+     그냥 글자다 — 아무것도 벗기지 않고 쓴 그대로 싣는다. */
   function paras(el, arr){ arr.forEach(p => { const x=document.createElement('p'); x.textContent=p; el.appendChild(x); }); }
   const fullOf = m => cleanParas(m.paras).join(' ');
   const excerptOf = m => { const t = fullOf(m); return t.length > 42 ? t.slice(0, 42) + '…' : t; };
+  /* ── 정보탭 카드의 알맹이 ──
+     한 로그를 두 벌로 그린다 — 화면은 DOM으로(infoCard), 게시판용은 인라인 스타일 HTML로
+     (infoBlock). 무엇을 그릴지를 두 곳에서 따로 정하던 동안, 가운데 정렬 판정과 탭 이름
+     기본값이 나란히 두 벌씩 적혀 있었다. 한쪽만 고치면 화면과
+     붙여 넣은 글이 말없이 어긋난다 — 이 저장소에서 가장 자주 생기던 회귀다.
+     그래서 '무엇을'은 여기서 한 번만 정하고, 두 렌더러는 '어떻게'만 맡는다.
+     생김새의 숫자는 :root의 --info-* 한 벌이 맡는다. */
+  function infoSpec(m, P, opts){
+    return {
+      center: !!(opts.align && m.name && opts.align[m.name] === 'center'),
+      tag: m.tab || '정보',
+      lines: P,
+      /* 화자 색이 없으면 빈 값을 준다. 받는 쪽이 저마다 제 테마의 --line-2로 떨어뜨린다 */
+      accent: m.color || ''
+    };
+  }
+
   /* 정보탭 카드 — 시간 순서상 제자리에 앉히되, 어느 탭에서 왔는지는 남긴다 */
   function infoCard(m, P, opts){
+    const S = infoSpec(m, P, opts);
     const w = document.createElement('div');
-    const center = (opts.align && m.name && opts.align[m.name] === 'center');
-    w.className = 'infocard' + (center ? ' center' : '');
-    if(m.color) w.style.setProperty('--speaker', m.color);
+    w.className = 'infocard' + (S.center ? ' center' : '');
+    if(S.accent) w.style.setProperty('--speaker', S.accent);
     w.dataset.mid = midOf(m);
     /* 라벨은 탭 이름만. 화자는 왼쪽 테두리 색으로 남고, 시각은 미세조정 목록에서 본다. */
     const lbl = document.createElement('div'); lbl.className = 'lbl';
-    const tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = m.tab || '정보'; lbl.appendChild(tag);
+    const tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = S.tag; lbl.appendChild(tag);
     w.appendChild(lbl);
-    if(P.length){ const b = document.createElement('div'); b.className = 'body'; paras(b, isSys(m) ? sysLines(P) : P); w.appendChild(b); }
+    if(S.lines.length){ const b = document.createElement('div'); b.className = 'body'; paras(b, S.lines); w.appendChild(b); }
     /* 자리 옮기기 버튼은 앱 전용이라, 저장 HTML·게시판 HTML에는 실리지 않는다 */
     const mv = document.createElement('div'); mv.className = 'mv app-only';
     const who = m.name || m.tab || '정보';
@@ -1830,55 +1903,89 @@
   }
   /* 판정 한 줄을 고른 모양대로 짓는다. 네 모양이 모두 같은 재료를 쓰므로
      가르는 자리는 한 곳뿐이고, 모양마다 놓는 자리만 다르다. */
-  function rollBlock(m, P, opts){
+  /* ── 판정 한 줄의 알맹이 ──
+     정보 카드·시스템 노트와 같은 방식이다(infoSpec·sysSpec 참고). 네 모양이 모두 같은
+     재료를 쓰므로, 재료를 고르는 일은 여기서 한 번만 하고 rollBlock()(화면)과
+     rollBlockHTML()(게시판)은 그것을 어떻게 놓느냐만 맡는다.
+     못 알아본 줄에는 빈손(null)을 돌려주고, 부르는 쪽이 지금까지의 흐린 한 줄로 되돌린다. */
+  function rollSpec(m, P, opts){
     const style = rollStyleOf(opts);
     if(!style) return null;
-    const flat = P.join(' ');
-    const R = rollParts(flat);
+    const R = rollParts(P.join(' '));
     if(!R) return null;
     const g = rollGrade(R.out);
-    const center = !!(opts.align && m.name && opts.align[m.name] === 'center');
+    return {
+      style: style, kind: g.kind, crit: g.crit,
+      center: !!(opts.align && m.name && opts.align[m.name] === 'center'),
+      name: m.name || '', expr: R.expr, num: R.num, out: R.out, sub: R.sub, die: R.die,
+      /* 티켓 머리의 미세 라벨 — 결과 낱말이 있으면 판정, 없으면 그냥 굴림이다 */
+      label: R.out ? '판정' : '주사위',
+      /* 타일 가운데 칸에 세울 말. 결과 낱말이 없으면 굴림 내역을, 그것도 없으면 식을 세운다.
+         식을 그 자리에 세웠으면 아래에 또 적지 않는다 — 같은 말이 두 줄로 겹친다. */
+      tileMain: R.out || R.sub || R.expr,
+      tileExpr: !!(R.out || R.sub)
+    };
+  }
+
+  function rollBlock(m, P, opts){
+    const S = rollSpec(m, P, opts);
+    if(!S) return null;
     const w = document.createElement('div');
-    w.className = 'rollx rs-' + style + (g.kind ? ' ' + g.kind : '') + (g.crit ? ' crit' : '') + (center ? ' center' : '');
+    w.className = 'rollx rs-' + S.style + (S.kind ? ' ' + S.kind : '') + (S.crit ? ' crit' : '') + (S.center ? ' center' : '');
     const sp = (cls, txt) => { const e = document.createElement('span'); e.className = cls; if(txt != null) e.textContent = txt; return e; };
     const dv = (cls, txt) => { const e = document.createElement('div'); e.className = cls; if(txt != null) e.textContent = txt; return e; };
-    const name = m.name || '';
     /* 결과 자리 — 판정이면 낱말, 수치만 나온 굴림이면 그 내역을 곁들인다 */
-    const tail = () => R.out ? sp('rx-out', R.out) : (R.sub ? sp('rx-sub', R.sub) : null);
+    const tail = () => S.out ? sp('rx-out', S.out) : (S.sub ? sp('rx-sub', S.sub) : null);
 
-    if(style === 'ticket'){
+    if(S.style === 'ticket'){
       const top = dv('rx-top');
-      top.appendChild(sp('rx-lbl', R.out ? '판정' : '주사위'));
-      if(name) top.appendChild(sp('rx-nm', name));
-      top.appendChild(sp('rx-expr', R.expr));
+      top.appendChild(sp('rx-lbl', S.label));
+      if(S.name) top.appendChild(sp('rx-nm', S.name));
+      top.appendChild(sp('rx-expr', S.expr));
       const bot = dv('rx-bot');
-      bot.appendChild(sp('rx-num', R.num));
+      bot.appendChild(sp('rx-num', S.num));
       const t = tail(); if(t) bot.appendChild(t);
       w.append(top, bot);
-    } else if(style === 'tile'){
+    } else if(S.style === 'tile'){
       const tile = dv('rx-tile');
-      tile.append(sp('rx-num', R.num), sp('rx-die', R.die));
+      tile.append(sp('rx-num', S.num), sp('rx-die', S.die));
       const col = dv('rx-col');
-      if(name) col.appendChild(dv('rx-nm', name));
-      /* 결과 낱말이 없으면 굴림 내역을, 그것도 없으면 식을 그 자리에 세운다 */
-      col.appendChild(R.out ? dv('rx-out', R.out) : dv('rx-sub', R.sub || R.expr));
-      if(R.out || R.sub) col.appendChild(sp('rx-expr', R.expr));
+      if(S.name) col.appendChild(dv('rx-nm', S.name));
+      col.appendChild(S.out ? dv('rx-out', S.tileMain) : dv('rx-sub', S.tileMain));
+      if(S.tileExpr) col.appendChild(sp('rx-expr', S.expr));
       w.append(tile, col);
-    } else if(style === 'band'){
-      if(name) w.appendChild(sp('rx-nm', name));
-      w.appendChild(sp('rx-expr', R.expr));
+    } else if(S.style === 'band'){
+      if(S.name) w.appendChild(sp('rx-nm', S.name));
+      w.appendChild(sp('rx-expr', S.expr));
       const right = dv('rx-right');
-      right.appendChild(sp('rx-num', R.num));
+      right.appendChild(sp('rx-num', S.num));
       const t = tail(); if(t) right.appendChild(t);
       w.appendChild(right);
     } else {
       w.appendChild(sp('rx-dot'));
-      if(name) w.appendChild(sp('rx-nm', name));
-      w.append(sp('rx-expr', R.expr), sp('rx-ar', '＞'), sp('rx-num', R.num));
+      if(S.name) w.appendChild(sp('rx-nm', S.name));
+      w.append(sp('rx-expr', S.expr), sp('rx-ar', '＞'), sp('rx-num', S.num));
       const t = tail(); if(t) w.append(sp('rx-ar', '＞'), t);
     }
     return w;
   }
+  /* ── 시스템 노트의 알맹이 ──
+     정보 카드와 같은 방식이다(infoSpec 참고). 상태 변화 줄과 /system 줄이 같은 모양으로
+     나가는데, 무엇을 실을지는 두 갈래로 갈린다. 그 갈림을 여기서 한 번만 정하고
+     sysNote()(화면)와 sysBlock()(게시판)이 결과만 읽는다.
+     kind는 부르는 쪽이 정한다 — 한 줄이 상태 변화이면서 /system이기도 할 수 있고,
+     그때 무엇으로 볼지는 두 렌더러가 똑같이 '상태 변화 먼저'로 정해 두었기 때문이다. */
+  function sysSpec(m, P, kind){
+    /* 상태 변화 줄은 누구 것인지가 본문에 없을 때만 이름을 앞에 세운다.
+       '홍길동의 HP가 줄었다'처럼 이미 이름이 들어 있으면 두 번 적지 않는다. */
+    const lines = (kind === 'status')
+      ? ((m.name && !P.some(t => t.includes(m.name))) ? [m.name].concat(P) : P)
+      : P;
+    /* 라벨은 지금 아무 데서도 안 쓴다(예전의 '시스템' 머리표를 걷어 냈다).
+       되살릴 일이 생기면 두 렌더러가 함께 보도록 여기서 정한다. */
+    return { lines: lines, label: '' };
+  }
+
   function sysNote(lines, label){
     const w = document.createElement('div'); w.className = 'sysmsg';
     if(label){ const l = document.createElement('span'); l.className = 'lbl'; l.textContent = label; w.appendChild(l); }
@@ -2095,15 +2202,16 @@
       }
       if(m.status){
         prevName = null; curNarr = null;
-        let lines = P; if(m.name && !P.some(t => t.includes(m.name))) lines = [m.name].concat(P);
-        const el = sysNote(lines, '');
+        const S = sysSpec(m, P, 'status');
+        const el = sysNote(S.lines, S.label);
         book.appendChild(el); slot(el, m);
         return;
       }
-      const asNarr = isSys(m) && !noise && !!opts.sysNarr;
-      if(isSys(m) && !noise && !asNarr){
+      const asNarr = !!m.system && !noise && !!opts.sysNarr;
+      if(m.system && !noise && !asNarr){
         prevName = null; curNarr = null;
-        const el = sysNote(sysLines(P), '');
+        const S = sysSpec(m, P, 'system');
+        const el = sysNote(S.lines, S.label);
         book.appendChild(el); slot(el, m);
         return;
       }
@@ -2119,7 +2227,7 @@
            덩어리를 통째로 자리로 삼으면 그 중심이 뒷줄보다 아래로 내려가 자리 순서가 뒤엉킨다.
            글이 한 줄도 안 생겼으면 자리를 남기지 않는다 — 보이지 않는 것은 자리도 아니다. */
         const at = b.childElementCount;
-        paras(b, asNarr ? sysLines(P) : P);
+        paras(b, P);
         if(b.children[at]) slot(b.children[at], m);
         return;
       }
@@ -2139,7 +2247,7 @@
          이름은 다시 적지 않는다 — 같은 사람이 표정만 바꾼 것이지 새 화자가 아니다. */
       const avSwap = !!(same && opts.avChange && m.avatar && prevAv && m.avatar !== prevAv);
       const center = alignOf(m.name) === 'center';
-      const roll = noise ? rollOutcome(P.join(' ')) : '';
+      const roll = noise ? rollTint(P.join(' ')) : '';
       const turn = document.createElement('article');
       turn.className = 'turn' + (same && !avSwap ? ' cont' : '') + (noise ? ' muted' : '') + (center ? ' center' : '') + (roll ? ' roll-' + roll : '');
       turn.dataset.who = m.name || (m.system ? '시스템' : '');
@@ -2440,7 +2548,7 @@
   function populateJournalAlign(messages){
     const wrap = $('#jalignWrap'), box = $('#journalAlign'); if(!box) return;
     const names = [], seen = new Set();
-    messages.forEach(m => { if(m.status || m.system || isSys(m) || !m.name) return; if(seen.has(m.name)) return; seen.add(m.name); names.push(m.name); });
+    messages.forEach(m => { if(m.status || m.system || !m.name) return; if(seen.has(m.name)) return; seen.add(m.name); names.push(m.name); });
     if(!names.length){ if(wrap) wrap.classList.add('hidden'); box.innerHTML = ''; return; }
     if(wrap) wrap.classList.remove('hidden');
     box.innerHTML = '';
@@ -3262,9 +3370,28 @@
     /* 본명조를 골랐는지 — 게시판용 행간을 화면과 맞추는 데 쓴다 */
     const serif = root.getAttribute('data-font') === 'serif';
     /* 폰트는 실제 적용된 스택을 그대로 쓴다. 속성값이므로 큰따옴표는 작은따옴표로 */
-    const font = (outEl ? getComputedStyle(outEl).fontFamily : "Pretendard, sans-serif").replace(/"/g, "'");
+    const quo = s => (s || '').replace(/"/g, "'");
+    const font = quo(outEl ? getComputedStyle(outEl).fontFamily : "Pretendard, sans-serif");
+
+    /* ── 치수 한 벌 ──
+       화면이 쓰는 CSS 변수를 그대로 읽어 게시판용 인라인 스타일에 넣는다. 색을 이렇게
+       읽어 오듯, 숫자도 :root 한 벌만 보고 짓는다.
+       여기에 기본값을 적지 않는 것은 일부러다 — 적는 순간 그 숫자가 두 벌이 되고,
+       CSS만 고친 날 조용히 갈라진다. 지우려는 것이 바로 그 어긋남이다.
+       palette()는 이 <style>이 살아 있는 리더 안에서만 도니 값이 빌 일도 없고,
+       혹시 비면 그 선언 한 줄이 무효가 될 뿐 틀린 값이 실리지는 않는다.
+       --접두-이름 이 그대로 카멜케이스 키가 된다: --rx-tl-die-op → rx.tlDieOp */
+    const camel = s => s.replace(/-([a-z])/g, (x, c) => c.toUpperCase());
+    const group = (prefix, names) => {
+      const o = {};
+      names.split(/\s+/).filter(Boolean).forEach(n => { o[camel(n)] = v('--' + prefix + '-' + n, ''); });
+      return o;
+    };
     return {
       light: light, dark: dark, font: font, serif: serif,
+      /* 판정 로그의 미세 라벨과 등폭 글씨는 본문 서체를 따르지 않는다. 화면의 --sans·--mono를
+         그대로 실어야 명조를 골랐을 때도 두 곳이 같은 글씨로 나온다. */
+      sans: quo(v('--sans', '')), mono: quo(v('--mono', '')),
       fs: parseFloat(v('--fs', '15px')) || 15,
       lh: v('--lh', '1.66'),
       av: parseFloat(v('--av', '55px')) || 55,
@@ -3272,7 +3399,18 @@
       avz: parseFloat(v('--av-zoom', '1')) || 1,
       avf: (v('--av-focus', 'top').trim() || 'top'),
       gap: parseFloat(v('--gap', '16px')) || 16,
-      wrap: parseFloat(v('--wrap', '730px')) || 730
+      wrap: parseFloat(v('--wrap', '730px')) || 730,
+      info: group('info', 'gap-y pad lbl-gap tag-fs tag-ls p-gap rule'),
+      sys:  group('sys',  'wrap gap-y pad fs lh p-gap lbl-fs lbl-ls lbl-gap'),
+      rx:   group('rx',
+        'expr-fs expr-ls sub-fs num-ls num-lh lbl-fs lbl-ls '
+        + 'tk-gap-y tk-pad tk-rule tk-rule-crit tk-top-gap tk-top-mb tk-bot-gap tk-nm-fs '
+        + 'tk-num-fs tk-out-fs tk-out-ls tk-out-ls-crit tk-out-pad '
+        + 'tl-pad tl-in-gap tl-tint tl-num-fs tl-die-fs tl-die-ls tl-die-op tl-die-op-crit '
+        + 'tl-col-pt tl-nm-fs tl-nm-mb tl-out-fs tl-out-ls tl-out-lh tl-sub-fs tl-expr-mt '
+        + 'bd-gap bd-gap-y bd-pad bd-rule bd-rule-crit bd-tint bd-tint-crit '
+        + 'bd-nm-fs bd-right-gap bd-num-fs bd-out-fs bd-out-ls '
+        + 'nt-gap-y nt-pad nt-gap nt-fs nt-lh nt-dot nt-num-fs nt-out-ls')
     };
   }
 
@@ -3296,8 +3434,9 @@
       + scoped(DARK_SEL, X.dark) + scoped(LIGHT_SEL, X.light)
       + '.ccf-post>*:first-child{margin-top:0;padding-top:0}.ccf-post img{max-width:100%;height:auto}</style>';
 
-    const pHTML = (arr, color, fs, lh) => arr.map((t, i) =>
-      '<p style="margin:0 0 ' + (i === arr.length - 1 ? '0' : '10px') + ';font-size:' + (fs || FS) + 'px;line-height:' + (lh || LH) + ';color:' + color + ';">' + esc(t) + '</p>').join('');
+    /* gap은 문단 사이. 안 주면 지금까지의 10px 그대로다 — 정보탭 카드만 제 치수(--info-p-gap)를 준다 */
+    const pHTML = (arr, color, fs, lh, gap) => arr.map((t, i) =>
+      '<p style="margin:0 0 ' + (i === arr.length - 1 ? '0' : (gap || '10px')) + ';font-size:' + (fs || FS) + 'px;line-height:' + (lh || LH) + ';color:' + color + ';">' + esc(t) + '</p>').join('');
     const avHTML = (src, dim, name) => {
       const ov = (src && avImgState[src]) || (name && avState[name]);
       const f = ov ? focusCSS(avOf(name, src)) : X.avf;
@@ -3317,11 +3456,19 @@
           + ';box-shadow:0 0 0 1px ' + C('line') + ';background:' + BLANK_TINT + ';"></div>';
       return spacerHTML;
     };
-    const sysP = arr => arr.map((t, i) => '<p style="margin:0 0 ' + (i === arr.length - 1 ? '0' : '4px') + ';">' + esc(t) + '</p>').join('');
-    const sysBlock = (lines, label) => '<div style="max-width:460px;margin:28px auto;text-align:center;color:' + C('muted')
-      + ';padding:15px 0;border-top:1px solid ' + C('line') + ';border-bottom:1px solid ' + C('line') + ';">'
-      + (label ? '<div style="font-size:10.5px;letter-spacing:.28em;color:' + C('faint') + ';margin-bottom:6px;">' + esc(label) + '</div>' : '')
-      + '<div style="font-size:14px;line-height:1.6;">' + lines + '</div></div>';
+    /* 시스템 노트 — 무엇을 실을지는 sysSpec()이, 치수는 :root의 --sys-* 한 벌(X.sys)이 정한다.
+       lines는 화면 쪽 sysNote()와 똑같이 '문단 배열'을 받는다. 예전에는 여기만 이미 지어 놓은
+       HTML을 받아, 부르는 쪽이 문단 짓기를 따로 챙겨야 했다 — 두 렌더러의 결이 달랐던 자리다. */
+    const SX = X.sys;
+    const sysBlock = (lines, label) => '<div style="max-width:' + SX.wrap + ';margin:' + SX.gapY + ' auto;text-align:center;color:' + C('muted')
+      + ';padding:' + SX.pad + ';border-top:1px solid ' + C('line') + ';border-bottom:1px solid ' + C('line') + ';">'
+      /* text-transform은 화면의 .sysmsg .lbl에는 있는데 여기에만 빠져 있었다.
+         라벨을 되살리는 날에야 드러났을 어긋남이라, 통합하는 김에 맞춰 둔다. */
+      + (label ? '<div style="font-size:' + SX.lblFs + ';letter-spacing:' + SX.lblLs + ';text-transform:uppercase;color:'
+          + C('faint') + ';margin-bottom:' + SX.lblGap + ';">' + esc(label) + '</div>' : '')
+      + '<div style="font-size:' + SX.fs + ';line-height:' + SX.lh + ';">'
+      + lines.map((t, i) => '<p style="margin:0 0 ' + (i === lines.length - 1 ? '0' : SX.pGap) + ';">' + esc(t) + '</p>').join('')
+      + '</div></div>';
 
     const shown = messages.filter(m => {
       if(m.status) return !!opts.showStatus;
@@ -3344,93 +3491,113 @@
       }
       narr = null; narrCenter = false;
     };
-    /* 정보탭 카드 - 화면과 같은 모양을 인라인 스타일로 옮긴다 */
+    /* 정보탭 카드 — 화면과 같은 모양을 인라인 스타일로 옮긴다.
+       무엇을 그릴지는 infoSpec()이, 치수는 :root의 --info-* 한 벌(X.info)이 정한다.
+       여기서 정하는 것은 그 둘을 인라인 스타일로 어떻게 적느냐뿐이다. */
+    const IX = X.info;
     const infoBlock = (m, P) => {
-      const center = alignOf(m.name) === 'center';
-      const head = '<div style="margin-bottom:7px;"><span style="font-size:10px;letter-spacing:.24em;'
-        + 'text-transform:uppercase;color:' + C('faint') + ';">' + esc(m.tab || '정보') + '</span></div>';
-      const body = P.length ? pHTML(isSys(m) ? sysLines(P) : P, C('ink2'), FS, MLH) : '';
-      return '<div style="margin:18px 0 18px ' + (center ? '0' : AVG + 'px') + ';padding:12px 15px;border:1px solid ' + C('line')
-        + ';border-left:2px solid ' + esc(m.color || C('line')) + ';' + (center ? 'text-align:center;' : '') + '">'
+      const S = infoSpec(m, P, opts);
+      const head = '<div style="margin-bottom:' + IX.lblGap + ';"><span style="font-size:' + IX.tagFs
+        + ';letter-spacing:' + IX.tagLs + ';text-transform:uppercase;color:' + C('faint') + ';">' + esc(S.tag) + '</span></div>';
+      const body = S.lines.length ? pHTML(S.lines, C('ink2'), FS, MLH, IX.pGap) : '';
+      /* 화자 색이 없으면 화면은 --line-2로 떨어진다. 여기서도 같은 칸을 쓴다 —
+         예전에는 한 단계 흐린 --line으로 떨어져, 색 없는 카드만 붙여 넣은 글에서 더 옅었다. */
+      return '<div style="margin:' + IX.gapY + ' 0 ' + IX.gapY + ' ' + (S.center ? '0' : AVG + 'px')
+        + ';padding:' + IX.pad + ';border:1px solid ' + C('line')
+        + ';border-left:' + IX.rule + ' solid ' + esc(S.accent || C('line2')) + ';'
+        + (S.center ? 'text-align:center;' : '') + '">'
         + head + body + '</div>';
     };
 
     /* 판정 로그 네 가지 모양 — 화면의 .rollx 규칙을 인라인 스타일로 옮긴다.
-       색면은 currentColor에서 뽑는다. 글자색에서 뽑는 색이라 게시판 스킨이 무슨 색이든
-       겉돌지 않고, 밝은·어두운 값을 따로 실을 필요도 없다.
+       무엇을 실을지는 rollSpec()이, 치수는 :root의 --rx-* 한 벌(X.rx)이 정한다.
+       색면만은 화면과 일부러 다르다 — 화면은 var(--rc)를 종이색에 섞지만 여기서는
+       currentColor를 투명에 섞는다. 글자색에서 뽑는 색이라 게시판 스킨이 무슨 색이든
+       겉돌지 않고, 밝은·어두운 값을 따로 실을 필요도 없다. 같은 까닭으로 티켓의
+       background:var(--surface)도 싣지 않는다. 게시판에서는 스킨 바탕이 비쳐야 한다.
+       (그래서 결과를 못 알아본 줄의 바탕은 화면의 --subtle 대신 흐린 글자색이 된다.)
        못 알아본 줄에는 빈 문자열을 돌려주고, 부르는 쪽이 지금까지의 흐린 한 줄로 되돌린다. */
-    const RX_MONO = 'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
+    const RX = X.rx;
     const rollBlockHTML = (m, P) => {
-      const style = rollStyleOf(opts);
-      if(!style) return '';
-      const R = rollParts(P.join(' '));
-      if(!R) return '';
-      const g = rollGrade(R.out);
-      const rc = g.kind === 'ok' ? C('ok') : (g.kind === 'ng' ? C('ng') : C('line2'));
-      const rt = g.kind === 'ok' ? C('ok') : (g.kind === 'ng' ? C('ng') : C('muted'));
-      const ind = alignOf(m.name) === 'center' ? 0 : AVG;
-      const nm = esc(m.name || ''), ex = esc(R.expr), nu = esc(R.num), ou = esc(R.out), sb = esc(R.sub);
-      const eS = 'font-family:' + RX_MONO + ';font-size:12.5px;color:' + C('faint') + ';';
-      const sS = 'font-family:' + RX_MONO + ';font-size:12px;color:' + C('faint') + ';';
-      const nS = 'font-variant-numeric:tabular-nums;letter-spacing:-.02em;';
+      const S = rollSpec(m, P, opts);
+      if(!S) return '';
+      const rc = S.kind === 'ok' ? C('ok') : (S.kind === 'ng' ? C('ng') : C('line2'));
+      const rt = S.kind === 'ok' ? C('ok') : (S.kind === 'ng' ? C('ng') : C('muted'));
+      const ind = S.center ? 0 : AVG;
+      const nm = esc(S.name), ex = esc(S.expr), nu = esc(S.num), ou = esc(S.out), sb = esc(S.sub);
+      const eS = 'font-family:' + X.mono + ';font-size:' + RX.exprFs + ';letter-spacing:' + RX.exprLs + ';color:' + C('faint') + ';';
+      const sS = 'font-family:' + X.mono + ';font-size:' + RX.subFs + ';color:' + C('faint') + ';';
+      const nS = 'font-variant-numeric:tabular-nums;letter-spacing:' + RX.numLs + ';';
 
-      if(style === 'ticket'){
+      if(S.style === 'ticket'){
         const tail = ou
-          ? (g.crit
-            ? '<span style="margin-left:auto;font-size:13px;font-weight:700;letter-spacing:.08em;padding:4px 9px;background:' + rc + ';color:' + C('paper') + ';">' + ou + '</span>'
-            : '<span style="margin-left:auto;font-size:13px;font-weight:700;letter-spacing:.1em;color:' + rt + ';">' + ou + '</span>')
+          ? (S.crit
+            ? '<span style="margin-left:auto;font-size:' + RX.tkOutFs + ';font-weight:700;letter-spacing:' + RX.tkOutLsCrit
+              + ';padding:' + RX.tkOutPad + ';background:' + rc + ';color:' + C('paper') + ';">' + ou + '</span>'
+            : '<span style="margin-left:auto;font-size:' + RX.tkOutFs + ';font-weight:700;letter-spacing:' + RX.tkOutLs
+              + ';color:' + rt + ';">' + ou + '</span>')
           : (sb ? '<span style="margin-left:auto;' + sS + '">' + sb + '</span>' : '');
-        return '<div style="margin:14px 0 14px ' + ind + 'px;padding:10px 14px 11px;border:1px solid ' + C('line')
-          + ';border-left:' + (g.crit ? 4 : 2) + 'px solid ' + rc + ';">'
-          + '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:5px;">'
-          + '<span style="font-size:10px;letter-spacing:.24em;color:' + C('faint') + ';">' + (ou ? '판정' : '주사위') + '</span>'
-          + (nm ? '<span style="font-size:11.5px;font-weight:600;color:' + C('muted') + ';">' + nm + '</span>' : '')
+        return '<div style="margin:' + RX.tkGapY + ' 0 ' + RX.tkGapY + ' ' + ind + 'px;padding:' + RX.tkPad
+          + ';border:1px solid ' + C('line') + ';border-left:' + (S.crit ? RX.tkRuleCrit : RX.tkRule) + ' solid ' + rc + ';">'
+          + '<div style="display:flex;align-items:baseline;gap:' + RX.tkTopGap + ';flex-wrap:wrap;margin-bottom:' + RX.tkTopMb + ';">'
+          /* 미세 라벨은 --sans를 그대로 싣는다. 게시글은 본문 서체를 물려받는데,
+             명조를 고른 세션에서는 10px에 자간을 벌린 이 글자가 뭉갠다 — 화면이 같은 이유로
+             .rx-lbl에 font-family를 못 박아 둔 자리다. 여기만 빠져 있었다. */
+          + '<span style="font-family:' + X.sans + ';font-size:' + RX.lblFs + ';letter-spacing:' + RX.lblLs
+          + ';color:' + C('faint') + ';">' + esc(S.label) + '</span>'
+          + (nm ? '<span style="font-size:' + RX.tkNmFs + ';font-weight:600;color:' + C('muted') + ';">' + nm + '</span>' : '')
           + '<span style="margin-left:auto;' + eS + '">' + ex + '</span></div>'
-          + '<div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;">'
-          + '<span style="font-size:27px;font-weight:700;line-height:1;' + nS + 'color:' + C('ink') + ';">' + nu + '</span>'
+          + '<div style="display:flex;align-items:baseline;gap:' + RX.tkBotGap + ';flex-wrap:wrap;">'
+          + '<span style="font-size:' + RX.tkNumFs + ';font-weight:700;line-height:' + RX.numLh + ';' + nS + 'color:' + C('ink') + ';">' + nu + '</span>'
           + tail + '</div></div>';
       }
-      if(style === 'tile'){
-        const tc = g.crit ? C('paper') : rt;
+      if(S.style === 'tile'){
+        const tc = S.crit ? C('paper') : rt;
         /* 이미지를 뺐으면 타일도 함께 접는다 — 화면과 같은 규칙이다 */
         const tile = noImg ? ''
           : '<div style="width:' + X.av + 'px;height:' + X.av + 'px;flex:0 0 ' + X.av + 'px;display:flex;'
-            + 'flex-direction:column;align-items:center;justify-content:center;gap:1px;border:1px solid ' + rc
-            + ';color:' + rt + ';background:' + (g.crit ? rc : 'color-mix(in srgb,currentColor 9%,transparent)') + ';">'
-            + '<span style="font-size:19px;font-weight:700;line-height:1;' + nS + 'color:' + tc + ';">' + nu + '</span>'
-            + '<span style="font-family:' + RX_MONO + ';font-size:8.5px;letter-spacing:.06em;color:' + tc + ';opacity:.8;">' + esc(R.die) + '</span></div>';
-        const main = ou
-          ? '<div style="font-size:15px;font-weight:700;letter-spacing:.04em;line-height:1.3;color:' + rt + ';">' + ou + '</div>'
-          : '<div style="font-family:' + RX_MONO + ';font-size:13.5px;color:' + rt + ';">' + (sb || ex) + '</div>';
-        return '<div style="display:flex;gap:' + X.gap + 'px;padding:15px 0;">' + tile
-          + '<div style="flex:1;min-width:0;padding-top:3px;">'
-          + (nm ? '<div style="font-size:11.5px;font-weight:600;color:' + C('muted') + ';margin-bottom:4px;">' + nm + '</div>' : '')
-          + main + ((ou || sb) ? '<span style="display:block;margin-top:3px;' + eS + '">' + ex + '</span>' : '')
+            + 'flex-direction:column;align-items:center;justify-content:center;gap:' + RX.tlInGap + ';border:1px solid ' + rc
+            + ';color:' + rt + ';background:' + (S.crit ? rc : 'color-mix(in srgb,currentColor ' + RX.tlTint + ',transparent)') + ';">'
+            + '<span style="font-size:' + RX.tlNumFs + ';font-weight:700;line-height:' + RX.numLh + ';' + nS + 'color:' + tc + ';">' + nu + '</span>'
+            + '<span style="font-family:' + X.mono + ';font-size:' + RX.tlDieFs + ';letter-spacing:' + RX.tlDieLs + ';color:' + tc
+            + ';opacity:' + (S.crit ? RX.tlDieOpCrit : RX.tlDieOp) + ';">' + esc(S.die) + '</span></div>';
+        const main = S.out
+          ? '<div style="font-size:' + RX.tlOutFs + ';font-weight:700;letter-spacing:' + RX.tlOutLs
+            + ';line-height:' + RX.tlOutLh + ';color:' + rt + ';">' + esc(S.tileMain) + '</div>'
+          : '<div style="font-family:' + X.mono + ';font-size:' + RX.tlSubFs + ';color:' + rt + ';">' + esc(S.tileMain) + '</div>';
+        return '<div style="display:flex;gap:' + X.gap + 'px;padding:' + RX.tlPad + ';">' + tile
+          + '<div style="flex:1;min-width:0;padding-top:' + RX.tlColPt + ';">'
+          + (nm ? '<div style="font-size:' + RX.tlNmFs + ';font-weight:600;color:' + C('muted') + ';margin-bottom:' + RX.tlNmMb + ';">' + nm + '</div>' : '')
+          + main + (S.tileExpr ? '<span style="display:block;margin-top:' + RX.tlExprMt + ';' + eS + '">' + ex + '</span>' : '')
           + '</div></div>';
       }
-      if(style === 'band'){
+      if(S.style === 'band'){
         const tail = ou
-          ? '<span style="font-size:12.5px;font-weight:700;letter-spacing:.1em;color:' + rt + ';">' + ou + '</span>'
+          ? '<span style="font-size:' + RX.bdOutFs + ';font-weight:700;letter-spacing:' + RX.bdOutLs + ';color:' + rt + ';">' + ou + '</span>'
           : (sb ? '<span style="' + sS + '">' + sb + '</span>' : '');
-        return '<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:14px 0;padding:11px 15px;color:' + rt
-          + ';border-left:' + (g.crit ? 5 : 3) + 'px solid ' + rc
-          + ';background:color-mix(in srgb,currentColor ' + (g.crit ? 15 : 7) + '%,transparent);">'
-          + (nm ? '<span style="font-size:13px;font-weight:700;color:' + C('ink') + ';">' + nm + '</span>' : '')
-          + '<span style="font-family:' + RX_MONO + ';font-size:12.5px;color:' + C('muted') + ';">' + ex + '</span>'
-          + '<div style="margin-left:auto;display:flex;align-items:baseline;gap:11px;">'
-          + '<span style="font-size:19px;font-weight:700;line-height:1;' + nS + 'color:' + C('ink') + ';">' + nu + '</span>'
+        return '<div style="display:flex;align-items:center;gap:' + RX.bdGap + ';flex-wrap:wrap;margin:' + RX.bdGapY + ' 0;padding:' + RX.bdPad
+          + ';color:' + rt + ';border-left:' + (S.crit ? RX.bdRuleCrit : RX.bdRule) + ' solid ' + rc
+          + ';background:color-mix(in srgb,currentColor ' + (S.crit ? RX.bdTintCrit : RX.bdTint) + ',transparent);">'
+          + (nm ? '<span style="font-size:' + RX.bdNmFs + ';font-weight:700;color:' + C('ink') + ';">' + nm + '</span>' : '')
+          + '<span style="font-family:' + X.mono + ';font-size:' + RX.exprFs + ';letter-spacing:' + RX.exprLs + ';color:' + C('muted') + ';">' + ex + '</span>'
+          + '<div style="margin-left:auto;display:flex;align-items:baseline;gap:' + RX.bdRightGap + ';">'
+          + '<span style="font-size:' + RX.bdNumFs + ';font-weight:700;line-height:' + RX.numLh + ';' + nS + 'color:' + C('ink') + ';">' + nu + '</span>'
           + tail + '</div></div>';
       }
-      const ar = '<span style="color:' + C('line') + ';">＞</span>';
+      /* 화살표는 화면의 .rx-ar와 같은 --line-2로 둔다. 예전에는 한 단계 흐린 --line이라
+         여백 표기만 게시판에서 화살표가 더 옅었다 — 정보 카드에서 겪은 것과 같은 어긋남이다. */
+      const ar = '<span style="color:' + C('line2') + ';">＞</span>';
       const tail = ou
-        ? ar + '<span style="font-weight:600;letter-spacing:.04em;color:' + rt + ';">' + ou + '</span>'
+        ? ar + '<span style="font-weight:600;letter-spacing:' + RX.ntOutLs + ';color:' + rt + ';">' + ou + '</span>'
         : (sb ? ar + '<span style="' + sS + '">' + sb + '</span>' : '');
-      return '<div style="margin:10px 0 10px ' + ind + 'px;padding:2px 0 2px 11px;border-left:1px solid ' + C('line')
-        + ';display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-size:12.5px;line-height:1.5;">'
-        + '<span style="width:6px;height:6px;flex:0 0 6px;border:1px solid ' + rc + ';' + (g.crit ? 'background:' + rc + ';' : '') + '"></span>'
+      return '<div style="margin:' + RX.ntGapY + ' 0 ' + RX.ntGapY + ' ' + ind + 'px;padding:' + RX.ntPad
+        + ';border-left:1px solid ' + C('line')
+        + ';display:flex;align-items:center;gap:' + RX.ntGap + ';flex-wrap:wrap;font-size:' + RX.ntFs + ';line-height:' + RX.ntLh + ';">'
+        + '<span style="width:' + RX.ntDot + ';height:' + RX.ntDot + ';flex:0 0 ' + RX.ntDot + ';border:1px solid ' + rc + ';'
+        + (S.crit ? 'background:' + rc + ';' : '') + '"></span>'
         + (nm ? '<span style="color:' + C('faint') + ';">' + nm + '</span>' : '')
         + '<span style="' + eS + '">' + ex + '</span>' + ar
-        + '<span style="font-family:' + RX_MONO + ';font-size:12.5px;font-weight:700;' + nS + 'color:' + C('ink2') + ';">' + nu + '</span>'
+        + '<span style="font-family:' + X.mono + ';font-size:' + RX.ntNumFs + ';font-weight:700;' + nS + 'color:' + C('ink2') + ';">' + nu + '</span>'
         + tail + '</div>';
     };
 
@@ -3449,21 +3616,22 @@
       }
       if(m.status){
         flush(); prevName = null;
-        let arr = P; if(m.name && !P.some(t => t.includes(m.name))) arr = [m.name].concat(P);
-        parts.push(sysBlock(sysP(arr), ''));
+        const S = sysSpec(m, P, 'status');
+        parts.push(sysBlock(S.lines, S.label));
         return;
       }
-      const asNarr = isSys(m) && !noise && !!opts.sysNarr;
-      if(isSys(m) && !noise && !asNarr){
+      const asNarr = !!m.system && !noise && !!opts.sysNarr;
+      if(m.system && !noise && !asNarr){
         flush(); prevName = null;
-        parts.push(sysBlock(sysP(sysLines(P)), ''));
+        const S = sysSpec(m, P, 'system');
+        parts.push(sysBlock(S.lines, S.label));
         return;
       }
       if((isNarr(m) || asNarr) && !noise){
         prevName = null;
         const who = asNarr ? narrLead : (m.name || 'GM');
         if(!narr){ narr = []; narrCenter = alignOf(who) === 'center'; }
-        (asNarr ? sysLines(P) : P).forEach(p => narr.push({p}));
+        P.forEach(p => narr.push({p}));
         return;
       }
       flush();
@@ -3480,7 +3648,7 @@
       const cont = same && !avSwap;
       const slotAv = m.avatar || (same ? prevAv : '');
       const center = alignOf(m.name) === 'center';
-      const roll = noise ? rollOutcome(P.join(' ')) : '';
+      const roll = noise ? rollTint(P.join(' ')) : '';
       const rollC = (opts.rollHighlight && roll) ? (roll === 'ok' ? C('ok') : C('ng')) : '';
       const bodyC = rollC || (noise ? C('faint') : C('ink2'));
       const nameC = rollC || m.color || C('ink');
