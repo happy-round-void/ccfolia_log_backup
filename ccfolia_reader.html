@@ -17,7 +17,11 @@
 <style>
   :root{
     --paper:#FFFFFF; --surface:#FFFFFF; --subtle:#F4F4F5; --subtle-2:#EDEDF0;
-    --ink:#18181B; --ink-2:#27272A; --muted:#71717A; --faint:#A1A1AA;
+    /* muted·faint는 WCAG AA(작은 글자 4.5:1)를 넘기도록 잡았다. faint는 시각·흐린 본문·주사위
+       보조 글자 같은 실제 콘텐츠에 쓰이므로 흰 바탕에서 읽혀야 한다. 예전 값(muted #71717A, faint
+       #A1A1AA)은 faint가 2.56:1로 미달이었다. faint를 통과선까지 낮추면 muted와 붙으므로, muted도
+       한 단계 더 낮춰 두 단계 회색의 위계를 남긴다(muted ~5.9:1, faint ~4.6:1). */
+    --ink:#18181B; --ink-2:#27272A; --muted:#64646B; --faint:#74747B;
     --line:#E4E4E7; --line-2:#D4D4D8;
     --accent:#18181B; --on-accent:#FFFFFF; --accent-soft:#F4F4F5;
     --hit:#E4E4E7; --hit-cur:#C7C7CC; --narr-bg:#F3F3F5;
@@ -56,7 +60,9 @@
   }
   html[data-theme="dark"]{
     --paper:#0E0E10; --surface:#161618; --subtle:#1C1C1F; --subtle-2:#242427;
-    --ink:#F4F4F5; --ink-2:#D4D4D8; --muted:#A1A1AA; --faint:#71717A;
+    /* 어둡게에서는 muted(#A1A1AA, 7.5:1)가 이미 AA를 넘고 faint보다 밝아 위계가 선다.
+       faint만 #71717A(3.99:1, 미달)에서 밝혀 AA를 넘긴다(~5.6:1). */
+    --ink:#F4F4F5; --ink-2:#D4D4D8; --muted:#A1A1AA; --faint:#8A8A92;
     --line:#27272A; --line-2:#3F3F46;
     --accent:#F4F4F5; --on-accent:#18181B; --accent-soft:#1C1C1F;
     --hit:#3F3F46; --hit-cur:#52525B; --narr-bg:#18181C;
@@ -76,6 +82,11 @@
   a:hover{color:var(--muted);}
   ::selection{background:var(--line-2); color:var(--ink);}
   :focus-visible{outline:2px solid var(--ink); outline-offset:2px; border-radius:0;}
+  /* 본문 바로가기: 평소엔 화면 위로 숨고, 탭으로 초점이 닿으면 왼쪽 위에 내려온다 */
+  .skip{position:fixed;top:8px;left:8px;z-index:100;transform:translateY(-160%);
+    background:var(--accent);color:var(--on-accent);font:inherit;font-size:13px;font-weight:700;
+    padding:9px 14px;border-radius:0;text-decoration:none;transition:transform .15s;}
+  .skip:focus{transform:translateY(0);}
 
   #progress{position:fixed;top:0;left:0;height:2px;width:0;background:var(--ink);z-index:60;transition:width .08s linear;}
 
@@ -98,6 +109,21 @@
   .seg button+button{border-left:1px solid var(--line);}
   .seg button:hover{color:var(--ink);}
   .seg button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);}
+  /* 글씨체 고르개. 화살표는 배경 이미지로 박으면 다크에서 색이 안 따라오므로,
+     감싼 span의 ::after에 테두리로 그린 쐐기를 얹어 테마를 따라가게 한다. */
+  .fontsel{position:relative;display:inline-flex;}
+  .fontsel select{appearance:none;-webkit-appearance:none;-moz-appearance:none;
+    font:inherit;font-size:13px;font-weight:600;line-height:1;color:var(--ink-2);
+    background:var(--surface);border:1px solid var(--line);border-radius:0;
+    padding:7px 30px 7px 12px;margin:0;cursor:pointer;transition:.15s;
+    max-width:190px;text-overflow:ellipsis;}
+  .fontsel select:hover{color:var(--ink);border-color:var(--line-2);}
+  .fontsel select:focus-visible{outline:none;border-color:var(--ink);}
+  .fontsel::after{content:"";position:absolute;right:13px;top:50%;width:6px;height:6px;
+    margin-top:-4px;border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);
+    transform:rotate(45deg);pointer-events:none;transition:.15s;}
+  .fontsel:hover::after{border-color:var(--ink);}
+  .fontsel select option{color:var(--ink);background:var(--surface);}
   .btn{font:inherit;font-size:13px;font-weight:600;line-height:1;padding:7px 12px;border-radius:0;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);cursor:pointer;transition:.15s;white-space:nowrap;text-decoration:none;}
   .btn:hover{color:var(--ink);border-color:var(--ink);}
   .btn-primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent);}
@@ -601,7 +627,13 @@
     .find{order:10;flex-basis:100%;max-width:none;margin:0;}
     .bar{gap:7px;}
   }
-  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}#progress{transition:none}}
+  /* 움직임을 줄여 달라는 사람에게는 넘김·미끄러짐을 모두 끈다 — 스킵 링크·단추·서랍의 전환까지.
+     ‘아주 짧게’로 남기는 것은, 0으로 두면 일부 브라우저가 transitionend를 아예 안 쏘아 상태가 걸리는 판이 있어서다. */
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto}
+    #progress{transition:none}
+    *,*::before,*::after{transition-duration:.01ms !important;animation-duration:.01ms !important;animation-iteration-count:1 !important;scroll-behavior:auto !important;}
+  }
   @media print{
     .panel,#progress,.excerpt-btn,.ex-overlay,.site-foot,.dropzone,#toast,
     .movebar,.tunechip,.dropline{display:none !important;}
@@ -616,11 +648,14 @@
 </style>
 </head>
 <body>
+<!-- 키보드로 여는 사람이 상단 바를 지나치지 않고 본문으로 바로 갈 수 있게. 평소엔 화면 밖에 숨고
+     탭으로 초점이 닿으면 왼쪽 위에 드러난다. 저장한 아카이브에도 실려 여는 사람에게도 쓰인다. -->
+<a class="skip" href="#output">본문으로 건너뛰기</a>
 <div id="progress"></div>
 
 <header class="bar">
   <div class="brand" id="brandTitle">
-    <span class="out-only hidden" id="docTitle" contenteditable="true" spellcheck="false" title="클릭하면 제목을 고칠 수 있습니다">클릭하여 세션 제목을 입력해 주세요.</span>
+    <span class="out-only hidden" id="docTitle" contenteditable="true" spellcheck="false" role="textbox" aria-label="세션 제목" aria-multiline="false" title="클릭하면 제목을 고칠 수 있습니다">클릭하여 세션 제목을 입력해 주세요.</span>
   </div>
 
   <div class="find out-only hidden" id="findWidget">
@@ -632,17 +667,23 @@
   </div>
 
   <span class="seg" role="group" aria-label="글자 크기">
-    <button id="fsDown" title="작게">A−</button>
-    <button id="fsUp" title="크게">A＋</button>
+    <button id="fsDown" title="작게" aria-label="글자 작게">A−</button>
+    <button id="fsUp" title="크게" aria-label="글자 크게">A＋</button>
   </span>
-  <span class="seg" role="group" aria-label="글씨체">
-    <button data-font-set="sans" aria-pressed="true">Pretendard</button>
-    <button data-font-set="serif">본명조</button>
+  <!-- 글씨체는 select 하나로 고른다. 토글 단추는 글꼴이 늘면 줄이 지저분해진다.
+       사용자가 웹폰트를 지정하면 런타임이 '글꼴' 항목(#fontCustomOpt)을 이 목록에 더한다.
+       저장한 아카이브에도 그대로 실려, 여는 사람도 같은 목록에서 고를 수 있다. -->
+  <span class="fontsel">
+    <select id="fontSelect" aria-label="글씨체">
+      <option value="sans">Pretendard</option>
+      <option value="serif">본명조</option>
+    </select>
   </span>
   <span class="seg" role="group" aria-label="테마">
     <button data-theme-set="light" aria-pressed="true">밝게</button>
     <button data-theme-set="dark">어둡게</button>
   </span>
+  <button class="btn app-only hidden" id="homeBtn" title="첫 페이지(수집·불러오기)로 돌아가기">첫 페이지</button>
   <button class="btn app-only hidden" id="editBtn" title="원본 다시 넣기">편집</button>
   <button class="btn app-only hidden" id="saveBtn" title="아카이브 HTML로 저장">저장</button>
   <button class="btn app-only hidden" id="exportBtn" title="티스토리·게시판에 붙여넣을 HTML로 복사">복사</button>
@@ -652,7 +693,7 @@
 <div class="panes app-only" id="editPanes">
 <section class="panel app-only" id="pastePanel">
   <!-- 파일을 고칠 때마다 이 날짜를 함께 바꾼다. 빌드 과정이 없는 단일 HTML이라 손으로 적어 둔다. -->
-  <div class="stamp collect-only">업데이트 2026-08-22 14:04</div>
+  <div class="stamp collect-only">업데이트 2026-08-22 17:20</div>
   <div class="alert collect-only" role="status">
     <span class="mk" aria-hidden="true">!</span>
     <div class="atxt">
@@ -663,6 +704,10 @@
         <li>저널에서 간헐적으로 이미지가 사라지는 오류 수정</li>
         <li>정보탭 메시지의 위치 변경 기능 개선</li>
         <li>주사위·판정 로그 디자인 개선</li>
+        <li>시노비가미·광쇄의 리벌처 다이스와 표 형태 다이스 지원</li>
+        <li>발췌 기능 개선(배경 이미지 업로드·비율 선택 가능·가독성 개선)</li>
+        <li>웹 폰트 삽입 기능 추가</li>
+        <li>일본어 판정 로그의 한국어 치환 옵션 추가</li>
         <li>기타 자잘한 오류와 가독성 수정·최적화</li>
       </ol>
       <p class="atail">등등을 적용했습니다.</p>
@@ -675,7 +720,7 @@
   <p class="lead collect-only">코코포리아 룸 채팅을 그대로 옮겨, 읽기 좋은 반응형 페이지로 저장합니다. 캐릭터 이미지·이름·색상을 살리고, GM은 내레이션으로 흘려 씁니다. <b>‘정보’ 등 다른 탭의 메시지도 함께 모아 시간 순서대로 본문에 끼워 넣습니다.</b> 코코포리아 채팅은 가상 스크롤이라, 아래 <b>‘룸 로그 수집’</b>으로 전체 로그를 먼저 모읍니다.</p>
 
   <h1 class="edit-only">표시 설정</h1>
-  <p class="lead edit-only">읽는 방식만 바꿉니다. 아래에서 고친 뒤 <b>‘변환 · 다시 적용’</b>을 누르면 세션에 곧바로 반영됩니다.</p>
+  <p class="lead edit-only">읽는 방식만 바꿉니다. 아래에서 고친 뒤 <b>‘변환 · 다시 적용’</b>을 누르면 로그에 곧바로 반영됩니다.</p>
 
   <!-- STEP 1 · 북마클릿 -->
   <div class="card collect-only">
@@ -699,7 +744,7 @@
     <details class="adv">
       <summary>북마클릿이 막히면 · 콘솔 스크립트 사용</summary>
       <p style="margin:.6rem 0">룸에서 <b>F12 → Console</b>에 붙여넣고 실행하세요. 결과는 북마클릿과 동일합니다.</p>
-      <textarea id="harvest" readonly style="min-height:110px"></textarea>
+      <textarea id="harvest" readonly aria-label="수집 콘솔 스크립트" style="min-height:110px"></textarea>
       <div class="row"><button class="btn" id="copyHarvest">스크립트 복사</button></div>
     </details>
   </div>
@@ -710,15 +755,29 @@
     <h2 class="collect-only">수집한 파일 열기</h2>
     <p class="sub collect-only">저장한 <code>ccfolia-log.html</code>을 아래 버튼으로 열거나, <b>이 페이지 아무 곳에나 끌어다 놓으세요.</b> 탭을 따로 모았다면 <b>파일 여러 개를 한꺼번에</b> 놓아도 됩니다. 직접 붙여넣기도 됩니다.</p>
     <div class="row collect-only">
-      <input type="file" id="fileInput" accept=".html,.htm,text/html" multiple class="hidden">
+      <input type="file" id="fileInput" accept=".html,.htm,text/html" multiple class="hidden" aria-label="수집한 HTML 파일 선택">
       <button class="btn btn-primary" id="fileBtn">HTML 파일 열기</button>
     </div>
     <div id="urlhint" class="urlhint hidden collect-only"></div>
-    <textarea id="src" class="collect-only" placeholder="또는 수집한 HTML 넣기…"></textarea>
+    <textarea id="src" class="collect-only" placeholder="또는 수집한 HTML 넣기…" aria-label="수집한 HTML 붙여넣기"></textarea>
 
     <details class="adv" id="advBox">
       <summary>고급 설정</summary>
-      <div class="field"><label>내레이션으로 쓸 캐릭터 이름 <span class="jhint">— 쉼표로 여러 명 지정 가능 (예: GM, 사회자)</span></label><input type="text" id="narrNames" value="GM" placeholder="예: GM, 사회자"></div>
+      <div class="field"><label>내레이션으로 쓸 캐릭터 이름 <span class="jhint">— 쉼표로 여러 명 지정 가능 (예: GM, KP, DM, BM)</span></label><input type="text" id="narrNames" value="GM" placeholder="예: GM, 사회자" aria-label="내레이션으로 쓸 캐릭터 이름"></div>
+
+      <!-- 본문 웹폰트. 구글 폰트는 이름만 적으면 되고, 눈누 등에서 받은 폰트 주소(.woff2)나
+           @font-face 코드를 통째로 붙여넣어도 된다. 고른 글씨체는 상단 바 '글꼴' 단추로 오갈 수 있고,
+           '저장'한 아카이브에도 그대로 실린다. -->
+      <div class="field" id="fontField">
+        <label style="width:100%;margin-bottom:2px">본문 글씨체 · 웹폰트 <span class="jhint">— 구글 폰트 이름을 적거나(예: Nanum Myeongjo · Gaegu), 눈누 등에서 받은 폰트 주소·코드를 그대로 붙여넣으세요 · 고른 글꼴은 인터넷에서 받아 옵니다</span></label>
+        <input type="text" id="fontInput" placeholder="구글 폰트 이름  ·  또는 폰트 주소(.woff2 등)·@font-face 코드 붙여넣기" autocomplete="off" spellcheck="false" aria-label="본문 글씨체 · 구글 폰트 이름, 폰트 주소, 또는 @font-face 코드" style="flex:1 1 240px;min-width:160px">
+        <button class="btn" type="button" id="fontApply">적용</button>
+        <button class="btn" type="button" id="fontClear">기본값</button>
+        <div id="fontFamRow" class="hidden" style="width:100%">
+          <input type="text" id="fontFamily" placeholder="CSS font-family 이름 (주소만으로 글꼴 이름을 못 알아낼 때만 적으세요)" autocomplete="off" spellcheck="false" aria-label="CSS font-family 이름" style="width:100%;max-width:340px;margin-top:4px">
+        </div>
+        <div id="fontMsg" class="jhint" style="width:100%;margin-top:3px"></div>
+      </div>
       <div class="field"><label><input type="checkbox" id="optSysNarr"> /system 메시지를 내레이션에 포함하기 <span class="jhint">— 가운데 시스템 블록 대신 내레이션 문단으로 흘려 씁니다</span></label></div>
       <div class="field"><label><input type="checkbox" id="optMerge" checked> 같은 화자 연속 발화 합치기</label></div>
       <div class="field"><label><input type="checkbox" id="optNoise"> 주사위·판정 로그도 포함</label></div>
@@ -731,6 +790,7 @@
         <label><input type="checkbox" id="optRsBand"> 하이라이트 밴드 <span class="jhint">— 읽는 폭 전체에 옅은 색면을 깔고 굵은 선을 세웁니다</span></label>
         <label><input type="checkbox" id="optRsNote"> 여백 표기 <span class="jhint">— 상자 없이 얇은 세로선 하나로 조용히</span></label>
       </div>
+      <div class="field"><label><input type="checkbox" id="optJaKo"> 일본어 판정 로그의 한국어 치환 <span class="jhint">— 주사위 결과의 クリティカル·ファンブル·スペシャル·成功·失敗·ヒット数를 한국어로 바꿔 보여 줍니다</span></label></div>
       <div class="field"><label><input type="checkbox" id="optStatus"> HP·MP·이성 등 스테이터스 변화를 시스템 로그로 포함</label></div>
 
       <div class="field"><label><input type="checkbox" id="optNoImg"> 캐릭터 이미지 빼고 내보내기 <span class="jhint">— 이미지 칸까지 접어 글만 남깁니다</span></label></div>
@@ -857,7 +917,7 @@
 </div>
 
 <!-- 출력 -->
-<main id="output" class="hidden">
+<main id="output" class="hidden" tabindex="-1">
   <div id="book"></div>
   <footer class="site-foot">문장을 드래그하면 발췌 이미지를 만들 수 있습니다. · 상단 검색으로 대사를 찾을 수 있습니다.</footer>
 </main>
@@ -881,14 +941,14 @@
 
 <!-- 게시판용 HTML 추출 (앱 전용) -->
 <div class="export-ov app-only" id="exportOv">
-  <div class="export-card">
+  <div class="export-card" role="dialog" aria-modal="true" aria-label="게시판용 HTML" tabindex="-1">
     <div class="export-head"><b>티스토리·게시판용 HTML</b><button class="btn" id="exportClose">닫기</button></div>
     <p class="export-desc">블로그·게시판 편집기를 <b>HTML 편집 모드</b>로 바꾼 뒤 아래 코드를 붙여넣으세요. · <b>티스토리</b>: 글쓰기 우측 상단 <b>기본모드 → HTML</b> · <b>아보카도에디션·그누보드</b>: 에디터의 <b>‘HTML’ 소스 버튼</b>. 캐릭터 이미지는 코코포리아 주소를 그대로 걸어 두므로 붙여넣기가 가벼우며, 원본이 살아 있는 동안 보입니다 — 빼고 싶으면 <b>‘편집 → 캐릭터 이미지 빼고 내보내기’</b>를 켜세요. · <b>글씨체·글자 크기·캐릭터 이미지 설정이 그대로 따라가고, 밝은·어두운 테마는 붙여넣는 곳을 따라갑니다.</b></p>
     <div class="export-opts">
       <label><input type="checkbox" id="expTitle" checked> 제목 헤더 포함</label>
       <label><input type="checkbox" id="expBg"> 배경색 넣기</label>
     </div>
-    <textarea id="exportOut" readonly spellcheck="false" placeholder="추출된 HTML…"></textarea>
+    <textarea id="exportOut" readonly spellcheck="false" placeholder="추출된 HTML…" aria-label="추출된 게시판용 HTML"></textarea>
     <div class="export-actions">
       <span class="export-size" id="exportSize"></span>
       <button class="btn" id="exportPreview">미리보기</button>
@@ -1003,13 +1063,98 @@
       l.href = 'https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;700&display=swap';
       document.head.appendChild(l);
     }
-    if(root.getAttribute('data-font') === 'serif') ensureSerif();   /* 본명조로 저장한 아카이브 */
+    /* 사용자가 고른 웹폰트도 본명조와 같은 결로 다룬다 — 고른 순간에만 인터넷에서 받아 오고,
+       CSS 변수 하나(--read-font)만 갈아 끼우므로 본문을 다시 그릴 일이 없다. 리더에서 고른 값은
+       <html>에 data-font-family·data-font-url로 적히고, 여기서 만든 <link>·<style>과 함께
+       저장한 아카이브에 그대로 실린다. 그래서 아카이브를 여는 사람도 같은 글씨체로 읽고,
+       상단 바의 '글꼴' 단추로 오갈 수 있다.
+       주소는 https만, 이름은 CSS를 깨뜨릴 글자를 걷어 낸 뒤 싣는다 — 넣는 것은 사용자가 친 글이다. */
+    function fontClean(s){ return String(s == null ? '' : s).replace(/["'\\;{}<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 60); }
+    function fontHref(u){ const t = String(u == null ? '' : u).trim(); return (/^https:\/\/[^\s"'<>]+$/i.test(t) && t.length <= 500) ? t : ''; }
+    /* 주소가 폰트 파일이면 @font-face의 format() 문자열을, CSS 스타일시트면 ''을 준다. 이것으로 두 길을
+       가른다 — 눈누(noonnu.cc)가 주는 .woff2 같은 파일 주소는 우리가 @font-face를 짜서 싣고, 구글 폰트처럼
+       CSS 주소면 예전대로 <link>로 싣는다. 파일 주소를 <link rel=stylesheet>로 걸면 브라우저가 폰트 이진을
+       CSS로 읽으려다 MIME 오류로 거절한다 — 그 실패가 이 갈림의 이유다. */
+    function fontFormat(u){
+      const m = String(u == null ? '' : u).match(/\.(woff2|woff|otf|ttf|eot)(?:[?#].*)?$/i);
+      return m ? ({ woff2:'woff2', woff:'woff', otf:'opentype', ttf:'truetype', eot:'embedded-opentype' })[m[1].toLowerCase()] : '';
+    }
+    /* 상단 바 select를 현재 글씨체에 맞춘다. '글꼴'(custom) 항목은 웹폰트를 지정했을 때만 목록에 있다. */
+    function syncFontSelect(){
+      const sel = document.getElementById('fontSelect');
+      if(sel) sel.value = root.getAttribute('data-font') || 'sans';
+    }
+    function clearUserFont(){
+      const l = document.getElementById('userFont'); if(l) l.remove();
+      const s = document.getElementById('userFontRule'); if(s) s.remove();
+      root.removeAttribute('data-font-family'); root.removeAttribute('data-font-url');
+      const opt = document.getElementById('fontCustomOpt'); if(opt) opt.remove();
+      if(root.getAttribute('data-font') === 'custom') root.setAttribute('data-font', 'sans');
+      syncFontSelect();
+    }
+    /* announce가 참일 때만 성패를 알린다. 아카이브를 열 때마다(=init에서 다시 세울 때) 토스트가
+       뜨면 잔소리가 되므로, 사용자가 '적용'을 눌렀을 때만 켠다. 이름을 잘못 적었거나 그 무게가
+       없으면 스타일시트가 통째로 안 와서 조용히 시스템 글꼴로 떨어진다 — 그것을 알려 준다. */
+    function applyUserFont(fam, url, announce){
+      const name = fontClean(fam), href = fontHref(url);
+      if(!name || !href){ clearUserFont(); return false; }
+      const fmt = fontFormat(href);
+      root.setAttribute('data-font-family', name);
+      root.setAttribute('data-font-url', href);
+      let s = document.getElementById('userFontRule');
+      if(!s){ s = document.createElement('style'); s.id = 'userFontRule'; document.head.appendChild(s); }
+      /* --read-font만 갈아 끼운다. 못 받아오면 뒤의 var(--sans)로 내려간다.
+         html[data-font="custom"]으로 가두므로 상단 바에서 다른 글씨체로 옮기면 이 규칙은 물러난다. */
+      const readRule = 'html[data-font="custom"]{--read-font:"' + name + '",var(--sans);}';
+      if(fmt){
+        /* 폰트 파일을 곧장 가리킨 주소다(눈누의 .woff2 등). @font-face를 우리가 짜서 <style>에 함께
+           싣는다 — 이름은 우리가 정하는 것이라 실제 글꼴 이름과 안 맞아도 그 파일을 지목한다.
+           스타일시트 모드에서 넘어왔다면 남아 있는 <link>는 걷어 낸다(이 모드에서는 쓰지 않는다). */
+        const l = document.getElementById('userFont'); if(l) l.remove();
+        s.textContent = '@font-face{font-family:"' + name + '";src:url("' + href + '") format("' + fmt + '");font-display:swap;}' + readRule;
+        /* 파일이 안 받아지면 조용히 시스템 글꼴로 떨어진다 — '적용'을 누른 순간에만 그 실패를 알린다. */
+        if(announce && document.fonts && document.fonts.load)
+          document.fonts.load('16px "' + name + '"').catch(() => { if(window.__toast) window.__toast('글씨체 파일을 불러오지 못했습니다 · 주소가 맞는지 확인해 주세요'); });
+      } else {
+        /* CSS 스타일시트 주소(구글 폰트 등) — 예전대로 <link>로 싣는다. */
+        let l = document.getElementById('userFont');
+        if(!l){ l = document.createElement('link'); l.id = 'userFont'; l.rel = 'stylesheet'; document.head.appendChild(l); }
+        l.onerror = announce ? () => { if(window.__toast) window.__toast('글씨체를 불러오지 못했습니다 · 이름의 대소문자·띄어쓰기를 확인하거나 CSS 주소를 붙여넣어 보세요'); } : null;
+        if(l.getAttribute('href') !== href) l.setAttribute('href', href);
+        s.textContent = readRule;
+      }
+      root.setAttribute('data-font', 'custom');
+      /* select에 '글꼴' 항목을 세우고 이름표를 붙인다. 저장하면 이 <option>도 아카이브에 그대로 실린다. */
+      const sel = document.getElementById('fontSelect');
+      if(sel){
+        let opt = document.getElementById('fontCustomOpt');
+        if(!opt){ opt = document.createElement('option'); opt.id = 'fontCustomOpt'; opt.value = 'custom'; sel.appendChild(opt); }
+        opt.textContent = name.length > 18 ? name.slice(0, 17) + '…' : name;
+      }
+      syncFontSelect();
+      return true;
+    }
+    window.__userFont = { apply: applyUserFont, clear: clearUserFont };
 
-    document.querySelectorAll('[data-font-set]').forEach(b => b.addEventListener('click', () => {
-      if(b.dataset.fontSet === 'serif') ensureSerif();
-      root.setAttribute('data-font', b.dataset.fontSet);
-      document.querySelectorAll('[data-font-set]').forEach(x => x.setAttribute('aria-pressed', x === b));
-    }));
+    if(root.getAttribute('data-font') === 'serif') ensureSerif();   /* 본명조로 저장한 아카이브 */
+    /* 웹폰트로 저장한 아카이브 — 담아 둔 이름·주소로 <link>·<style>을 도로 세운다.
+       대개 저장할 때 만든 것이 이미 <head>에 함께 실려 오지만, 무엇이 빠져도 여기서 다시 세운다.
+       담긴 값이 깨져 있으면 기본 글씨체로 조용히 내려간다. */
+    if(root.getAttribute('data-font') === 'custom'){
+      if(!applyUserFont(root.getAttribute('data-font-family'), root.getAttribute('data-font-url'), false))
+        root.setAttribute('data-font', 'sans');
+    }
+    syncFontSelect();   /* 본명조·기본으로 저장한 아카이브도 목록이 그 자리에 맞춰 열린다 */
+
+    const fontSel = document.getElementById('fontSelect');
+    if(fontSel) fontSel.addEventListener('change', () => {
+      const set = fontSel.value;
+      if(set === 'serif') ensureSerif();
+      /* 웹폰트로 돌아오는 길 — 담아 둔 값으로 다시 세운다(이미 서 있으면 그대로 둔다) */
+      if(set === 'custom'){ applyUserFont(root.getAttribute('data-font-family'), root.getAttribute('data-font-url'), false); return; }
+      root.setAttribute('data-font', set);
+      syncFontSelect();
+    });
 
     let fs = parseFloat(getComputedStyle(root).getPropertyValue('--fs')) || 16.5;
     const setFs = v => { fs = Math.max(13, Math.min(22, v)); root.style.setProperty('--fs', fs + 'px'); };
@@ -1135,9 +1280,35 @@
     let ov = document.getElementById('exOverlay');
     if(!ov){
       ov = document.createElement('div'); ov.id='exOverlay'; ov.className='ex-overlay';
-      ov.innerHTML = '<div class="ex-card"><img id="exImg" alt="발췌 이미지"><div class="ex-actions"><button class="btn" id="exClose">닫기</button><button class="btn" id="exCopy">클립보드 복사</button><button class="btn btn-primary" id="exSave">PNG 저장</button></div></div>';
+      ov.innerHTML = '<div class="ex-card" role="dialog" aria-modal="true" aria-label="발췌 이미지" tabindex="-1"><img id="exImg" alt="발췌 이미지"><div class="ex-actions"><button class="btn" id="exClose">닫기</button><button class="btn" id="exCopy">클립보드 복사</button><button class="btn btn-primary" id="exSave">PNG 저장</button></div></div>';
       document.body.appendChild(ov);
     }
+    /* 대화상자 접근성: 열 때 초점을 상자 안으로 옮기고, 닫을 때 부르기 전 자리로 되돌린다.
+       열려 있는 동안 Esc로 닫고, Tab이 상자 밖으로 새지 않게 가둔다(초점 덫). 이 창은 저장한
+       아카이브에도 실려 가므로, 여기서 갖춘 접근성이 그대로 따라간다. */
+    const exCard = ov.querySelector('.ex-card');
+    let exLastFocus = null;
+    const exFocusable = () => [...ov.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')]
+      .filter(el => !el.disabled && el.offsetParent !== null);
+    const openOv = () => {
+      exLastFocus = document.activeElement;
+      ov.classList.add('open');
+      const f = exFocusable(); (f[0] || exCard).focus();
+    };
+    const closeOv = () => {
+      ov.classList.remove('open');
+      if(exLastFocus && exLastFocus.focus){ try{ exLastFocus.focus(); }catch(e){} }
+      exLastFocus = null;
+    };
+    ov.addEventListener('keydown', e => {
+      if(e.key === 'Escape'){ e.preventDefault(); closeOv(); return; }
+      if(e.key === 'Tab'){
+        const f = exFocusable(); if(!f.length) return;
+        const first = f[0], last = f[f.length - 1];
+        if(e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+        else if(!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+      }
+    });
 
     /* 이 스크립트는 저장한 보관본에도 그대로 실려 간다. 거기엔 배경 그림을 고를 사람도,
        고친 값으로 다시 그려 줄 앱도 없다. 그래서 손잡이는 리더에만 단다 —
@@ -1170,7 +1341,7 @@
         +   '<button type="button" class="btn" id="exPick">고르기</button>'
         +   '<button type="button" class="btn" id="exDropPic" disabled>지우기</button>'
         +   '<span class="exname" id="exName">없음</span>'
-        +   '<input type="file" id="exFile" accept="image/*" class="hidden"></div>'
+        +   '<input type="file" id="exFile" accept="image/*" class="hidden" aria-label="배경 그림 파일 선택"></div>'
         + '<div class="exrow off" id="exScrimRow"><span class="exlab">막 진하기</span>'
         +   '<input type="range" id="exScrim" min="0" max="100" step="1" value="72" disabled aria-label="배경 그림 위에 덮는 막의 진하기" aria-describedby="exScrimVal">'
         +   '<span class="exval" id="exScrimVal">72%</span></div>'
@@ -1253,11 +1424,11 @@
       shotText = long ? curText.slice(0, MAX_EXCERPT).replace(/\s+$/, '') + '…' : curText;
       shotWho  = curSpeaker;
       paint();
-      ov.classList.add('open'); hide();
+      openOv(); hide();
       if(long) toast('고른 글이 길어 앞 ' + MAX_EXCERPT + '자만 담았습니다');
     });
     ov.addEventListener('click', e => {
-      if(e.target === ov || e.target.id === 'exClose'){ ov.classList.remove('open'); }
+      if(e.target === ov || e.target.id === 'exClose'){ closeOv(); }
       if(e.target.id === 'exSave' && ov._cv){
         /* 앵커는 문서에 붙여야 하고, 주소는 곧바로 거두면 안 된다 —
            브라우저가 내려받기를 시작하기도 전에 주소가 죽어 조용히 취소되는 판이 있다. */
@@ -1337,38 +1508,64 @@
     const line = css('--line') || '#E4E4E7', accent = css('--ink') || '#18181B';
     const dark = (document.documentElement.getAttribute('data-theme') === 'dark');
     const title = (document.getElementById('docTitle') ? document.getElementById('docTitle').textContent : '클릭하여 세션 제목을 입력해 주세요.').trim() || '클릭하여 세션 제목을 입력해 주세요.';
-    const fam = '"Pretendard Variable",Pretendard,sans-serif';
+    /* 발췌 이미지도 본문 글씨체를 따른다. 발췌 단추를 누를 때 document.fonts.ready를 먼저
+       기다리므로(setupExcerpt), 여기 올 때면 고른 웹폰트가 이미 받아져 있다. */
+    const fam = css('--read-font') || '"Pretendard Variable",Pretendard,sans-serif';
+    /* 한국어가 편히 읽히도록: 줄 사이는 넉넉히(행간 1.72), 자간은 살짝 좁혀 또렷하게(-0.02em).
+       장평은 건드리지 않는다 — 100%가 가장 읽기 좋고, 늘리거나 줄이면 오히려 흐트러진다.
+       어간(낱말 사이)도 기본이 알맞다 — 좁히면 낱말이 붙고 넓히면 헐거워진다. */
+    const LH = 1.72, LS = '-0.02em';
 
     /* 잣대가 둘이다. 여백과 줄 사이는 **짧은 변**을 따르고, 글씨는 **폭**을 따른다.
        하나로 묶으면 가로로 긴 칸에서 반드시 한쪽이 어그러진다 — 폭에 맞추면 여백이
        부풀어 세로가 모자라고, 짧은 변에 맞추면 글씨만 좁쌀만 하게 남는다. */
     const scale = 2, W = box ? box[0] : 1080;
     const kt = W / 1080, kp = (box ? Math.min(box[0], box[1]) : 1080) / 1080;
-    const pad = Math.round(92 * kp), maxW = W - pad * 2;
+    const pad = Math.round(92 * kp);
+    /* 좌우 여백은 폭(kt)을 따르고 조금 넉넉히 둔다 — 짧은 변(kp)만 따르면 가로로 긴 칸에서
+       옆이 유난히 좁아 글이 모서리에 붙어 보였다. 폭 기준이라 비율이 어떻든 옆 여백 비율이 같다.
+       위·아래(pad)는 그대로 짧은 변을 따른다. */
+    const padX = Math.round(116 * kt), maxW = W - padX * 2;
     const barW = Math.round(40 * kt), barH = Math.max(2, Math.round(3 * kt));
-    const tFs = Math.round(18 * kt), sFs = Math.round(22 * kt), tGap = Math.round(20 * kp);
-    /* 머리(막대·제목)와 발치(화자)가 차지하는 높이. 끄면 그만큼 본문 자리가 넓어진다.
-       막대는 제목과 한 덩이다 — 제목만 끄고 막대를 남기면 아무 데도 안 붙은 짧은 선 하나가
-       모서리에 떠 있게 된다. 둘 다 끈 사람은 글만 있는 한 장을 바랐을 것이다. */
-    const headH = showTitle ? barH + tGap + tFs : 0;
+    const tGap = Math.round(20 * kp);
+    /* 세션 제목·화자 이름은 본문 글씨(qFs)에 비례시킨다 — 본문이 비율에 맞춰 커지면 이 둘도 함께 커져
+       어떤 비율에서든 위계가 한결같다(제목은 본문의 절반쯤, 화자는 그보다 조금 크게). 예전엔 폭(kt)만
+       따라, 본문이 50~56px로 커진 뒤에도 18·22px에 머물러 유난히 작아 보였다. */
+    const TITLE_R = 0.52, SPEAKER_R = 0.64;
     const gapT = showTitle ? Math.round(40 * kp) : 0, gapB = showWho ? Math.round(46 * kp) : 0;
-    const bandTop = pad + headH + gapT, tail = gapB + (showWho ? sFs : 0) + pad;
+    /* 머리(막대·제목)와 발치(화자)의 높이는 본문 크기에 딸려 움직인다. 후보 본문 크기 하나를 주면
+       제목·화자 크기와 머리·발치 높이가 함께 정해지도록 한 함수에 담아, 칸 맞추기 계산이 닫히게 한다.
+       막대는 제목과 한 덩이다 — 제목만 끄고 막대를 남기면 아무 데도 안 붙은 짧은 선이 모서리에 뜬다. */
+    const metrics = q => {
+      const tf = Math.round(q * TITLE_R), sf = Math.round(q * SPEAKER_R);
+      const hH = showTitle ? barH + tGap + tf : 0;
+      return { tFs: tf, sFs: sf, bandTop: pad + hH + gapT, tail: gapB + (showWho ? sf : 0) + pad };
+    };
 
     const m = document.createElement('canvas').getContext('2d');
+    /* 자간을 주면 줄바꿈 계산도 그만큼 달라진다. 재는 쪽에 먼저 자간을 걸어 두어야
+       그림과 줄나눔이 어긋나지 않는다. 자간은 새 브라우저만 지원하니, 없으면 기본으로 얌전히 간다. */
+    const canLS = 'letterSpacing' in m;
+    if(canLS) m.letterSpacing = LS;
     const lay = z => { m.font = '500 ' + z + 'px ' + fam; return wrapText(m, text, maxW); };
     let qFs, lines, lh, H, clipped = false;
     if(box){
       H = box[1];
-      const band = H - tail - bandTop;
-      /* 칸이 정해졌으니 글 길이로 크기를 어림잡을 이유가 없다. 큰 쪽에서 내려오며
-         칸에 들어가는 가장 큰 크기를 고른다 — 짧은 글은 큼직하게, 긴 글은 작게 앉는다.
-         맨 위를 한 줄에 열두 자쯤으로 잡아 두는 것은, 짧은 글 두 마디가 칸을 가득 메우는
-         꼴을 막기 위해서다. 위아래로 다 못 담으면 아래에서 담을 수 있는 줄까지만 담는다. */
-      const top = Math.max(24, Math.round(maxW / 12)), bot = Math.max(16, Math.round(20 * kt));
+      /* 칸이 정해졌으니 그 칸에 맞춰 크기를 정한다 — 가로로·세로로 길수록 칸이 커지고, 글씨도 그만큼
+         커져야 비율을 바꿔도 글이 좁쌀만 해 보이지 않는다. 칸 크기(가로·세로의 기하평균)에 비례해
+         맨 위 크기를 잡고, 거기서 내려오며 세로에 다 담기는 가장 큰 크기를 고른다 — 짧은 글은 큼직하게
+         칸을 채우고, 긴 글은 담기는 만큼 작아진다. 머리·발치가 본문 크기에 딸리므로 담기는 높이도 후보마다 다시 잰다.
+         위아래로 다 못 담으면 담을 수 있는 줄까지만 담는다.
+         예전엔 폭만 보고 36px으로 묶어 두어, 가로·세로로 긴 칸에서 글씨가 유난히 작아 보였다 —
+         상한을 칸 크기에 비례시키니 세 비율이 엇비슷한 크기로 커진다. */
+      const canvasSize = Math.sqrt(W * H);   /* 정사각형 1080 · 세로 1207 · 가로 1200 — 셋이 엇비슷하다 */
+      const top = Math.round(canvasSize * 0.046), bot = Math.max(16, Math.round(canvasSize * 0.022));
       for(qFs = top; ; qFs -= 2){
-        lines = lay(qFs); lh = Math.round(qFs * 1.66);
-        if(lines.length * lh <= band || qFs <= bot) break;
+        const mt = metrics(qFs);
+        lines = lay(qFs); lh = Math.round(qFs * LH);
+        if(lines.length * lh <= H - mt.tail - mt.bandTop || qFs <= bot) break;
       }
+      const mt = metrics(qFs), band = H - mt.tail - mt.bandTop;
       const room = Math.max(1, Math.floor(band / lh));
       if(lines.length > room){
         lines = lines.slice(0, room);
@@ -1379,16 +1576,20 @@
         clipped = true;
       }
     } else {
-      /* 세로가 자라는 '자동'에서만 글 길이로 크기를 정한다. 예전보다 한 단계씩 작다 —
-         한 줄에 더 담기고 줄 사이가 넓어져 눈이 덜 밀린다. */
-      qFs = text.length > 260 ? 30 : text.length > 170 ? 34 : text.length > 90 ? 38 : 44;
-      lines = lay(qFs); lh = Math.round(qFs * 1.66);
-      H = bandTop + lines.length * lh + tail;
+      /* 세로가 자라는 '자동'에서만 글 길이로 크기를 정한다. 한국어가 편히 읽히도록 한 단계 더 낮췄다 —
+         한 줄에 스물다섯~서른다섯 자쯤 담기고, 넓힌 행간과 좁힌 자간이 눈을 덜 밀리게 한다. */
+      qFs = text.length > 260 ? 25 : text.length > 170 ? 28 : text.length > 90 ? 31 : 34;
+      lines = lay(qFs); lh = Math.round(qFs * LH);
+      const mt = metrics(qFs);
+      H = mt.bandTop + lines.length * lh + mt.tail;
     }
+    /* 본문 크기가 정해졌으니 제목·화자 크기와 머리·발치를 마지막으로 확정한다 */
+    const M = metrics(qFs), tFs = M.tFs, sFs = M.sFs, bandTop = M.bandTop, tail = M.tail;
     const quoteY = bandTop + Math.max(0, ((H - tail - bandTop) - lines.length * lh) / 2);
     const cv = document.createElement('canvas'); cv.width = Math.round(W * scale); cv.height = Math.round(H * scale);
     const ctx = cv.getContext('2d'); ctx.scale(scale, scale);
     ctx.textBaseline = 'alphabetic';
+    if(canLS) ctx.letterSpacing = LS;   /* 잰 것과 같은 자간으로 그린다 (em이라 글자 크기에 맞춰 따라간다) */
     ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
 
     const a = Math.min(1, Math.max(0, o.scrim == null ? .72 : o.scrim));
@@ -1411,15 +1612,15 @@
     ctx.shadowBlur = halo ? Math.round(12 * kt) : 0;
 
     if(showTitle){
-      ctx.fillStyle = accent; ctx.fillRect(pad, pad, barW, barH);
+      ctx.fillStyle = accent; ctx.fillRect(padX, pad, barW, barH);
       ctx.fillStyle = muted; ctx.font = '700 ' + tFs + 'px ' + fam;
-      ctx.fillText(title, pad, pad + barH + tGap + tFs * .8);
+      ctx.fillText(title, padX, pad + barH + tGap + tFs * .8);
     }
     ctx.fillStyle = ink; ctx.font = '500 ' + qFs + 'px ' + fam;
-    lines.forEach((ln, i) => ctx.fillText(ln, pad, quoteY + i * lh + qFs * .8));
+    lines.forEach((ln, i) => ctx.fillText(ln, padX, quoteY + i * lh + qFs * .8));
     if(showWho){
       ctx.fillStyle = accent; ctx.font = '700 ' + sFs + 'px ' + fam;
-      ctx.fillText('— ' + (speaker || '내레이션'), pad, H - pad - sFs * .2);
+      ctx.fillText('— ' + (speaker || '내레이션'), padX, H - pad - sFs * .2);
     }
     ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
     cv._clipped = clipped;
@@ -1521,7 +1722,19 @@
      한글·일본어·영어를 한 목록에 담는다 — 코코포리아 방은 시스템에 따라 셋이 섞여 나온다. */
   const ROLL_NG = /(대실패|치명적\s*실패|실패|펌블|팜블|ファンブル|大失敗|致命的失敗|失敗|fumble|botch|failure)/i;
   const ROLL_OK = /(대성공|결정적\s*성공|스페셜|크리티컬|성공|大成功|決定的成功|クリティカル|スペシャル|成功|critical|special|success)/i;
-  const rollOutcome = flat => ROLL_NG.test(flat) ? 'ng' : (ROLL_OK.test(flat) ? 'ok' : '');
+  /* 성패 낱말만 본다 — 판정 조각을 고를 때 낱말 결과를 맞은 횟수보다 앞세우는 데 쓴다. */
+  const wordOutcome = flat => ROLL_NG.test(flat) ? 'ng' : (ROLL_OK.test(flat) ? 'ok' : '');
+  /* 성공·실패 낱말이 없는 공격 굴림은 맞은 횟수(ヒット数 N)가 곧 성패다 — 한 대라도 맞으면 성공,
+     0이면 빗나감(실패). ダメージ·잔여 HP처럼 0이 실패가 아닌 다른 수치 결과에는 색을 주면 안 되므로
+     ‘ヒット数’로 좁게 잡는다. ‘일본어 판정 로그의 한국어 치환’을 켜면 ‘히트 수’로 바뀌므로
+     그쪽도 함께 본다 — 치환 뒤에도 맞은 횟수로 성패를 가려야 한다. */
+  const ROLL_HITS = /(?:ヒット数|히트\s*수)\s*(\d+)/;
+  const rollOutcome = flat => {
+    const w = wordOutcome(flat);
+    if(w) return w;                                    /* 낱말 결과가 먼저 */
+    const h = ROLL_HITS.exec(flat);
+    return h ? (+h[1] > 0 ? 'ok' : 'ng') : '';
+  };
   /* 대성공·대실패는 한 단계 더 세게 그린다. ‘대성공’이 ‘성공’을, ‘대실패’가 ‘실패’를
      품고 있으니 성공·실패보다 먼저 본다.
      크리티컬(クリティカル)과 스페셜(スペシャル)은 대성공으로, 펌블(ファンブル)은 대실패로 친다.
@@ -1572,16 +1785,42 @@
     /* 결과 낱말은 보통 맨 끝에 오지만, 명령이 이어 붙은 줄에서는 가운데 놓이기도 한다.
        그래서 뒤에서부터 찾는다. 숫자로도 읽히는 조각은 낱말이 아니다. */
     let wi = -1;
-    for(let i = seg.length - 1; i >= 1; i--){ if(rollOutcome(seg[i]) && !rollNum(seg[i])){ wi = i; break; } }
+    for(let i = seg.length - 1; i >= 1; i--){ if(wordOutcome(seg[i]) && !rollNum(seg[i])){ wi = i; break; } }
+    /* 성패 낱말이 없으면 맞은 횟수(ヒット数 N)를 결과 낱말 자리에 세운다. wi는 색·라벨의 근거라
+       낱말이 먼저다 — '… ＞ クリティカル 2 ＞ ヒット数 4'의 색·세기는 여전히 크리티컬이 정한다. */
+    if(wi < 0) for(let i = seg.length - 1; i >= 1; i--){ if(ROLL_HITS.test(seg[i]) && !rollNum(seg[i])){ wi = i; break; } }
+    /* 다만 맞은 횟수는 낱말이 있어도 '보여줄 결과'로는 앞선다 — 크리티컬이 떠도 rx-out엔 ヒット数를
+       세워 달라는 요청이다. 색은 wi(낱말)가, 표시는 hi(ヒット数)가 맡게 두 자리를 갈라 둔다. */
+    let hi = -1;
+    for(let i = seg.length - 1; i >= 1; i--){ if(ROLL_HITS.test(seg[i]) && !rollNum(seg[i])){ hi = i; break; } }
     /* 굴린 값은 결과 낱말 바로 앞에 있다. 낱말이 없으면 맨 뒤의 수를 쓴다. */
     let ni = (wi > 1 && rollNum(seg[wi - 1])) ? wi - 1 : -1;
     if(ni < 0) for(let i = seg.length - 1; i >= 1; i--){ if(rollNum(seg[i])){ ni = i; break; } }
-    if(ni < 1) return null;
-    const num = rollNum(seg[ni]);
-    if(!num) return null;
-    /* 자리를 못 받은 조각은 한 줄로 모아 곁들인다 — 어느 것도 말없이 사라지지 않는다 */
-    const sub = seg.filter((x, i) => i !== 0 && i !== ni && i !== wi).join(' ');
-    return { expr: rollExpr(seg[0]), num: num, out: wi > -1 ? seg[wi] : '', sub: sub, die: rollDie(flat) };
+    /* 깔끔한 총합 수를 찾았으면 지금까지처럼 그대로 판정으로 세운다 */
+    if(ni >= 1){
+      const num = rollNum(seg[ni]);
+      if(num){
+        /* 자리를 못 받은 조각은 한 줄로 모아 곁들인다 — 어느 것도 말없이 사라지지 않는다 */
+        const sub = seg.filter((x, i) => i !== 0 && i !== ni && i !== wi).join(' ');
+        const out = wi > -1 ? seg[wi] : '';
+        return { expr: rollExpr(seg[0]), num: num, out: out, show: hi > -1 ? seg[hi] : out, sub: sub, die: rollDie(flat) };
+      }
+    }
+    /* 총합 수가 없어도 판정인 줄이 있다. '3AT<=4 (3attack<=4) ＞ 1,1,6 ＞ クリティカル 2 ＞ ヒット数 4'
+       처럼 굴린 눈이 콤마로 늘어서고(1,1,6) 수치가 낱말에 붙어 오는(クリティカル 2·ヒット数 4)
+       공격 판정이 그렇다 — 어느 조각도 순수한 수가 아니라 위쪽의 총합 찾기가 빈손으로 돌아온다.
+       그래도 결과 낱말이 잡혔고 식 뒤 어느 조각엔가 숫자가 있으면, 곧 글자만 있는 표 뽑기
+       (感情表 ＞ 敵意)나 규칙 설명(変調表 ＞ …成功すると…)이 아니라 진짜 굴림이면,
+       식 바로 뒤 첫 숫자 조각을 굴린 값으로 세워 판정으로 살린다. */
+    if(wi > -1){
+      let ri = -1;
+      for(let i = 1; i < seg.length; i++){ if(i !== wi && /\d/.test(seg[i])){ ri = i; break; } }
+      if(ri > -1){
+        const sub = seg.filter((x, i) => i !== 0 && i !== ri && i !== wi).join(' ');
+        return { expr: rollExpr(seg[0]), num: seg[ri], out: seg[wi], show: hi > -1 ? seg[hi] : seg[wi], sub: sub, die: rollDie(flat) };
+      }
+    }
+    return null;
   }
 
   /* 흐린 한 줄로 떨어진 판정에 입힐 색.
@@ -2003,12 +2242,25 @@
   /* composeAll = 지운 것까지 포함한 전체 배열. 미세조정 목록과 자리 계산은 이쪽을 본다.
      composeLog = 실제로 보여 줄 배열. 렌더·내보내기·저장은 이쪽만 쓴다. */
   const isGone = m => !!delState[midOf(m)];
+  /* ── 일본어 판정 로그의 한국어 치환 (고급 설정) ──
+     원본(rawMessages)은 건드리지 않고 ‘보여 줄 배열’에만 입힌다 — 끄면 그대로 돌아오고,
+     이어보기 초안에도 원문 그대로 남는다. 판정 색·티켓은 이 뒤에 오는 렌더러가 매기는데,
+     성패를 가리는 정규식(ROLL_OK·ROLL_NG·ROLL_CRIT·ROLL_HITS)이 한글 낱말도 이미 보므로
+     치환한 글로도 그대로 판정된다. 낱말끼리 겹치는 곳이 없어 차례는 상관없지만, 긴 것을 앞에 둔다. */
+  const JAKO = [['クリティカル', '크리티컬'], ['スペシャル', '스페셜'], ['ファンブル', '펌블'],
+                ['ヒット数', '히트 수'], ['成功', '성공'], ['失敗', '실패']];
+  const jako = s => { let t = String(s == null ? '' : s); for(const p of JAKO) t = t.split(p[0]).join(p[1]); return t; };
+  /* 화면에 나오는 글은 문단(paras)뿐이다. 원본을 지키려고 얕은 복사에 새 문단 배열만 갈아 끼운다. */
+  const jakoMsg = m => (m.paras && m.paras.length) ? Object.assign({}, m, { paras: m.paras.map(jako) }) : m;
   /* 방금 만든 '지운 것까지 포함한 전체'를 들고 있는다. 렌더는 composeLog 바로 뒤에 오므로
      미세조정 목록이 같은 것을 한 번 더 만들 필요가 없다 — 큰 로그에서는 병합을 두 번 도는
      비용이 그대로 렌더 시간이었다. */
   let lastAll = null;
   const composeAll = (raw, opts) => (lastAll = applyMoves(mergeTabs(raw, opts)));
-  const composeLog = (raw, opts) => composeAll(raw, opts).filter(m => !isGone(m));
+  const composeLog = (raw, opts) => {
+    const list = composeAll(raw, opts).filter(m => !isGone(m));
+    return (opts && opts.jaKo) ? list.map(jakoMsg) : list;
+  };
   /* ── 빠진 캐릭터 이미지 메우기 ──
      같은 캐릭터인데 어떤 줄에만 그림이 없을 때가 있다. 수집하는 사이에 그 줄이 다시 그려지면
      그림이 붙기 전 모습이 담기고, 앱이 옛 글을 끼워 넣는 순간에도 같은 일이 난다.
@@ -2124,16 +2376,19 @@
     if(!style) return null;
     const R = rollParts(P.join(' '));
     if(!R) return null;
+    /* 색·세기는 결과 낱말(R.out)이 정하고, 결과 칸에 보이는 글자는 R.show가 정한다.
+       둘은 ヒット数가 낀 판정에서만 갈린다 — 크리티컬이 색을, ヒット数가 표시를 맡는다.
+       R.out으로 등급을 매기는 것은 그대로다(명령 이름이 색을 물들이지 않게 · §4 3번). */
     const g = rollGrade(R.out);
     return {
       style: style, kind: g.kind, crit: g.crit,
       center: !!(opts.align && m.name && opts.align[m.name] === 'center'),
-      name: m.name || '', expr: R.expr, num: R.num, out: R.out, sub: R.sub, die: R.die,
+      name: m.name || '', expr: R.expr, num: R.num, out: R.show, sub: R.sub, die: R.die,
       /* 티켓 머리의 미세 라벨 — 결과 낱말이 있으면 판정, 없으면 그냥 굴림이다 */
       label: R.out ? '판정' : '주사위',
       /* 타일 가운데 칸에 세울 말. 결과 낱말이 없으면 굴림 내역을, 그것도 없으면 식을 세운다.
          식을 그 자리에 세웠으면 아래에 또 적지 않는다 — 같은 말이 두 줄로 겹친다. */
-      tileMain: R.out || R.sub || R.expr,
+      tileMain: R.show || R.sub || R.expr,
       tileExpr: !!(R.out || R.sub)
     };
   }
@@ -2504,6 +2759,7 @@
       $('#saveBtn').classList.remove('hidden');
       $('#exportBtn').classList.remove('hidden');
       $('#editBtn').classList.remove('hidden');
+      $('#homeBtn').classList.remove('hidden');
       window.scrollTo(0, 0);
     }
     if(!opts._demo && !opts._restore) saveDraft(messages, opts, title);
@@ -2520,8 +2776,14 @@
   })();
   function writeDraft(messages, opts, title){
     /* 병합 결과가 아니라 원본을 담는다. 배치 보정(mv)만 따로 얹으면 언제든 되살아난다. */
+    /* 글씨체는 opts가 아니라 <html>의 표식에서 곧바로 읽는다 — 파싱이 아니라 CSS 문제라
+       currentOpts를 거치지 않기 때문이다. 새로고침 뒤 이어보기에서도 같은 웹폰트로 열리게 한다. */
+    const R = document.documentElement;
+    const ft = R.getAttribute('data-font') === 'custom'
+      ? { fam:R.getAttribute('data-font-family'), url:R.getAttribute('data-font-url'), raw:($('#fontInput') ? $('#fontInput').value : '') }
+      : null;
     try{
-      localStorage.setItem(KEY, JSON.stringify({ t:title, o:{merge:opts.merge, avChange:opts.avChange, hideNoise:opts.hideNoise, avatarKey:opts.avatarKey, showStatus:opts.showStatus, align:opts.align, narrators:opts.narrators, avShape:opts.avShape, avSize:opts.avSize, avZoom:opts.avZoom, avFocus:opts.avFocus, avPer:avState, avImg:avImgState, rollHighlight:opts.rollHighlight, rollStyle:opts.rollStyle, sysNarr:opts.sysNarr, withInfo:opts.withInfo, infoCard:opts.infoCard, infoFirst:opts.infoFirst, noImages:opts.noImages, noImgSlot:opts.noImgSlot}, m:(rawMessages && rawMessages.length ? rawMessages : messages), mv:moveState, dl:delState, at:Date.now() }));
+      localStorage.setItem(KEY, JSON.stringify({ t:title, o:{merge:opts.merge, avChange:opts.avChange, hideNoise:opts.hideNoise, avatarKey:opts.avatarKey, showStatus:opts.showStatus, align:opts.align, narrators:opts.narrators, avShape:opts.avShape, avSize:opts.avSize, avZoom:opts.avZoom, avFocus:opts.avFocus, avPer:avState, avImg:avImgState, rollHighlight:opts.rollHighlight, rollStyle:opts.rollStyle, sysNarr:opts.sysNarr, jaKo:opts.jaKo, withInfo:opts.withInfo, infoCard:opts.infoCard, infoFirst:opts.infoFirst, noImages:opts.noImages, noImgSlot:opts.noImgSlot}, ft:ft, m:(rawMessages && rawMessages.length ? rawMessages : messages), mv:moveState, dl:delState, at:Date.now() }));
     }catch(e){
       /* 대개 용량 초과다. 조용히 넘기면 '자동 보관됩니다'라는 첫 화면의 약속이
          큰 세션에서만 말없이 깨지고, 사용자는 새로고침한 뒤에야 알게 된다.
@@ -2587,6 +2849,7 @@
       if(d.o && $('#optRoll')) $('#optRoll').checked = !!d.o.rollHighlight;
       if(d.o) ROLL_PICKS.forEach(x => { const e = $(x[0]); if(e) e.checked = (d.o.rollStyle === x[1]); });
       if(d.o && $('#optSysNarr')) $('#optSysNarr').checked = !!d.o.sysNarr;
+      if(d.o && $('#optJaKo')) $('#optJaKo').checked = !!d.o.jaKo;
       if($('#optInfo')) $('#optInfo').checked = !(d.o && d.o.withInfo === false);
       if($('#optInfoCard')) $('#optInfoCard').checked = !(d.o && d.o.infoCard === false);
       if($('#optInfoFirst')) $('#optInfoFirst').checked = !(d.o && d.o.infoFirst === false);
@@ -2599,6 +2862,9 @@
       if(d.o && d.o.avShape) document.querySelectorAll('[data-av-shape]').forEach(x => x.setAttribute('aria-pressed', x.dataset.avShape === d.o.avShape ? 'true' : 'false'));
       if(d.o && d.o.avZoom && $('#avZoom')){ $('#avZoom').value = d.o.avZoom; $('#avZoomVal').textContent = d.o.avZoom + '%'; }
       if(d.o && d.o.avFocus) document.querySelectorAll('[data-av-focus]').forEach(x => x.setAttribute('aria-pressed', x.dataset.avFocus === d.o.avFocus ? 'true' : 'false'));
+      /* 담아 둔 웹폰트를 도로 세운다. 적었던 글도 칸에 되살려 다시 손볼 수 있게 한다.
+         조용히(announce=false) — 이어보기를 열 때마다 토스트가 뜨면 잔소리가 된다. */
+      if(d.ft && d.ft.url){ if($('#fontInput')) $('#fontInput').value = d.ft.raw || d.ft.fam || ''; if(window.__userFont) window.__userFont.apply(d.ft.fam, d.ft.url, false); }
       syncRollEnabled(); syncImgEnabled(); syncAvChangeEnabled();
       const o = Object.assign({merge:true,hideNoise:true,avatarKey:'avatar',title:d.t}, d.o||{}, {_restore:true, align:alignState, avPer:avState, avImg:avImgState});
       adoptRaw(stampSeq(d.m), true);   /* 보관해 둔 보정을 방금 얹었다 — 지문 검사로 지우면 안 된다 */
@@ -3318,7 +3584,7 @@
     withInfo: chk('#optInfo', true), infoCard: chk('#optInfoCard', true), infoFirst: chk('#optInfoFirst', true),
     noImages: chk('#optNoImg', false), noImgSlot: blankPick(), hideNoise: !$('#optNoise').checked, showStatus: $('#optStatus') ? $('#optStatus').checked : false, align: alignState, narrators: parseNarr($('#narrNames') ? $('#narrNames').value : 'GM'), title: '',
     avShape: avShapeNow(), avSize: parseInt(($('#avSize') ? $('#avSize').value : 55), 10) || 55,
-    avFocus: avFocusNow(), avZoom: parseInt(($('#avZoom') ? $('#avZoom').value : 100), 10) || 100, avPer: avState, avImg: avImgState, rollHighlight: !!($('#optRoll') && $('#optRoll').checked), rollStyle: rollPick(), sysNarr: !!($('#optSysNarr') && $('#optSysNarr').checked) });
+    avFocus: avFocusNow(), avZoom: parseInt(($('#avZoom') ? $('#avZoom').value : 100), 10) || 100, avPer: avState, avImg: avImgState, rollHighlight: !!($('#optRoll') && $('#optRoll').checked), rollStyle: rollPick(), sysNarr: !!($('#optSysNarr') && $('#optSysNarr').checked), jaKo: chk('#optJaKo', false) });
 
   /* 캐릭터 이미지·판정 설정은 ‘변환’을 기다리지 않고 곰바로 반영된다 */
   document.querySelectorAll('[data-av-shape]').forEach(b => b.addEventListener('click', () => {
@@ -3377,6 +3643,8 @@
   });
   $('#optNoise') && $('#optNoise').addEventListener('change', syncRollEnabled);
   syncRollEnabled();
+  /* 한국어 치환은 보여 줄 글을 갈아 끼우므로 본문을 다시 그린다. 원본은 그대로다. */
+  $('#optJaKo') && $('#optJaKo').addEventListener('change', () => { if(rawMessages) recompose(); else persistOpts(); });
   /* 합치기를 끄면 어차피 매번 캐릭터 이미지가 나오므로, 이 설정은 잠가 둔다 */
   function syncAvChangeEnabled(){
     const a = $('#optAvChange'); if(!a) return;
@@ -3402,6 +3670,75 @@
     if(rawMessages){ quietRender = true; try{ render(composeLog(rawMessages, o), o); } finally { quietRender = false; } }
   });
   syncImgEnabled();
+
+  /* ── 본문 웹폰트 (고급 설정) ──
+     사용자가 친 것을 '글꼴 이름'과 'CSS 주소' 한 쌍으로 바꿔 런타임(window.__userFont)에 넘긴다.
+     실제로 <link>·<style>을 세우고 <html>에 표식을 남기는 일은 런타임이 맡는다 — 그래야 저장한
+     아카이브에도 그대로 실려, 여는 사람도 같은 글씨체로 읽는다. 여기(앱)는 리더에만 있으므로,
+     '무엇을 적었는지'를 주소·이름으로 풀어 주는 일까지만 한다.
+     구글 폰트는 이름만 적으면 되고(가장 흔한 무료 웹폰트라 한글·일본어도 넉넉하다),
+     다른 곳의 폰트는 CSS 주소를 붙여넣는다. */
+  const fontMsg = (t, warn) => { const m = $('#fontMsg'); if(!m) return; m.textContent = t || ''; m.style.color = warn ? 'var(--ng)' : ''; };
+  const toggleFamRow = show => { const r = $('#fontFamRow'); if(r) r.classList.toggle('hidden', !show); };
+  /* 이름 → 구글 폰트 CSS 주소. 400·700만 청한다 — 굵기를 넓게 청하면 그 무게가 없는 글꼴에서
+     주소가 통째로 400을 내며 실패한다. 이 둘은 인기 있는 본문용 글꼴이 거의 다 갖고 있다. */
+  const gfUrl = name => 'https://fonts.googleapis.com/css2?family=' + name.trim().replace(/\s+/g, '+') + ':wght@400;700&display=swap';
+  /* 구글 폰트 주소에서 글꼴 이름을 캐낸다 — family=Nanum+Myeongjo:wght@… → 'Nanum Myeongjo' */
+  const famFromUrl = u => {
+    const m = u.match(/[?&]family=([^&:]+)/i);
+    if(!m) return '';
+    try{ return decodeURIComponent(m[1].replace(/\+/g, ' ')).trim(); }catch(e){ return m[1].replace(/\+/g, ' ').trim(); }
+  };
+  /* 폰트 파일 주소인지 — 눈누(noonnu.cc)가 주는 .woff2 같은 주소다. 스타일시트가 아니라 파일이므로
+     런타임이 <link>가 아니라 @font-face로 싣는다(fontFormat·applyUserFont). */
+  const FONT_EXT = /\.(?:woff2|woff|otf|ttf|eot)(?:[?#].*)?$/i;
+  /* 폰트 파일 주소에서 이름을 지어낸다 — …/SeochoBatang-Regular.woff2 → 'SeochoBatang Regular'.
+     직접 파일이면 @font-face를 우리가 짜므로 이름은 무엇이어도 그 파일을 지목한다. 화면·목록에 보일 이름일 뿐이다.
+     그래서 코딩을 몰라 이름을 모르는 사람도 파일 주소만 붙여넣으면 막히지 않는다. */
+  const famFromFile = u => u.split(/[?#]/)[0].split('/').pop().replace(FONT_EXT, '').replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim();
+  /* 눈누는 '웹폰트 사용 코드'로 @font-face{ font-family:'…'; src:url('…') … } 한 덩이를 준다.
+     코딩을 모르는 사람은 그 덩이를 통째로 붙여넣기 마련이라, 이름과 주소를 여기서 캐낸다.
+     (한 줄 입력칸이라 붙여넣을 때 줄바꿈은 사라지지만, 이름·주소는 그대로 남아 정규식에 걸린다.) */
+  const parseFontFace = css => ({
+    fam: (css.match(/font-family\s*:\s*['"]?([^'";}]+)/i) || [])[1] || '',
+    src: (css.match(/url\(\s*['"]?([^'")]+)/i) || [])[1] || ''
+  });
+  function applyFontFromInputs(){
+    let raw = ($('#fontInput') ? $('#fontInput').value : '').trim();
+    const famManual = ($('#fontFamily') ? $('#fontFamily').value : '').trim();
+    if(!raw){ if(window.__userFont) window.__userFont.clear(); toggleFamRow(false); fontMsg('기본 글씨체로 되돌렸습니다'); persistOpts(); return; }
+    let url = '', fam = famManual;
+    /* @font-face 코드를 통째로 붙여넣었으면 이름·주소를 캐내 아래 흐름에 태운다(눈누의 사용 코드). */
+    if(/@font-face|url\s*\(/i.test(raw)){
+      const f = parseFontFace(raw);
+      if(f.src){ raw = f.src.trim(); if(!fam && f.fam) fam = f.fam.trim(); }
+    }
+    if(/^https?:\/\//i.test(raw)){
+      url = raw.replace(/^http:\/\//i, 'https://');   /* http는 아카이브·미리보기에서 어차피 막힌다 */
+      /* 폰트 파일 주소면 이름을 파일명에서 지어내고(직접 @font-face를 짜므로 이름은 자유롭다),
+         CSS 스타일시트 주소면 family=에서 캐낸다. */
+      if(!fam) fam = FONT_EXT.test(url) ? famFromFile(url) : famFromUrl(url);
+      /* 그래도 이름을 못 정했다 — family=가 없는 CSS 주소다. 이름을 물어보는 칸을 열어 알린다.
+         (폰트 파일 주소는 파일명이 있어 여기 오지 않는다 — 코딩을 몰라도 막히지 않는다.) */
+      if(!fam){ toggleFamRow(true); fontMsg('이 주소에서는 글꼴 이름을 알 수 없습니다 · 아래 칸에 CSS font-family 이름을 적어 주세요', true); return; }
+    } else {
+      fam = raw; url = gfUrl(raw);
+    }
+    const ok = window.__userFont && window.__userFont.apply(fam, url, true);
+    if(ok){ toggleFamRow(/^https?:\/\//i.test(raw) && !!famManual); fontMsg('“' + fam + '” 적용 — 바뀌지 않으면 글꼴 이름의 철자를 확인해 주세요'); persistOpts(); }
+    else fontMsg('적용하지 못했습니다 · 이름이나 주소를 확인해 주세요', true);
+  }
+  $('#fontApply') && $('#fontApply').addEventListener('click', applyFontFromInputs);
+  $('#fontInput') && $('#fontInput').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); applyFontFromInputs(); } });
+  $('#fontClear') && $('#fontClear').addEventListener('click', () => {
+    if($('#fontInput')) $('#fontInput').value = '';
+    if($('#fontFamily')) $('#fontFamily').value = '';
+    toggleFamRow(false);
+    if(window.__userFont) window.__userFont.clear();
+    fontMsg('기본 글씨체로 되돌렸습니다');
+    persistOpts();
+  });
+
   /* 실패는 반드시 눈에 보여야 한다. #msg는 접혀 있는 ‘고급 설정’ 안에 있어서,
      그냥 적어 두기만 하면 파일을 놓아도 아무 일도 안 일어난 것처럼 보였다.
      서랍을 펴고, 그 자리로 데려가고, 토스트로도 알린다. 글자는 textContent로 넣는다. */
@@ -3452,11 +3789,28 @@
     refreshChip();   /* 조회 화면을 떠나면 알림도 함께 접는다 */ $('#pastePanel').classList.remove('hidden');
     if($('#charPanel')) $('#charPanel').classList.remove('hidden');
     $('#saveBtn').classList.add('hidden'); $('#exportBtn').classList.add('hidden'); $('#editBtn').classList.add('hidden');
+    $('#homeBtn').classList.add('hidden');
     $('#findWidget').classList.add('hidden');
     const dt = $('#docTitle'); if(dt) dt.classList.add('hidden');
     /* 편집은 ‘설정 고치기’이므로 수집 안내를 접고 고급 설정을 펼쳐 둔다 */
     $('#pastePanel').classList.add('mode-edit');
     if($('#advBox')) $('#advBox').open = true;
+    if(window.__resetSearch) window.__resetSearch();
+    window.scrollTo(0,0);
+  };
+  /* ‘첫 페이지’는 편집과 달리 수집·불러오기 안내를 편 채로 돌아간다.
+     편집이 ‘설정만 고치기’라면, 이쪽은 아예 처음 화면으로 되돌아오는 길이다. */
+  $('#homeBtn').onclick = () => {
+    cancelHold(true);
+    $('#output').classList.add('hidden');
+    refreshChip();
+    $('#pastePanel').classList.remove('hidden');
+    if($('#charPanel')) $('#charPanel').classList.remove('hidden');
+    $('#saveBtn').classList.add('hidden'); $('#exportBtn').classList.add('hidden'); $('#editBtn').classList.add('hidden');
+    $('#homeBtn').classList.add('hidden');
+    $('#findWidget').classList.add('hidden');
+    const dt = $('#docTitle'); if(dt) dt.classList.add('hidden');
+    $('#pastePanel').classList.remove('mode-edit');   /* 수집 안내(collect-only)를 편다 */
     if(window.__resetSearch) window.__resetSearch();
     window.scrollTo(0,0);
   };
@@ -3598,8 +3952,30 @@
       names.split(/\s+/).filter(Boolean).forEach(n => { o[camel(n)] = v('--' + prefix + '-' + n, ''); });
       return o;
     };
+    /* 게시판에 붙였을 때도 글꼴이 실제로 뜨도록, <style>에 폰트 자체를 함께 싣는다. 인라인 스택엔
+       이름만 실려, 그 글꼴이 없는 에디터(티스토리 등)에서는 시스템 글꼴로 떨어지기 때문이다.
+       파일 주소면 @font-face를, CSS 주소(구글·본명조)면 @import를 짓는다 — @import는 규칙 맨 앞에
+       와야 하므로 styleTag 머리에 붙인다. <style>을 통째로 지우는 에디터에서는 이마저 사라져 예전처럼
+       이름만 남는다(그때는 블로그 스킨 CSS에 폰트를 넣어야 한다 — 인라인엔 @font-face를 못 박는다).
+       표식은 런타임이 fontClean·fontHref로 이미 걸러 둔 값이지만, 여기서도 한 번 더 방어한다(§5.10). */
+    let fontEmbed = '';
+    const dfont = root.getAttribute('data-font');
+    if(dfont === 'serif'){
+      fontEmbed = '@import url("https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;700&display=swap");';
+    } else if(dfont === 'custom'){
+      const efam = (root.getAttribute('data-font-family') || '').replace(/["'\\;{}<>]/g, '');
+      const eurlRaw = (root.getAttribute('data-font-url') || '').trim();
+      const eurl = /^https:\/\/[^\s"'<>]+$/i.test(eurlRaw) ? eurlRaw : '';
+      if(efam && eurl){
+        const em = eurl.match(/\.(woff2|woff|otf|ttf|eot)(?:[?#].*)?$/i);
+        const efmt = em ? ({woff2:'woff2',woff:'woff',otf:'opentype',ttf:'truetype',eot:'embedded-opentype'})[em[1].toLowerCase()] : '';
+        fontEmbed = efmt
+          ? '@font-face{font-family:"' + efam + '";src:url("' + eurl + '") format("' + efmt + '");font-display:swap;}'
+          : '@import url("' + eurl + '");';
+      }
+    }
     return {
-      light: light, dark: dark, font: font, serif: serif,
+      light: light, dark: dark, font: font, serif: serif, fontEmbed: fontEmbed,
       /* 판정 로그의 미세 라벨과 등폭 글씨는 본문 서체를 따르지 않는다. 화면의 --sans·--mono를
          그대로 실어야 명조를 골랐을 때도 두 곳이 같은 글씨로 나온다. */
       sans: quo(v('--sans', '')), mono: quo(v('--mono', '')),
@@ -3640,7 +4016,7 @@
     const wrapBg = withBg ? ';background:' + C('paper') : '';
     const varList = o => keys.map(k => '--ccf-' + k + ':' + o[k]).join(';');
     const scoped = (sels, o) => sels.map(s => s + ' .ccf-post').join(',') + '{' + varList(o) + '}';
-    const styleTag = '<style>.ccf-post,.ccf-post *{box-sizing:border-box}.ccf-post{' + varList(X.light) + '}'
+    const styleTag = '<style>' + X.fontEmbed + '.ccf-post,.ccf-post *{box-sizing:border-box}.ccf-post{' + varList(X.light) + '}'
       + '@media (prefers-color-scheme:dark){.ccf-post{' + varList(X.dark) + '}}'
       + scoped(DARK_SEL, X.dark) + scoped(LIGHT_SEL, X.light)
       + '.ccf-post>*:first-child{margin-top:0;padding-top:0}.ccf-post img{max-width:100%;height:auto}</style>';
@@ -3916,10 +4292,24 @@
     return html;
   }
   const exportOv = $('#exportOv');
-  $('#exportBtn').onclick = () => { if(!lastMessages){ toast('먼저 로그를 변환하세요'); return; } refreshExport(); exportOv.classList.add('open'); };
+  /* 대화상자 접근성: 열 때 초점을 안으로, 닫을 때 부르기 전 자리로. Esc로 닫고 Tab을 안에 가둔다.
+     (내보내기 창은 앱 전용이라 저장한 아카이브에는 실리지 않는다 — 그래도 리더의 키보드 사용성을 위해 갖춘다.) */
+  const exportCard = exportOv.querySelector('.export-card');
+  let exportLastFocus = null;
+  const exportFocusable = () => [...exportOv.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')]
+    .filter(el => !el.disabled && el.offsetParent !== null);
+  const openExport = () => { exportLastFocus = document.activeElement; exportOv.classList.add('open'); const f = exportFocusable(); (f[0] || exportCard).focus(); };
+  const closeExport = () => { exportOv.classList.remove('open'); if(exportLastFocus && exportLastFocus.focus){ try{ exportLastFocus.focus(); }catch(e){} } exportLastFocus = null; };
+  $('#exportBtn').onclick = () => { if(!lastMessages){ toast('먼저 로그를 변환하세요'); return; } refreshExport(); openExport(); };
   $('#expTitle').addEventListener('change', refreshExport);
   $('#expBg').addEventListener('change', refreshExport);
-  exportOv.addEventListener('click', e => { if(e.target === exportOv || e.target.id === 'exportClose') exportOv.classList.remove('open'); });
+  exportOv.addEventListener('click', e => { if(e.target === exportOv || e.target.id === 'exportClose') closeExport(); });
+  exportOv.addEventListener('keydown', e => {
+    if(e.key === 'Escape'){ e.preventDefault(); closeExport(); return; }
+    if(e.key === 'Tab'){ const f = exportFocusable(); if(!f.length) return; const first = f[0], last = f[f.length - 1];
+      if(e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+      else if(!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); } }
+  });
   /* ── 클립보드에 담기 ──
      두 길이 있다. 새 방식(navigator.clipboard)이 막히면 옛 방식(execCommand)으로 내려간다.
      문제는 둘 다 실패해도 예전에는 '복사됨 ✓'이 떴다는 것이다 — execCommand가 돌려주는
