@@ -25,7 +25,21 @@
     --line:#E4E4E7; --line-2:#D4D4D8;
     --accent:#18181B; --on-accent:#FFFFFF; --accent-soft:#F4F4F5;
     --hit:#E4E4E7; --hit-cur:#C7C7CC; --narr-bg:#F3F3F5;
+    /* 잡담 말풍선의 바탕. 내레이션 바탕(--narr-bg)과 같은 결로 두되 한 단계 진하게 잡았다 —
+       메신저의 말풍선은 종이와 구별되는 ‘덩이’여야 하고, 이 값(1.15:1)은 실제 메신저들이
+       흰 바탕에 쓰는 세기와 같다. 글자는 --muted라 이 바탕 위에서 4.7:1로 AA를 넘는다. */
+    --bubble-bg:#EDEDF0;
     --fs:15px; --lh:1.66; --wrap:730px; --radius:0px; --av:55px; --av-radius:0px; --av-zoom:1; --av-focus:top; --gap:16px;
+    /* 곁대화 글 칸이 넓어질 수 있는 데까지 — 우측 정렬한 칸과 말풍선이 함께 쓴다.
+       읽는 폭(--wrap)을 다 쓰게 두면 한쪽에 붙인 티가 나지 않고, 줄이 길어질수록
+       정렬의 들쭉날쭉한 끝이 눈에 걸린다. em이라 글자를 키우면 함께 넓어지고,
+       좁은 화면에서는 min(100%, …)이 알아서 물러선다.
+       게시판 내보내기도 palette()가 이 한 값을 읽어 간다. */
+    --chat-w:32em;
+    /* 잡담 말풍선의 치수 한 벌. 화면의 .turn.bubble 규칙과 게시판용 HTML이 이것만 읽는다(§5.3).
+       --bub-nose는 꼬리가 닿는 모서리의 굴림이다 — 곧은 면이라야 삼각형이 깔끔하게 붙는다.
+       --bub-tail은 꼬리의 길이이자 높이의 절반이고, 그만큼 글 칸에 자리를 비워 둔다. */
+    --bub-pad:10px 14px; --bub-radius:18px; --bub-nose:5px; --bub-tail:7px; --bub-top:13px;
     /* 정보탭 카드의 치수 한 벌. 화면의 .infocard 규칙과 게시판용 HTML을 짓는 infoBlock()이
        이것만 읽는다. 예전에는 같은 숫자를 CSS와 자바스크립트에 따로 적어 두었고,
        그래서 문단 사이가 화면에서는 9px, 붙여 넣은 글에서는 10px로 갈라져 있어도
@@ -60,6 +74,7 @@
   }
   html[data-theme="dark"]{
     --paper:#0E0E10; --surface:#161618; --subtle:#1C1C1F; --subtle-2:#242427;
+    --bubble-bg:#242427;
     /* 어둡게에서는 muted(#A1A1AA, 7.5:1)가 이미 AA를 넘고 faint보다 밝아 위계가 선다.
        faint만 #71717A(3.99:1, 미달)에서 밝혀 AA를 넘긴다(~5.6:1). */
     --ink:#F4F4F5; --ink-2:#D4D4D8; --muted:#A1A1AA; --faint:#8A8A92;
@@ -244,21 +259,28 @@
   /* 옵션이 많아 한눈에 안 들어오던 것을 뜻으로 묶어 가는 선으로 나눈다.
      선을 '다음 덩어리의 첫 줄'에 얹어, 그 줄이 숨으면 선도 함께 사라지게 한다. */
   .adv .field.divide{border-top:1px solid var(--line);margin-top:1.15rem;padding-top:1.15rem;}
-  /* 강조 스타일 네 갈래(티켓·타일·밴드·표기)가 그 제목에 딸린 것임이 드러나게,
-     왼쪽 세로선으로 묶어 한 칸 들여쓴다. */
-  .adv .subopts{display:flex;flex-direction:column;gap:.5rem;margin:.2rem 0 0 3px;padding-left:13px;border-left:1px solid var(--line);}
-  /* 저널 정렬·정보탭은 로그를 불러온 뒤에만 뜬다. 뜰 때만 구분선이 서게 요소 자신에 얹는다.
-     둘이 나란히 뜨면 위 선 하나로 묶어, 가는 선이 겹쳐 촘촘해 보이지 않게 한다. */
-  #jalignWrap,#infoWrap{border-top:1px solid var(--line);margin-top:1.15rem;padding-top:1.15rem;}
-  #jalignWrap:not(.hidden) + #infoWrap{border-top:0;margin-top:.7rem;padding-top:0;}
+  /* 딸린 항목들(강조 스타일 네 갈래, 정보탭·잡담탭의 체크박스)이 바로 위 제목에 속한 것임이
+     드러나게, 왼쪽 세로선으로 묶어 한 칸 들여쓴다. */
+  .adv .subopts{display:flex;flex-direction:column;gap:.5rem;margin:.2rem 0 0 3px;padding-left:13px;border-left:1px solid var(--line);min-width:0;}
+  /* 묶음의 제목. .adv 전체가 --muted라 제목만 한 단계 진하게 올려 두면 위계가 선다 —
+     제목과 딸린 항목의 글자 색이 같으면 어디까지가 제목인지 읽는 사람이 세어 봐야 한다. */
+  .adv .gtitle{display:block;margin-bottom:2px;color:var(--ink-2);font-weight:700;}
+  /* 저널 정렬·정보탭·잡담탭은 로그를 불러온 뒤에만 뜬다. 뜰 때만 구분선이 서게 요소 자신에 얹는다.
+     예전에는 저널 정렬과 정보탭을 위 선 하나로 묶었는데, 그러면 정보탭이 어디서 시작해 어디서
+     끝나는지가 보이지 않았다 — 딸린 항목 셋이 위아래 어디에도 닿지 않은 채 떠 있었다.
+     이제 덩이마다 제 윗선을 세우고, 정보탭에는 아랫선까지 둬 한 칸으로 닫는다.
+     잇달아 뜨면 앞 덩이의 아랫선과 뒤 덩이의 윗선이 같은 자리라, 뒤의 윗선만 남긴다. */
+  #jalignWrap,#infoWrap,#chatWrap{border-top:1px solid var(--line);margin-top:1.15rem;padding-top:1.15rem;}
+  #infoWrap{border-bottom:1px solid var(--line);padding-bottom:1.15rem;}
+  #infoWrap:has(+ #chatWrap:not(.hidden)){border-bottom:0;padding-bottom:0;}
   /* 체크박스는 어디서든 눌리면 까맣게(테마에 따라 잉크색) — '캐릭터 이미지 설정'과 톤을 맞춘다. */
   input[type=checkbox]{accent-color:var(--ink);}
   .jalign{display:flex;flex-direction:column;gap:8px;width:100%;min-width:0;max-width:100%;margin-top:6px;}
-  #infoWrap,#rollStyleWrap,#blankSlotWrap{flex-direction:column;align-items:stretch;gap:.45rem;min-width:0;}
+  #infoWrap,#chatWrap,#rollStyleWrap,#blankSlotWrap{flex-direction:column;align-items:stretch;gap:.45rem;min-width:0;}
   /* 세로로 쌓는 줄에서는 stretch가 세그먼트를 폭 끝까지 늘린다. 글자만큼만 차지하게 둔다. */
   #blankSlotWrap .seg{align-self:flex-start;}
-  #infoWrap > details.adv{min-width:0;max-width:100%;}
-  #infoWrap > details.adv{margin-top:6px;}
+  /* 배치 미세조정도 정보탭 묶음 안(.subopts)에 들어가므로, 딸린 항목들과 같은 간격으로 붙인다 */
+  #infoTuneBox{min-width:0;max-width:100%;margin-top:.15rem;}
   .jrow{display:flex;align-items:center;gap:10px;}
   /* 정보탭 배치 미세조정 목록 */
   .itune{display:flex;flex-direction:column;gap:5px;width:100%;min-width:0;max-width:100%;margin:8px 0 4px;max-height:264px;overflow:auto;}
@@ -387,9 +409,14 @@
   /* 이미지가 없는 저널의 이미지 칸 — 단색으로 채울지, 빈 자리로 둘지, 통째로 접을지는 고급 설정이 정한다.
      칸은 언제나 그려 두고 보이는 방식만 CSS로 갈아 끼운다. 설정을 바꿔도 본문을 다시 그릴 일이 없다. */
   .av.blank{background:var(--subtle);}
-  /* 흰색 화자 색 바꾸기를 켜면, 이미지가 없는 그 화자의 단색 칸도 고른 색으로 채운다.
-     단색 모드에서만 뜻이 있으므로 그때로 좁힌다 — --speaker에는 바뀐 색이 이미 들어 있다. */
-  html[data-avblank="solid"] .turn.whitefix .av.blank{background:var(--speaker,var(--subtle));}
+  /* ‘단색’ — 사라진 캐릭터 이미지 자리를 화자 색으로 채운다.
+     예전에는 --subtle(종이와 1.10:1)로 칠해, 눌러도 아무 일이 없어 보였다. 화자 색으로 채우는
+     규칙은 있었지만 ‘흰색 화자 색 바꾸기’를 켠 줄(.whitefix)에만 걸려 있어, 그 옵션을 안 쓰는
+     사람에게는 영영 닿지 않았다. 이제 모든 줄이 같은 규칙을 탄다 — 흰색을 바꾼 줄은 --speaker에
+     이미 바뀐 색이 들어 있으므로 저절로 따라오고, 따로 좁힐 것이 없어 그 규칙은 없앴다.
+     그림 자리를 그림과 같은 무게의 색 칩이 대신하므로, 이름 색과 짝을 이뤄 누구인지 바로 읽힌다.
+     화자 색조차 없는 저널은 읽히는 회색(--line-2)으로 떨어진다. */
+  html[data-avblank="solid"] .av.blank{background:var(--speaker,var(--line-2));}
   /* 빈 자리로 둘 때는 높이도 놓아 준다 — 안 그러면 한 줄짜리 저널이 그림 높이만큼 부풀어
      그림 없는 캐릭터의 줄만 유독 성기게 벌어진다. 폭만 지키면 글머리는 그대로 맞는다. */
   html[data-avblank="gap"] .av.blank{background:none;box-shadow:none;height:auto;}
@@ -490,6 +517,52 @@
      흐린 --faint에 작은 글씨지만, 잡담은 통째로 읽는 대사라 --muted에 본문 크기 그대로 둔다. 이름도
      함께 재워(--speaker를 덮어) 곁대화임을 한눈에 알린다. 판정 색(roll-ok/ng)은 특이도가 높아 그대로 이긴다. */
   .turn.chat .body,.turn.chat .who{color:var(--muted);}
+  /* 저널 정렬: 우측 — ‘잡담탭 우측 정렬하기’와 저널 정렬의 ‘우측’이 같은 규칙을 쓴다.
+     줄을 뒤집는 것(row-reverse) 하나로 캐릭터 이미지·빈 칸·이어지는 줄의 자리가 통째로
+     오른쪽으로 옮겨 간다. 요소를 새로 만들지 않으므로 저장한 아카이브도 그대로 따라온다.
+     글 칸은 flex:1을 놓아 주고(0 1 auto) 넓어질 한계만 정한다 — 짧은 말은 짧은 만큼만
+     차지하고 긴 말은 --chat-w에서 멈춘다. row-reverse에서는 줄의 시작이 오른쪽이라
+     남는 자리가 저절로 왼쪽에 쌓인다.
+     min-width:0과 본문의 overflow-wrap:anywhere가 함께 있어, 띄어쓰기 없는 긴 주소가 와도
+     칸을 밀어내지 못한다 — 어떤 폭에서도 글이 영역을 벗어나지 않는다. */
+  .turn.right{flex-direction:row-reverse;text-align:right;}
+  .turn.right .content{flex:0 1 auto;max-width:min(100%,var(--chat-w));}
+  .turn.right .head{justify-content:flex-end;}
+  /* 내레이션·정보 카드도 같은 자리로 옮긴다. 가운데(.center)가 왼쪽 들여쓰기를 푸는 것과 짝으로,
+     우측은 그 들여쓰기를 오른쪽으로 옮기고 글을 오른쪽에 붙인다. 정보 카드는 화자 색 선까지
+     오른쪽으로 넘겨야 카드가 뒤집힌 것으로 읽힌다 — 선만 왼쪽에 남으면 어정쩡해 보인다. */
+  .narr.right{margin-left:0;margin-right:calc(var(--av) + var(--gap));text-align:right;}
+  .infocard.right{margin-left:0;margin-right:calc(var(--av) + var(--gap));text-align:right;
+    border-left:1px solid var(--line);border-right:var(--info-rule) solid var(--speaker,var(--line-2));}
+  html[data-img="off"] .narr.right,html[data-img="off"] .infocard.right{margin-right:0;}
+
+  /* ── 잡담탭 말풍선 ──
+     ‘잡담탭을 말풍선처럼 표시하기’를 켜면 곁대화가 메신저의 말풍선으로 나온다.
+     상자는 .body 하나에만 건다 — 이름은 상자 밖 위에 그대로 두어야 메신저처럼 읽힌다.
+     inline-block이라 글만큼만 차지하고, 어느 쪽에 붙을지는 부모의 text-align이 정한다.
+     한 화자가 이어 말하면 렌더가 문단만 이어 붙이므로 상자는 언제나 하나다 — 그래서 발화가
+     아무리 길어져도 꼬리가 여럿 달리거나 상자가 쪼개지지 않는다.
+     상자 안 글은 왼쪽에 붙인다. 오른쪽 말풍선이라도 안쪽까지 오른쪽으로 맞추면 글의 왼쪽 끝이
+     상자의 곧은 면과 어긋나 상자가 새는 것처럼 보인다 — 자리는 상자가, 읽기는 글이 맡는다. */
+  .turn.bubble .body{position:relative;display:inline-block;text-align:left;
+    max-width:min(100%,var(--chat-w));padding:var(--bub-pad);
+    background:var(--bubble-bg);border-radius:var(--bub-radius);border-top-left-radius:var(--bub-nose);}
+  /* 꼬리가 삐져나갈 자리는 글 칸이 미리 비워 둔다. 상자에 음수 여백으로 붙이면 캐릭터 이미지를
+     뺀 판에서 꼬리가 읽는 폭 밖으로 새어 가로 스크롤이 생긴다. */
+  .turn.bubble .content{padding-left:var(--bub-tail);}
+  /* 꼬리는 상자 크기와 무관한 절대 위치라, 글이 몇 줄이 되든 첫 줄 옆에 그대로 붙어 있다 */
+  .turn.bubble .body::after{content:"";position:absolute;top:var(--bub-top);left:calc(var(--bub-tail) * -1);
+    border-style:solid;border-width:var(--bub-tail) var(--bub-tail) var(--bub-tail) 0;
+    border-color:transparent var(--bubble-bg) transparent transparent;}
+  .turn.bubble.right .body{border-top-left-radius:var(--bub-radius);border-top-right-radius:var(--bub-nose);}
+  .turn.bubble.right .content{padding-left:0;padding-right:var(--bub-tail);}
+  .turn.bubble.right .body::after{left:auto;right:calc(var(--bub-tail) * -1);
+    border-width:var(--bub-tail) 0 var(--bub-tail) var(--bub-tail);
+    border-color:transparent transparent transparent var(--bubble-bg);}
+  /* 가운데로 지정한 화자는 꼬리를 뗀다 — 한가운데 뜬 상자가 옆을 가리켜 봐야 가리킬 것이 없다 */
+  .turn.bubble.center .body{border-radius:var(--bub-radius);}
+  .turn.bubble.center .content{padding-left:0;padding-right:0;}
+  .turn.bubble.center .body::after{display:none;}
   /* 판정 강조: 성공은 초록, 실패는 빨강 */
   html[data-roll="on"] .turn.roll-ok .body,html[data-roll="on"] .turn.roll-ok .who{color:var(--ok);}
   html[data-roll="on"] .turn.roll-ng .body,html[data-roll="on"] .turn.roll-ng .who{color:var(--ng);}
@@ -712,7 +785,7 @@
 <div class="panes app-only" id="editPanes">
 <section class="panel app-only" id="pastePanel">
   <!-- 파일을 고칠 때마다 이 날짜를 함께 바꾼다. 빌드 과정이 없는 단일 HTML이라 손으로 적어 둔다. -->
-  <div class="stamp collect-only">업데이트 2026-08-22 18:30</div>
+  <div class="stamp collect-only">업데이트 2026-08-22 21:25</div>
   <div class="alert collect-only" role="status">
     <span class="mk" aria-hidden="true">!</span>
     <div class="atxt">
@@ -727,7 +800,12 @@
         <li>발췌 기능 개선(배경 이미지 업로드·비율 선택 가능·가독성 개선)</li>
         <li>웹 폰트 삽입 기능 추가</li>
         <li>일본어 판정 로그의 한국어 치환 옵션 추가</li>
-        <li>잡담탭 함께 보기(시:분 순서로 끼워 넣기·회색 표시·캐릭터 이미지 빼기 옵션)</li>
+        <li>잡담탭 함께 보기(시:분 순서로 끼워 넣기·회색 표시·말풍선·우측 정렬·캐릭터 이미지 빼기 옵션)</li>
+        <li>저널 정렬에 ‘우측’ 추가(말풍선·내레이션·정보 카드가 함께 따라갑니다)</li>
+        <li>빈 칸 ‘단색’이 화자 색으로 채워지도록 수정(예전에는 종이색과 구별되지 않았습니다)</li>
+        <li>잡담탭 메시지가 내레이션 상자에 합쳐지던 오류 수정</li>
+        <li>내레이션으로 지정한 캐릭터도 캐릭터 이미지 설정에 나오도록 수정</li>
+        <li>캐릭터 이미지 설정의 캐릭터 순서가 옵션을 켤 때마다 바뀌던 오류 수정</li>
         <li>기타 자잘한 오류와 가독성 수정·최적화</li>
       </ol>
       <p class="atail">등등을 적용했습니다.</p>
@@ -804,7 +882,7 @@
       <div class="field"><label><input type="checkbox" id="optRoll"> 주사위·판정 로그도 강조 <span class="jhint">— 성공은 초록, 실패는 빨강으로</span></label></div>
 
       <div class="field" id="rollStyleWrap">
-        <label style="display:block;margin-bottom:2px">주사위·판정 로그 강조 스타일 <span class="jhint">— 하나만 고릅니다 · 아무것도 고르지 않으면 지금처럼 글자색만 바뀝니다</span></label>
+        <label class="gtitle">주사위·판정 로그 강조 스타일 <span class="jhint">— 하나만 고릅니다 · 아무것도 고르지 않으면 지금처럼 글자색만 바뀝니다</span></label>
         <div class="subopts">
           <label><input type="checkbox" id="optRsTicket"> 판정 티켓 <span class="jhint">— 왼쪽 세로선과 큰 숫자가 들어간 작은 표</span></label>
           <label><input type="checkbox" id="optRsTile"> 주사위 타일 <span class="jhint">— 캐릭터 이미지 자리에 주사위 눈을 놓습니다</span></label>
@@ -827,35 +905,41 @@
       <!-- 캐릭터 이미지 설정의 '빈 칸' 줄과 같은 표식(data-av-blank)을 쓴다.
            그래서 어느 쪽을 누르든 두 곳이 함께 움직이고, 담기는 값도 하나다. -->
       <div class="field collect-only" id="blankSlotWrap">
-        <label style="display:block;margin-bottom:2px">빈 칸인 캐릭터 이미지 처리 <span class="jhint">— 캐릭터 이미지가 없는 저널의 이미지 자리를 어떻게 할지 정합니다 · 변환한 뒤 <b>‘캐릭터 이미지 설정’</b>에서도 바꿀 수 있습니다</span></label>
+        <label class="gtitle">빈 칸인 캐릭터 이미지 처리 <span class="jhint">— 캐릭터 이미지가 없는 저널의 이미지 자리를 어떻게 할지 정합니다 · 변환한 뒤 <b>‘캐릭터 이미지 설정’</b>에서도 바꿀 수 있습니다</span></label>
         <span class="seg" role="group" aria-label="빈 칸인 캐릭터 이미지 처리">
           <button type="button" data-av-blank="gap" aria-pressed="true" title="칸을 비워 둡니다 — 글머리는 그대로 맞습니다">비움</button>
-          <button type="button" data-av-blank="solid" aria-pressed="false" title="빈 칸을 단색으로 채웁니다">단색</button>
+          <button type="button" data-av-blank="solid" aria-pressed="false" title="빈 칸을 화자 색으로 채웁니다 — 색이 없는 화자는 옅은 회색으로">단색</button>
           <button type="button" data-av-blank="hide" aria-pressed="false" title="칸을 통째로 접어 글이 왼쪽 끝에서 시작합니다">숨김</button>
         </span>
       </div>
 
       <div class="field jalign-wrap hidden" id="jalignWrap">
-        <label style="display:block;margin-bottom:2px">저널 정렬 <span class="jhint">— 변환 후 캐릭터별 좌측/중앙 지정 · 변경 뒤 ‘변환 · 다시 적용’으로 반영</span></label>
+        <label class="gtitle">저널 정렬 <span class="jhint">— 변환 후 캐릭터별 좌측/중앙/우측 지정 · 변경 뒤 ‘변환 · 다시 적용’으로 반영</span></label>
         <div id="journalAlign" class="jalign"></div>
       </div>
 
       <div class="field jalign-wrap hidden" id="infoWrap">
-        <label style="display:block;margin-bottom:2px">정보탭 <span class="jhint">— ‘메인’ 밖의 탭에서 온 메시지를 시:분 순서대로 본문에 끼워 넣습니다</span></label>
-        <label><input type="checkbox" id="optInfo" checked> 정보탭 함께 보기</label>
-        <label><input type="checkbox" id="optInfoCard" checked> 구분 카드로 표시 <span class="jhint">— 끄면 본문과 똑같이 섞입니다</span></label>
-        <label><input type="checkbox" id="optInfoFirst" checked> 시:분이 겹칠 때 정보를 먼저</label>
-        <details class="adv" id="infoTuneBox">
-          <summary>배치 미세조정 <span id="infoCount" class="imoved"></span></summary>
-          <p style="margin:.55rem 0 0">코코포리아는 시:분까지만 알려 주므로, 같은 분에 겹친 카드는 순서가 어긋날 수 있습니다. 어긋난 것만 손보세요. ‘↳’ 뒤가 바로 앞에 놓인 메시지입니다. 본문의 정보 카드에 마우스를 올려도 같은 버튼이 나옵니다.</p>
-          <div id="infoTune" class="itune"></div>
-          <div class="row"><button class="btn" type="button" id="infoReset">자동 배치로 되돌리기</button><button class="btn hidden" type="button" id="infoUndel">지운 카드 모두 되살리기</button></div>
-        </details>
+        <label class="gtitle">정보탭 <span class="jhint">— ‘메인’ 밖의 탭에서 온 메시지를 시:분 순서대로 본문에 끼워 넣습니다</span></label>
+        <div class="subopts">
+          <label><input type="checkbox" id="optInfo" checked> 정보탭 함께 보기</label>
+          <label><input type="checkbox" id="optInfoCard" checked> 구분 카드로 표시 <span class="jhint">— 끄면 본문과 똑같이 섞입니다</span></label>
+          <label><input type="checkbox" id="optInfoFirst" checked> 시:분이 겹칠 때 정보를 먼저</label>
+          <details class="adv" id="infoTuneBox">
+            <summary>배치 미세조정 <span id="infoCount" class="imoved"></span></summary>
+            <p style="margin:.55rem 0 0">코코포리아는 시:분까지만 알려 주므로, 같은 분에 겹친 카드는 순서가 어긋날 수 있습니다. 어긋난 것만 손보세요. ‘↳’ 뒤가 바로 앞에 놓인 메시지입니다. 본문의 정보 카드에 마우스를 올려도 같은 버튼이 나옵니다.</p>
+            <div id="infoTune" class="itune"></div>
+            <div class="row"><button class="btn" type="button" id="infoReset">자동 배치로 되돌리기</button><button class="btn hidden" type="button" id="infoUndel">지운 카드 모두 되살리기</button></div>
+          </details>
+        </div>
       </div>
       <div class="field jalign-wrap hidden" id="chatWrap">
-        <label style="display:block;margin-bottom:2px">잡담탭 <span class="jhint">— ‘잡담’ 탭 메시지를 시:분 순서대로 본문에 끼워 넣고 회색으로 보여 줍니다</span></label>
-        <label><input type="checkbox" id="optChat" checked> 잡담탭 함께 보기</label>
-        <label><input type="checkbox" id="optChatNoImg"> 잡담탭의 캐릭터 이미지 빼기 <span class="jhint">— 잡담 메시지를 캐릭터 이미지 없이 냅니다</span></label>
+        <label class="gtitle">잡담탭 <span class="jhint">— ‘잡담’ 탭 메시지를 시:분 순서대로 본문에 끼워 넣고 회색으로 보여 줍니다</span></label>
+        <div class="subopts">
+          <label><input type="checkbox" id="optChat" checked> 잡담탭 함께 보기</label>
+          <label><input type="checkbox" id="optChatBubble"> 잡담탭을 말풍선처럼 표시하기 <span class="jhint">— 메신저처럼 둥근 말풍선에 담습니다 · 같은 화자가 이어 말하면 한 말풍선으로 묶입니다</span></label>
+          <label><input type="checkbox" id="optChatRight"> 잡담탭 우측 정렬하기 <span class="jhint">— 잡담 메시지를 오른쪽 끝에 붙여 본문 줄기와 갈라 놓습니다</span></label>
+          <label><input type="checkbox" id="optChatNoImg"> 잡담탭의 캐릭터 이미지 빼기 <span class="jhint">— 잡담 메시지를 캐릭터 이미지 없이 냅니다</span></label>
+        </div>
       </div>
       <div id="msg"></div>
     </details>
@@ -929,7 +1013,7 @@
       <span class="setval">
         <span class="seg" role="group" aria-label="이미지가 없는 저널의 이미지 칸">
           <button type="button" data-av-blank="gap" aria-pressed="true" title="칸을 비워 둡니다 — 글머리는 그대로 맞습니다">비움</button>
-          <button type="button" data-av-blank="solid" aria-pressed="false" title="빈 칸을 단색으로 채웁니다">단색</button>
+          <button type="button" data-av-blank="solid" aria-pressed="false" title="빈 칸을 화자 색으로 채웁니다 — 색이 없는 화자는 옅은 회색으로">단색</button>
           <button type="button" data-av-blank="hide" aria-pressed="false" title="칸을 통째로 접어 글이 왼쪽 끝에서 시작합니다">숨김</button>
         </span>
       </span>
@@ -2385,6 +2469,13 @@
   }
 
   /* ── 렌더 ── */
+  /* 저널 정렬은 셋 중 하나다. 목록에 없는 값(옛 초안이 들고 올 수 있다)은 좌측으로 떨어진다.
+     좌측을 맨 앞에 둔 것은 ‘담기지 않는 기본값’이라는 뜻이다 — indexOf가 0이면 지운다. */
+  const ALIGNS = ['left', 'center', 'right'];
+  const alignPick = (opts, name) => {
+    const v = name && opts && opts.align && opts.align[name];
+    return ALIGNS.indexOf(v) > 0 ? v : 'left';
+  };
   const normName = s => (s||'').trim().toLowerCase();
   const narratorSet = opts => new Set(((opts && Array.isArray(opts.narrators)) ? opts.narrators : ['GM']).map(normName).filter(Boolean));
   const stripEdit = s => s.replace(/\s*\[편집 완료\]/g, '').trim();
@@ -2404,8 +2495,12 @@
      그래서 '무엇을'은 여기서 한 번만 정하고, 두 렌더러는 '어떻게'만 맡는다.
      생김새의 숫자는 :root의 --info-* 한 벌이 맡는다. */
   function infoSpec(m, P, opts){
+    const al = alignPick(opts, m.name);
     return {
-      center: !!(opts.align && m.name && opts.align[m.name] === 'center'),
+      /* 정보 카드도 저널 정렬을 탄다. center는 예전 이름을 그대로 두어 부르는 쪽이 안 흔들리게 하고,
+         셋을 가리는 자리에는 align을 쓴다. 판정 로그(rollSpec)는 우측을 타지 않는다 —
+         네 모양이 저마다 폭과 자리를 잡아 둔 것이라, 뒤집으면 그 안의 배치가 흔들린다. */
+      align: al, center: al === 'center',
       tag: m.tab || '정보',
       lines: P,
       /* 화자 색이 없으면 빈 값을 준다. 받는 쪽이 저마다 제 테마의 --line-2로 떨어뜨린다 */
@@ -2417,7 +2512,7 @@
   function infoCard(m, P, opts){
     const S = infoSpec(m, P, opts);
     const w = document.createElement('div');
-    w.className = 'infocard' + (S.center ? ' center' : '');
+    w.className = 'infocard' + (S.align === 'left' ? '' : ' ' + S.align);
     if(S.accent) w.style.setProperty('--speaker', S.accent);
     w.dataset.mid = midOf(m);
     /* 라벨은 탭 이름만. 화자는 왼쪽 테두리 색으로 남고, 시각은 미세조정 목록에서 본다. */
@@ -2737,12 +2832,18 @@
     bookSlots = [];
     const slot = (el, m) => { if(el) bookSlots.push({ el: el, mid: midOf(m) }); };
     let prevName = null, prevAv = '', curNarr = null;
-    const alignOf = name => (name && opts.align && opts.align[name] === 'center') ? 'center' : 'left';
+    /* 지금 이어 쓰고 있는 잡담 말풍선. 같은 화자가 이어 말하면 새 줄을 세우지 않고
+       이 상자에 문단만 잇는다 — 상자가 하나여야 꼬리도 하나다. */
+    let curBubble = null;
+    const alignOf = name => alignPick(opts, name);
     const narrators = narratorSet(opts); const isNarr = m => narrators.has(normName(m.name));
     const narrLead = (Array.isArray(opts.narrators) && opts.narrators[0]) || 'GM';
 
     shown.forEach(m => {
       const noise = m.dice;
+      /* ‘잡담’ 탭 줄 — 회색으로 물러앉히고, 옵션에 따라 오른쪽으로 붙이거나 캐릭터 이미지를 뺀다.
+         어느 갈래로 보낼지를 가르는 데도 쓰이므로 맨 앞에서 한 번만 가린다. */
+      const chat = isChat(m);
       const P = cleanParas(m.paras);
       /* 남는 글이 없으면 통째로 접는다. 코코포리아가 붙이는 '[편집 완료]' 표식만 있던 줄은
          표식을 떼고 나면 아무것도 남지 않아, 놔두면 이름표만 붙은 빈 말풍선이 된다.
@@ -2750,31 +2851,42 @@
       if(!P.length) return;
 
       if(isInfo(m) && opts.infoCard !== false){
-        prevName = null; curNarr = null;
+        prevName = null; curNarr = null; curBubble = null;
         const el = infoCard(m, P, opts);
         book.appendChild(el); slot(el, m);
         return;
       }
       if(m.status){
-        prevName = null; curNarr = null;
+        prevName = null; curNarr = null; curBubble = null;
         const S = sysSpec(m, P, 'status');
         const el = sysNote(S.lines, S.label);
         book.appendChild(el); slot(el, m);
         return;
       }
-      const asNarr = !!m.system && !noise && !!opts.sysNarr;
+      /* 잡담탭 줄은 내레이션으로 흘려보내지 않는다. 곁대화는 주고받는 말이라, 내레이션으로
+         지정해 둔 캐릭터(GM 등)가 잡담탭에서 한 말까지 내레이션 상자에 밀어 넣으면 이름도
+         캐릭터 이미지도 없이 앞뒤 서술과 한 덩어리가 되어, 누가 한 말인지가 사라진다.
+         그래서 잡담탭은 언제나 말풍선 갈래로 보낸다. 화자가 없는 /system 줄도 마찬가지로
+         내레이션에 합치지 않고, ‘/system을 내레이션으로’를 끈 때처럼 가운데 시스템 노트로 낸다. */
+      const asNarr = !!m.system && !noise && !!opts.sysNarr && !chat;
       if(m.system && !noise && !asNarr){
-        prevName = null; curNarr = null;
+        prevName = null; curNarr = null; curBubble = null;
         const S = sysSpec(m, P, 'system');
         const el = sysNote(S.lines, S.label);
         book.appendChild(el); slot(el, m);
         return;
       }
-      if((isNarr(m) || asNarr) && !noise){
-        prevName = null;
+      if((isNarr(m) || asNarr) && !noise && !chat){
+        prevName = null; curBubble = null;
+        /* 내레이션은 캐릭터 이미지를 그리지 않지만, 그 캐릭터도 설정 목록에는 올려 둔다.
+           여기서 빠뜨리면 내레이션으로 지정한 캐릭터는 대사가 모두 이 갈래로 새어 나가
+           ‘캐릭터 이미지 설정’에서 통째로 사라진다 — 잡담탭에서는 같은 캐릭터의 그림이
+           실제로 그려지는데도 손볼 길이 없었다. 아래 판정 갈래에 같은 취지의 한 줄이 있다. */
+        if(!opts.noImages && m.avatar) noteAvatar(m);
         const who = asNarr ? narrLead : (m.name || 'GM');
         if(!curNarr){
-          curNarr = document.createElement('div'); curNarr.className = 'narr' + (alignOf(who)==='center' ? ' center' : ''); curNarr.dataset.who = who;
+          const nAl = alignOf(who);
+          curNarr = document.createElement('div'); curNarr.className = 'narr' + (nAl === 'left' ? '' : ' ' + nAl); curNarr.dataset.who = who;
           const b = document.createElement('div'); b.className = 'body'; curNarr.appendChild(b); book.appendChild(curNarr);
         }
         const b = curNarr.querySelector('.body');
@@ -2800,6 +2912,10 @@
              모두 내레이션·판정 갈래로 빠져, ‘강조’를 켜는 순간 설정에서 통째로 사라졌다.
              아래 일반 줄 갈래의 noteAvatar와 같은 취지다(안 그려질 그림도 남긴다). */
           if(!opts.noImages && m.avatar) noteAvatar(m);
+          /* 판정은 prevName을 일부러 안 지운다(굴린 사람의 다음 말을 한 덩어리로 읽히게).
+             그래서 말풍선 잇기만은 여기서 끊어야 한다 — 안 그러면 판정 줄을 건너뛰고
+             그 앞 말풍선에 뒷말이 붙어, 화면에 보이는 차례와 어긋난다. */
+          curBubble = null;
           book.appendChild(rb); slot(rb, m); return;
         }
       }
@@ -2808,22 +2924,43 @@
       /* 합쳐 놓았더라도 서 있는 그림이 바뀐 자리에서는 캐릭터 이미지를 한 번 더 낸다.
          이름은 다시 적지 않는다 — 같은 사람이 표정만 바꾼 것이지 새 화자가 아니다. */
       const avSwap = !!(same && opts.avChange && m.avatar && prevAv && m.avatar !== prevAv);
-      const center = alignOf(m.name) === 'center';
+      /* 이 덩어리가 기대는 그림. 이어지는 줄은 제 그림이 없어도 첫 줄의 그림을 따라간다.
+         비어 있으면 ‘이미지가 없는 저널’ — 칸을 어떻게 할지는 고급 설정이 정한다. */
+      const cont = same && !avSwap;
+      const slotAv = m.avatar || (same ? prevAv : '');
+      const al = alignOf(m.name);
+      const center = al === 'center';
+      /* 오른쪽으로 붙일지 — 저널 정렬에서 이 화자를 ‘우측’으로 지정했거나, ‘잡담탭 우측 정렬하기’를
+         켠 잡담 줄이다. 가운데로 지정한 화자에게는 탭 설정을 걸지 않는다 — 사람이 캐릭터마다
+         콕 집어 고른 자리가 탭 전체에 거는 설정에 밀려서는 안 된다. */
+      const right = al === 'right' || (chat && !!opts.chatRight && !center);
+      /* 말풍선은 잡담탭에만. 주사위·판정 줄은 제 모양이 따로 있으므로 태우지 않는다. */
+      const bubble = chat && !!opts.chatBubble && !noise;
       const roll = noise ? rollTint(P.join(' ')) : '';
-      const turn = document.createElement('article');
-      const chat = isChat(m);   /* ‘잡담’ 탭 줄 — 회색으로 물러앉히고, 옵션이면 캐릭터 이미지도 뺀다 */
-      turn.className = 'turn' + (same && !avSwap ? ' cont' : '') + (noise ? ' muted' : '') + (center ? ' center' : '') + (roll ? ' roll-' + roll : '') + (chat ? ' chat' : '') + (m._wf ? ' whitefix' : '');
-      turn.dataset.who = m.name || (m.system ? '시스템' : '');
-      if(m.color) turn.style.setProperty('--speaker', m.color);
 
       /* 캐릭터 이미지를 뺄지 — 전체(noImages)이거나, ‘잡담탭의 캐릭터 이미지 빼기’가 켜진 잡담 줄이면 뺀다.
          뺄 줄은 설정 목록(noteAvatar)에도 올리지 않는다 — 어차피 안 그려질 그림에 자리를 만들어 헷갈리지 않게. */
       const dropAv = opts.noImages || (chat && opts.chatNoImg);
       if(!dropAv && m.avatar) noteAvatar(m);   /* 합쳐서 안 그려질 그림도 설정 목록에는 남긴다 */
-      /* 이 덩어리가 기대는 그림. 이어지는 줄은 제 그림이 없어도 첫 줄의 그림을 따라간다.
-         비어 있으면 ‘이미지가 없는 저널’ — 칸을 어떻게 할지는 고급 설정이 정한다. */
-      const cont = same && !avSwap;
-      const slotAv = m.avatar || (same ? prevAv : '');
+
+      /* 말풍선을 켠 채 같은 화자가 이어 말하면, 새 줄을 세우지 않고 앞 말풍선에 문단만 잇는다.
+         상자를 줄마다 세우면 아무리 바짝 붙여 놔도 꼬리가 여러 개 달리고, 이어지는 말이
+         상자 밖에서 끊긴다. 자리(slot)는 내레이션과 같은 방식으로 ‘이번에 새로 생긴 첫 문단’에
+         건다 — 덩어리를 통째로 자리로 삼으면 그 중심이 뒷줄보다 아래로 내려가 차례가 엉킨다. */
+      if(bubble && cont && curBubble){
+        const b = curBubble.querySelector('.body');
+        const at = b.childElementCount;
+        paras(b, P);
+        if(b.children[at]) slot(b.children[at], m);
+        if(m.avatar) prevAv = m.avatar;
+        return;
+      }
+      curBubble = null;
+
+      const turn = document.createElement('article');
+      turn.className = 'turn' + (cont ? ' cont' : '') + (noise ? ' muted' : '') + (center ? ' center' : '') + (roll ? ' roll-' + roll : '') + (chat ? ' chat' : '') + (right ? ' right' : '') + (bubble ? ' bubble' : '') + (m._wf ? ' whitefix' : '');
+      turn.dataset.who = m.name || (m.system ? '시스템' : '');
+      if(m.color) turn.style.setProperty('--speaker', m.color);
       if(dropAv){ /* 캐릭터 이미지를 아예 그리지 않고 자리도 접는다 */ }
       else if(center){
         if(!cont && m.avatar) turn.appendChild(avatarBox(m));
@@ -2835,7 +2972,7 @@
 
       const content = document.createElement('div'); content.className = 'content';
       if(!same && m.name){ const head = document.createElement('div'); head.className='head'; const who=document.createElement('span'); who.className='who'; who.textContent=m.name; head.appendChild(who); content.appendChild(head); }
-      if(P.length){ const b=document.createElement('div'); b.className='body'; paras(b, P); content.appendChild(b); }
+      if(P.length){ const b=document.createElement('div'); b.className='body'; paras(b, P); content.appendChild(b); if(bubble) curBubble = turn; }
       turn.appendChild(content);
       book.appendChild(turn); slot(turn, m);
       /* 덩어리 안에서 한 줄만 그림이 빠져도 그 덩어리가 쓰던 그림은 잊지 않는다 */
@@ -2883,7 +3020,7 @@
       ? { fam:R.getAttribute('data-font-family'), url:R.getAttribute('data-font-url'), raw:($('#fontInput') ? $('#fontInput').value : '') }
       : null;
     try{
-      localStorage.setItem(KEY, JSON.stringify({ t:title, o:{merge:opts.merge, avChange:opts.avChange, hideNoise:opts.hideNoise, avatarKey:opts.avatarKey, showStatus:opts.showStatus, align:opts.align, narrators:opts.narrators, avShape:opts.avShape, avSize:opts.avSize, avZoom:opts.avZoom, avFocus:opts.avFocus, avPer:avState, avImg:avImgState, rollHighlight:opts.rollHighlight, rollStyle:opts.rollStyle, sysNarr:opts.sysNarr, jaKo:opts.jaKo, whiteFix:opts.whiteFix, whiteColor:opts.whiteColor, withInfo:opts.withInfo, infoCard:opts.infoCard, infoFirst:opts.infoFirst, withChat:opts.withChat, chatNoImg:opts.chatNoImg, noImages:opts.noImages, noImgSlot:opts.noImgSlot}, ft:ft, m:(rawMessages && rawMessages.length ? rawMessages : messages), mv:moveState, dl:delState, at:Date.now() }));
+      localStorage.setItem(KEY, JSON.stringify({ t:title, o:{merge:opts.merge, avChange:opts.avChange, hideNoise:opts.hideNoise, avatarKey:opts.avatarKey, showStatus:opts.showStatus, align:opts.align, narrators:opts.narrators, avShape:opts.avShape, avSize:opts.avSize, avZoom:opts.avZoom, avFocus:opts.avFocus, avPer:avState, avImg:avImgState, rollHighlight:opts.rollHighlight, rollStyle:opts.rollStyle, sysNarr:opts.sysNarr, jaKo:opts.jaKo, whiteFix:opts.whiteFix, whiteColor:opts.whiteColor, withInfo:opts.withInfo, infoCard:opts.infoCard, infoFirst:opts.infoFirst, withChat:opts.withChat, chatBubble:opts.chatBubble, chatRight:opts.chatRight, chatNoImg:opts.chatNoImg, noImages:opts.noImages, noImgSlot:opts.noImgSlot}, ft:ft, m:(rawMessages && rawMessages.length ? rawMessages : messages), mv:moveState, dl:delState, at:Date.now() }));
     }catch(e){
       /* 대개 용량 초과다. 조용히 넘기면 '자동 보관됩니다'라는 첫 화면의 약속이
          큰 세션에서만 말없이 깨지고, 사용자는 새로고침한 뒤에야 알게 된다.
@@ -2956,6 +3093,8 @@
       if($('#optInfoCard')) $('#optInfoCard').checked = !(d.o && d.o.infoCard === false);
       if($('#optInfoFirst')) $('#optInfoFirst').checked = !(d.o && d.o.infoFirst === false);
       if($('#optChat')) $('#optChat').checked = !(d.o && d.o.withChat === false);
+      if($('#optChatBubble')) $('#optChatBubble').checked = !!(d.o && d.o.chatBubble);
+      if($('#optChatRight')) $('#optChatRight').checked = !!(d.o && d.o.chatRight);
       if($('#optChatNoImg')) $('#optChatNoImg').checked = !!(d.o && d.o.chatNoImg);
       if($('#optNoImg')) $('#optNoImg').checked = !!(d.o && d.o.noImages);
       setBlank((d.o && d.o.noImgSlot) || 'gap');
@@ -2985,6 +3124,28 @@
   function avSet(row, v){ if(row.dataset.src) avImgState[row.dataset.src] = v; else avState[row.dataset.name] = v; }
   function avClear(row){ if(row.dataset.src) delete avImgState[row.dataset.src]; else delete avState[row.dataset.name]; }
   const sameDim = (a, b) => !!(a && b && a.w === b.w && a.h === b.h);
+
+  /* ── 목록에 세울 차례 ──
+     목록은 렌더가 훑은 차례대로 쌓인다(noteAvatar). 그런데 무엇을 어느 차례로 훑을지는
+     설정이 정한다 — ‘잡담탭 함께 보기’를 켜면 잡담 줄이 시간축에 끼어들면서 누가 먼저
+     나왔는지가 통째로 뒤바뀌었고, 손보던 캐릭터가 목록 아래로 떠내려갔다.
+     그래서 차례만은 설정이 손댈 수 없는 것에 물린다 — 수집한 원본 로그에서 처음 나온 자리다.
+     목록에 누가 오르는지는 예전 그대로 렌더가 정하고(안 그려질 그림은 안 올린다),
+     오른 사람들을 세우는 차례만 이 표를 본다. 원본이 그대로면 표도 그대로라 한 번만 짓는다. */
+  let avRankSrc = null, avRank = new Map(), avPicRank = new Map();
+  function avRanks(){
+    if(avRankSrc === rawMessages) return;
+    avRankSrc = rawMessages; avRank = new Map(); avPicRank = new Map();
+    (rawMessages || []).forEach((m, i) => {
+      if(m.name && !avRank.has(m.name)) avRank.set(m.name, i);
+      if(m.avatar && !avPicRank.has(m.avatar)) avPicRank.set(m.avatar, i);
+    });
+  }
+  /* 원본에 없는 이름·그림은 맨 뒤로 보내되, 저희끼리는 쌓인 차례를 지킨다 */
+  const avSortBy = (map, arr) => arr
+    .map((x, i) => [x, map.has(x) ? map.get(x) : Infinity, i])
+    .sort((a, b) => (a[1] - b[1]) || (a[2] - b[2]))
+    .map(x => x[0]);
 
   /* 그림 크기는 한 번만 재고 기억해 둔다 — '크기가 다른 그림'을 골라내는 유일한 근거다.
      로그에 이미 떠 있는 그림이라 대개 캐시에서 즉시 돌아온다. */
@@ -3046,7 +3207,12 @@
     if(!avNames.length){ if(wrap) wrap.classList.add('hidden'); box.innerHTML = ''; return; }
     if(wrap) wrap.classList.remove('hidden');
     box.innerHTML = '';
-    avNames.forEach(name => {
+    avRanks();
+    /* 그림 차례도 함께 못박는다. 맨 앞 그림은 얼굴 그림이자 ‘크기 다른 것’을 재는 잣대라,
+       여기서 흔들리면 크기 경고까지 켤 때마다 달라진다. 담아 둔 배열 자체를 세워 두어
+       syncAvRows가 보는 것과 목록에 그려진 것이 어긋나지 않게 한다. */
+    avPicsAll.forEach((pics, name) => { const o = avSortBy(avPicRank, pics); pics.length = 0; pics.push.apply(pics, o); });
+    avSortBy(avRank, avNames).forEach(name => {
       const pics = avPicsAll.get(name) || [];
       box.appendChild(makeAvRow(name, pics[0] || '', false));
       /* 그림이 둘 이상이면 한 장씩 따로 맞출 수 있게 접어 둔다 */
@@ -3134,11 +3300,11 @@
     if(wrap) wrap.classList.remove('hidden');
     box.innerHTML = '';
     names.forEach(name => {
-      const cur = alignState[name] === 'center' ? 'center' : 'left';
+      const cur = ALIGNS.indexOf(alignState[name]) > 0 ? alignState[name] : 'left';
       const row = document.createElement('div'); row.className = 'jrow'; row.dataset.name = name;
       const nm = document.createElement('span'); nm.className = 'jname'; nm.textContent = name;
       const seg = document.createElement('span'); seg.className = 'seg jseg';
-      [['left','좌측'],['center','중앙']].forEach(([al, lab]) => {
+      [['left','좌측'],['center','중앙'],['right','우측']].forEach(([al, lab]) => {
         const b = document.createElement('button'); b.type = 'button'; b.dataset.align = al; b.textContent = lab;
         b.setAttribute('aria-pressed', cur === al ? 'true' : 'false');
         seg.appendChild(b);
@@ -3629,7 +3795,7 @@
     if(a === 'reset'){ moveState = {}; recompose(); toast('정보 카드를 자동 배치로 되돌렸습니다'); }
     else if(a === 'undel'){ delState = {}; recompose(); toast('지운 정보 카드를 모두 되살렸습니다'); }
   });
-  ['#optInfo', '#optInfoCard', '#optInfoFirst', '#optChat', '#optChatNoImg'].forEach(sel => {
+  ['#optInfo', '#optInfoCard', '#optInfoFirst', '#optChat', '#optChatBubble', '#optChatRight', '#optChatNoImg'].forEach(sel => {
     const el = $(sel); if(el) el.addEventListener('change', recompose);
   });
 
@@ -3665,7 +3831,8 @@
     const b = e.target.closest('button[data-align]'); if(!b) return;
     const row = b.closest('.jrow'); if(!row) return;
     const name = row.dataset.name, al = b.dataset.align;
-    if(al === 'center') alignState[name] = 'center'; else delete alignState[name];
+    /* 기본값(좌측)은 담지 않는다 — 담아 두면 손대지 않은 화자와 구별이 안 되고 초안만 커진다 */
+    if(ALIGNS.indexOf(al) > 0) alignState[name] = al; else delete alignState[name];
     row.querySelectorAll('button[data-align]').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));
   });
 
@@ -3690,7 +3857,8 @@
   const rollPick = () => { const f = ROLL_PICKS.filter(x => chk(x[0], false))[0]; return f ? f[1] : ''; };
   const currentOpts = () => ({ avatarKey: 'avatar', merge: $('#optMerge').checked, avChange: chk('#optAvChange', false),
     withInfo: chk('#optInfo', true), infoCard: chk('#optInfoCard', true), infoFirst: chk('#optInfoFirst', true),
-    withChat: chk('#optChat', true), chatNoImg: chk('#optChatNoImg', false),
+    withChat: chk('#optChat', true), chatBubble: chk('#optChatBubble', false),
+    chatRight: chk('#optChatRight', false), chatNoImg: chk('#optChatNoImg', false),
     noImages: chk('#optNoImg', false), noImgSlot: blankPick(), hideNoise: !$('#optNoise').checked, showStatus: $('#optStatus') ? $('#optStatus').checked : false, align: alignState, narrators: parseNarr($('#narrNames') ? $('#narrNames').value : 'GM'), title: '',
     avShape: avShapeNow(), avSize: parseInt(($('#avSize') ? $('#avSize').value : 55), 10) || 55,
     avFocus: avFocusNow(), avZoom: parseInt(($('#avZoom') ? $('#avZoom').value : 100), 10) || 100, avPer: avState, avImg: avImgState, rollHighlight: !!($('#optRoll') && $('#optRoll').checked), rollStyle: rollPick(), sysNarr: !!($('#optSysNarr') && $('#optSysNarr').checked), jaKo: chk('#optJaKo', false),
@@ -4022,13 +4190,15 @@
 
   /* 테마에 따라 갈리는 색만 추린다. 키 이름이 그대로 --ccf-<키>가 된다. */
   const THEME_VARS = {ink:'--ink', ink2:'--ink-2', muted:'--muted', faint:'--faint',
-    line:'--line', line2:'--line-2', ok:'--ok', ng:'--ng', paper:'--paper', narr:'--narr-bg'};
+    line:'--line', line2:'--line-2', ok:'--ok', ng:'--ng', paper:'--paper', narr:'--narr-bg',
+    bubble:'--bubble-bg'};
   /* '배경색 넣기'를 끄면 빠지는 키. 배경을 비우면 게시판 스킨 배경이 그대로 비친다. */
-  const BG_KEYS = ['paper', 'narr'];
+  const BG_KEYS = ['paper', 'narr', 'bubble'];
   /* 배경을 뺐을 때 내레이션 블록에 대신 얹는 틴트. 글자색에서 뽑으므로 어떤 스킨 위에서도 겉돌지 않는다. */
   const NARR_TINT = 'color-mix(in srgb,currentColor 6%,transparent)';
-  /* 이미지가 없는 저널을 단색으로 채울 때 쓰는 색. 역시 글자색에서 뽑으므로 배경을 빼도 겉돌지 않는다. */
-  const BLANK_TINT = 'color-mix(in srgb,currentColor 9%,transparent)';
+  /* 말풍선도 같은 방식이다 — 배경을 빼면 글자색에서 뽑은 틴트로 갈아, 어떤 스킨 위에서도 상자가 보인다.
+     내레이션보다 한 단계 진하게 잡은 것은 말풍선이 종이와 구별되는 ‘덩이’여야 하기 때문이다. */
+  const BUBBLE_TINT = 'color-mix(in srgb,currentColor 10%,transparent)';
   /* 블로그 스킨이 다크·라이트를 표시하는 흔한 방식들. 수동 토글까지 따라가려는 목록이다. */
   const DARK_SEL  = ['[data-theme="dark"]','[data-color-scheme="dark"]','[data-dark-mode="true"]','html.dark','body.dark','html.dark-mode','body.dark-mode','.theme-dark'];
   const LIGHT_SEL = ['[data-theme="light"]','[data-color-scheme="light"]','[data-dark-mode="false"]','html.light','body.light','html.light-mode','body.light-mode','.theme-light'];
@@ -4105,6 +4275,8 @@
       avf: (v('--av-focus', 'top').trim() || 'top'),
       gap: parseFloat(v('--gap', '16px')) || 16,
       wrap: parseFloat(v('--wrap', '730px')) || 730,
+      chatW: v('--chat-w', ''),
+      bub:  group('bub',  'pad radius nose tail top'),
       info: group('info', 'gap-y pad lbl-gap tag-fs tag-ls p-gap rule'),
       sys:  group('sys',  'wrap gap-y pad fs lh p-gap lbl-fs lbl-ls lbl-gap'),
       rx:   group('rx',
@@ -4144,9 +4316,26 @@
     /* OS 다크모드 오버라이드는 배경을 넣을 때만 싣는다(위 주석). 스킨을 명시하는
        DARK_SEL/LIGHT_SEL은 배경 유무와 무관하게 늘 실어, 게시판의 다크·라이트 표식은 따라간다. */
     const mediaDark = withBg ? '@media (prefers-color-scheme:dark){.ccf-post{' + varList(X.dark) + '}}' : '';
+    /* 말풍선의 바탕과 치수. 배경을 뺀 판에서는 글자색에서 뽑은 틴트로 간다(내레이션과 같은 규칙). */
+    const BX = X.bub;
+    const bubBg = withBg ? C('bubble') : BUBBLE_TINT;
+    /* 꼬리는 ::after라 인라인 스타일에 못 박는다 — 규칙이지 요소의 속성이 아니기 때문이다.
+       그래서 이 한 조각만 <style>에 싣는다. <style>을 통째로 지우는 편집기에서는 꼬리만 빠지고
+       둥근 말풍선은 그대로 남는다 — 글꼴·다크모드가 이미 지고 있는 것과 같은 한계다.
+       말풍선을 안 켠 로그에는 아예 싣지 않는다 — 맞는 요소가 하나도 없는 규칙을 붙여 넣는 글마다
+       퍼뜨릴 까닭이 없다. 그래서 켜지 않은 세션의 내보내기는 글자 하나까지 예전 그대로다. */
+    const bubTail = !opts.chatBubble ? '' : '.ccf-post .ccf-bub{position:relative}'
+      + '.ccf-post .ccf-bub::after{content:"";position:absolute;top:' + BX.top + ';left:-' + BX.tail
+      + ';border-style:solid;border-width:' + BX.tail + ' ' + BX.tail + ' ' + BX.tail + ' 0'
+      + ';border-color:transparent ' + bubBg + ' transparent transparent}'
+      + '.ccf-post .ccf-bub.r::after{left:auto;right:-' + BX.tail
+      + ';border-width:' + BX.tail + ' 0 ' + BX.tail + ' ' + BX.tail
+      + ';border-color:transparent transparent transparent ' + bubBg + '}'
+      + '.ccf-post .ccf-bub.c::after{display:none}';
     const styleTag = '<style>' + X.fontEmbed + '.ccf-post,.ccf-post *{box-sizing:border-box}.ccf-post{' + varList(X.light) + '}'
       + mediaDark
       + scoped(DARK_SEL, X.dark) + scoped(LIGHT_SEL, X.light)
+      + bubTail
       + '.ccf-post>*:first-child{margin-top:0;padding-top:0}.ccf-post img{max-width:100%;height:auto}</style>';
 
     /* gap은 문단 사이. 안 주면 지금까지의 10px 그대로다 — 정보탭 카드만 제 치수(--info-p-gap)를 준다 */
@@ -4164,13 +4353,13 @@
     /* 이미지가 없는 저널의 이미지 칸 — 화면과 같은 세 갈래를 인라인 스타일로 옮긴다 */
     const bmode = blankMode(opts);
     const spacerHTML = '<div style="width:' + X.av + 'px;flex:0 0 ' + X.av + 'px;"></div>';
-    /* tint이 오면(흰색 화자 색 바꾸기가 걸린 줄) 단색 칸을 그 색으로 채운다. 화면의
-       html[data-avblank="solid"] .turn.whitefix .av.blank 규칙과 짝이다(§5.3). */
+    /* 단색 칸은 화자 색으로 채운다. 색이 없는 저널만 읽히는 회색으로 떨어진다 —
+       화면의 html[data-avblank="solid"] .av.blank{background:var(--speaker,var(--line-2))}와 짝이다(§5.3). */
     const blankHTML = (first, tint) => {
       if(bmode === 'hide') return '';
       if(bmode === 'solid' && first)
         return '<div style="width:' + X.av + 'px;height:' + X.av + 'px;flex:0 0 ' + X.av + 'px;overflow:hidden;border-radius:' + X.avr
-          + ';box-shadow:0 0 0 1px ' + C('line') + ';background:' + (tint ? esc(tint) : BLANK_TINT) + ';"></div>';
+          + ';box-shadow:0 0 0 1px ' + C('line') + ';background:' + (tint ? esc(tint) : C('line2')) + ';"></div>';
       return spacerHTML;
     };
     /* 시스템 노트 — 무엇을 실을지는 sysSpec()이, 치수는 :root의 --sys-* 한 벌(X.sys)이 정한다.
@@ -4192,8 +4381,11 @@
       if(m.dice) return !opts.hideNoise;
       return true;
     });
-    const alignOf = name => (name && opts.align && opts.align[name] === 'center') ? 'center' : 'left';
-    const parts = []; let prevName = null, prevAv = '', narr = null, narrCenter = false;
+    const alignOf = name => alignPick(opts, name);
+    const parts = []; let prevName = null, prevAv = '', narr = null, narrAlign = 'left';
+    /* 지금 이어 쓰고 있는 잡담 말풍선의 문단들. 화면 쪽 curBubble과 같은 뜻이다(§5.3) —
+       같은 화자가 이어 말하면 상자를 새로 세우지 않고 여기에 문단만 쌓았다가 한 번에 낸다. */
+    let bub = null, bubStyle = '', bubTextC = '';
     const narrators = narratorSet(opts); const isNarr = m => narrators.has(normName(m.name));
     const narrLead = (Array.isArray(opts.narrators) && opts.narrators[0]) || 'GM';
 
@@ -4202,11 +4394,17 @@
         const inner = narr.map((it, i) =>
           '<p style="margin:0 0 ' + (i === narr.length - 1 ? '0' : '10px') + ';font-size:' + FS + 'px;line-height:' + MLH
             + ';color:' + C('ink2') + ';">' + esc(it.p) + '</p>').join('');
-        const style = 'margin:16px 0' + (narrCenter ? '' : ' 16px ' + AVG + 'px') + ';padding:13px 16px;background:' + narrBg + ';'
-          + (narrCenter ? 'text-align:center;' : '');
+        /* 가운데는 왼쪽 들여쓰기를 풀고, 우측은 그 들여쓰기를 오른쪽으로 옮긴다(화면의 .narr.center/.right와 짝) */
+        const ind = narrAlign === 'center' ? '' : narrAlign === 'right' ? ' 16px 0 16px ' + AVG + 'px' : ' 16px ' + AVG + 'px';
+        const style = (narrAlign === 'right' ? 'margin:16px' + ind : 'margin:16px 0' + ind)
+          + ';padding:13px 16px;background:' + narrBg + ';'
+          + (narrAlign === 'center' ? 'text-align:center;' : narrAlign === 'right' ? 'text-align:right;' : '');
         parts.push('<div style="' + style + '">' + inner + '</div>');
       }
-      narr = null; narrCenter = false;
+      narr = null; narrAlign = 'left';
+      /* 말풍선도 같은 자리에서 닫는다 — 다른 갈래가 끼어들면 상자는 거기서 끝나야 한다 */
+      if(bub && bub.length) parts.push(bubStyle.replace('%BODY%', () => pHTML(bub, bubTextC, FS, MLH)));
+      bub = null; bubStyle = '';
     };
     /* 정보탭 카드 — 화면과 같은 모양을 인라인 스타일로 옮긴다.
        무엇을 그릴지는 infoSpec()이, 치수는 :root의 --info-* 한 벌(X.info)이 정한다.
@@ -4219,10 +4417,17 @@
       const body = S.lines.length ? pHTML(S.lines, C('ink2'), FS, MLH, IX.pGap) : '';
       /* 화자 색이 없으면 화면은 --line-2로 떨어진다. 여기서도 같은 칸을 쓴다 —
          예전에는 한 단계 흐린 --line으로 떨어져, 색 없는 카드만 붙여 넣은 글에서 더 옅었다. */
-      return '<div style="margin:' + IX.gapY + ' 0 ' + IX.gapY + ' ' + (S.center ? '0' : AVG + 'px')
-        + ';padding:' + IX.pad + ';border:1px solid ' + C('line')
-        + ';border-left:' + IX.rule + ' solid ' + esc(S.accent || C('line2')) + ';'
-        + (S.center ? 'text-align:center;' : '') + '">'
+      /* 우측은 가운데의 짝이다 — 왼쪽 들여쓰기를 오른쪽으로 옮기고, 화자 색 선도 오른쪽으로 넘긴다.
+         선만 왼쪽에 남으면 카드가 뒤집힌 것으로 안 읽힌다(화면의 .infocard.right와 짝 · §5.3). */
+      const rule = esc(S.accent || C('line2'));
+      const side = S.align === 'right'
+        ? 'border-left:1px solid ' + C('line') + ';border-right:' + IX.rule + ' solid ' + rule + ';text-align:right;'
+        : 'border-left:' + IX.rule + ' solid ' + rule + ';' + (S.center ? 'text-align:center;' : '');
+      /* 들여쓰기는 캐릭터 이미지 칸만큼. 가운데는 풀고, 우측은 반대쪽으로 옮긴다 */
+      const mr = S.align === 'right' ? AVG + 'px' : '0';
+      const ml = S.align === 'left' ? AVG + 'px' : '0';
+      return '<div style="margin:' + IX.gapY + ' ' + mr + ' ' + IX.gapY + ' ' + ml
+        + ';padding:' + IX.pad + ';border:1px solid ' + C('line') + ';' + side + '">'
         + head + body + '</div>';
     };
 
@@ -4320,6 +4525,7 @@
 
     shown.forEach(m => {
       const noise = m.dice;
+      const chat = isChat(m);   /* 화면 렌더러와 같은 자리에서 같은 것을 가린다(§5.3) */
       const P = cleanParas(m.paras);
       /* 남는 글이 없으면 통째로 접는다. 코코포리아가 붙이는 '[편집 완료]' 표식만 있던 줄은
          표식을 떼고 나면 아무것도 남지 않아, 놔두면 이름표만 붙은 빈 말풍선이 된다.
@@ -4337,39 +4543,46 @@
         parts.push(sysBlock(S.lines, S.label));
         return;
       }
-      const asNarr = !!m.system && !noise && !!opts.sysNarr;
+      /* 잡담탭 줄은 내레이션으로 흘려보내지 않는다. 곁대화는 주고받는 말이라, 내레이션으로
+         지정해 둔 캐릭터(GM 등)가 잡담탭에서 한 말까지 내레이션 상자에 밀어 넣으면 이름도
+         캐릭터 이미지도 없이 앞뒤 서술과 한 덩어리가 되어, 누가 한 말인지가 사라진다.
+         그래서 잡담탭은 언제나 말풍선 갈래로 보낸다. 화자가 없는 /system 줄도 마찬가지로
+         내레이션에 합치지 않고, ‘/system을 내레이션으로’를 끈 때처럼 가운데 시스템 노트로 낸다. */
+      const asNarr = !!m.system && !noise && !!opts.sysNarr && !chat;
       if(m.system && !noise && !asNarr){
         flush(); prevName = null;
         const S = sysSpec(m, P, 'system');
         parts.push(sysBlock(S.lines, S.label));
         return;
       }
-      if((isNarr(m) || asNarr) && !noise){
+      if((isNarr(m) || asNarr) && !noise && !chat){
         prevName = null;
         const who = asNarr ? narrLead : (m.name || 'GM');
-        if(!narr){ narr = []; narrCenter = alignOf(who) === 'center'; }
+        /* 내레이션을 새로 열 때만 앞의 것을 닫는다 — 이어지는 내레이션은 같은 덩어리라 닫지 않는다 */
+        if(!narr){ flush(); narr = []; narrAlign = alignOf(who); }
         P.forEach(p => narr.push({p}));
         return;
       }
-      flush();
 
       /* 화면에서 고른 모양을 게시판용에도 그대로 옮긴다. 못 알아본 줄이면 빈손으로
          돌아오고, 아래의 흐린 한 줄이 원문을 그대로 받는다. */
       if(noise && opts.rollHighlight){
         const rb = rollBlockHTML(m, P);
-        if(rb){ parts.push(rb); return; }
+        if(rb){ flush(); parts.push(rb); return; }
       }
 
       const same = opts.merge && m.name && m.name === prevName;
       const avSwap = !!(same && opts.avChange && m.avatar && prevAv && m.avatar !== prevAv);
       const cont = same && !avSwap;
       const slotAv = m.avatar || (same ? prevAv : '');
-      const center = alignOf(m.name) === 'center';
+      const al = alignOf(m.name);
+      const center = al === 'center';
       const roll = noise ? rollTint(P.join(' ')) : '';
       const rollC = (opts.rollHighlight && roll) ? (roll === 'ok' ? C('ok') : C('ng')) : '';
       /* 잡담 줄은 통째로 회색(--muted)으로 물러앉힌다 — 화면의 .turn.chat 규칙을 인라인으로 옮긴 것.
          판정 색(rollC)은 화면에서도 특이도로 이겨 그대로 두므로, 여기서도 rollC를 앞에 둔다. */
-      const chat = isChat(m);
+      const right = al === 'right' || (chat && !!opts.chatRight && !center);
+      const bubble = chat && !!opts.chatBubble && !noise;
       const dropAvatar = noImg || (chat && opts.chatNoImg);
       const bodyC = rollC || (chat ? C('muted') : (noise ? C('faint') : C('ink2')));
       const nameC = rollC || (chat ? C('muted') : (m.color || C('ink')));
@@ -4377,24 +4590,57 @@
       /* 일반 메시지만 본명조에서 행간을 벌린다 — 화면의 규칙을 그대로 옮긴다 */
       const bLh = !noise ? MLH : (opts.rollHighlight ? LH : '1.5');
 
+      /* 말풍선을 켠 채 같은 화자가 이어 말하면 문단만 쌓아 두고 줄은 세우지 않는다 —
+         상자가 하나여야 꼬리도 하나다(화면 쪽 curBubble과 같은 규칙 · §5.3) */
+      if(bubble && cont && bub){
+        P.forEach(p => bub.push(p));
+        if(m.avatar) prevAv = m.avatar;
+        return;
+      }
+      flush();
+
       const head = (!same && m.name)
         ? '<div style="font-weight:700;font-size:15px;letter-spacing:-.01em;color:' + esc(nameC) + ';margin-bottom:5px;">' + esc(m.name) + '</div>' : '';
       const body = P.length ? pHTML(P, bodyC, bFs, bLh) : '';
       const pad = cont ? '2px' : '15px';
 
+      /* 말풍선은 문단을 바로 놓지 않고 상자에 담는다. 꼬리가 닿는 모서리만 덜 굴려 삼각형이
+         곧은 면에 붙게 하고, 가운데로 지정한 화자는 가리킬 것이 없으므로 네 귀를 고르게 굴린다.
+         상자 안 글은 왼쪽에 붙인다 — 오른쪽 말풍선이라도 안쪽까지 오른쪽으로 맞추면 글의 왼쪽 끝이
+         상자의 곧은 면과 어긋나 상자가 새는 것처럼 보인다.
+         꼬리(::after)는 규칙이지 요소의 속성이 아니라 인라인에 못 박으므로 styleTag가 맡는다. */
+      const rad = center ? BX.radius
+        : right ? BX.radius + ' ' + BX.nose + ' ' + BX.radius + ' ' + BX.radius
+        : BX.nose + ' ' + BX.radius + ' ' + BX.radius + ' ' + BX.radius;
+      const bubHTML = '<div class="ccf-bub' + (center ? ' c' : right ? ' r' : '')
+        + '" style="display:inline-block;text-align:left;max-width:min(100%,' + X.chatW + ');padding:' + BX.pad
+        + ';background:' + bubBg + ';border-radius:' + rad + ';">%BODY%</div>';
+      const inner = bubble ? bubHTML : body;
+      /* 말풍선은 곧바로 내보내지 않고 손에 쥔다 — 같은 화자가 이어 말하면 이 상자에 문단만 잇고,
+         다른 갈래가 끼어들 때(flush) 비로소 한 덩이로 내보낸다. */
+      const emit = html => { if(bubble){ bub = P.slice(); bubTextC = bodyC; bubStyle = html; } else parts.push(html); };
+
       if(center){
-        const mid = inner => '<div style="display:flex;justify-content:center;margin-bottom:8px;">' + inner + '</div>';
+        const mid = x => '<div style="display:flex;justify-content:center;margin-bottom:8px;">' + x + '</div>';
         const avc = dropAvatar || cont ? ''
           : m.avatar ? mid(avHTML(m.avatar, noise, m.name))
-          : (!slotAv && bmode === 'solid') ? mid(blankHTML(true, m._wf ? m.color : '')) : '';
-        parts.push('<div style="text-align:center;padding:' + pad + ' 0;">' + avc + head + body + '</div>');
+          : (!slotAv && bmode === 'solid') ? mid(blankHTML(true, m.color)) : '';
+        emit('<div style="text-align:center;padding:' + pad + ' 0;">' + avc + head + inner + '</div>');
       } else {
         const av = dropAvatar ? ''
-          : !slotAv ? blankHTML(!cont, m._wf ? m.color : '')
+          : !slotAv ? blankHTML(!cont, m.color)
           : cont ? spacerHTML
           : avHTML(m.avatar, noise, m.name);
-        parts.push('<div style="display:flex;align-items:flex-start;gap:' + X.gap + 'px;padding:' + pad + ' 0;">'
-          + av + '<div style="flex:1;min-width:0;padding-top:2px;">' + head + body + '</div></div>');
+        /* 오른쪽 정렬은 화면의 .turn.right 규칙을 그대로 인라인으로 옮긴 것이다(§5.3).
+           줄을 뒤집고 글 칸이 넓어질 한계만 --chat-w로 묶는다 — 요소를 새로 만들지 않으므로
+           캐릭터 이미지·빈 칸·이어지는 줄이 통째로 따라 옮겨 간다.
+           말풍선을 켜면 꼬리가 삐져나갈 자리를 글 칸이 미리 비워 둔다 — 상자에 음수 여백으로
+           붙이면 캐릭터 이미지를 뺀 판에서 꼬리가 읽는 폭 밖으로 새어 가로 스크롤이 생긴다. */
+        const dir = right ? 'flex-direction:row-reverse;text-align:right;' : '';
+        const cflex = right ? 'flex:0 1 auto;max-width:min(100%,' + X.chatW + ');' : 'flex:1;';
+        const cpad = bubble ? (right ? 'padding-right:' + BX.tail + ';' : 'padding-left:' + BX.tail + ';') : '';
+        emit('<div style="display:flex;align-items:flex-start;' + dir + 'gap:' + X.gap + 'px;padding:' + pad + ' 0;">'
+          + av + '<div style="' + cflex + cpad + 'min-width:0;padding-top:2px;">' + head + inner + '</div></div>');
       }
       /* 덩어리 안에서 한 줄만 그림이 빠져도 그 덩어리가 쓰던 그림은 잊지 않는다 */
       if(m.name){ if(m.avatar) prevAv = m.avatar; else if(m.name !== prevName) prevAv = ''; prevName = m.name; }
