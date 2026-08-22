@@ -241,6 +241,18 @@
   .adv .val{font-size:12.5px;font-weight:600;color:var(--ink-2);font-variant-numeric:tabular-nums;min-width:46px;}
   .adv .fname{flex:0 0 auto;color:var(--ink-2);font-weight:600;}
   .adv .avprev{flex:0 0 auto;width:26px;height:26px;background:var(--subtle-2);border-radius:var(--av-radius);box-shadow:0 0 0 1px var(--line);}
+  /* 옵션이 많아 한눈에 안 들어오던 것을 뜻으로 묶어 가는 선으로 나눈다.
+     선을 '다음 덩어리의 첫 줄'에 얹어, 그 줄이 숨으면 선도 함께 사라지게 한다. */
+  .adv .field.divide{border-top:1px solid var(--line);margin-top:1.15rem;padding-top:1.15rem;}
+  /* 강조 스타일 네 갈래(티켓·타일·밴드·표기)가 그 제목에 딸린 것임이 드러나게,
+     왼쪽 세로선으로 묶어 한 칸 들여쓴다. */
+  .adv .subopts{display:flex;flex-direction:column;gap:.5rem;margin:.2rem 0 0 3px;padding-left:13px;border-left:1px solid var(--line);}
+  /* 저널 정렬·정보탭은 로그를 불러온 뒤에만 뜬다. 뜰 때만 구분선이 서게 요소 자신에 얹는다.
+     둘이 나란히 뜨면 위 선 하나로 묶어, 가는 선이 겹쳐 촘촘해 보이지 않게 한다. */
+  #jalignWrap,#infoWrap{border-top:1px solid var(--line);margin-top:1.15rem;padding-top:1.15rem;}
+  #jalignWrap:not(.hidden) + #infoWrap{border-top:0;margin-top:.7rem;padding-top:0;}
+  /* 체크박스는 어디서든 눌리면 까맣게(테마에 따라 잉크색) — '캐릭터 이미지 설정'과 톤을 맞춘다. */
+  input[type=checkbox]{accent-color:var(--ink);}
   .jalign{display:flex;flex-direction:column;gap:8px;width:100%;min-width:0;max-width:100%;margin-top:6px;}
   #infoWrap,#rollStyleWrap,#blankSlotWrap{flex-direction:column;align-items:stretch;gap:.45rem;min-width:0;}
   /* 세로로 쌓는 줄에서는 stretch가 세그먼트를 폭 끝까지 늘린다. 글자만큼만 차지하게 둔다. */
@@ -375,6 +387,9 @@
   /* 이미지가 없는 저널의 이미지 칸 — 단색으로 채울지, 빈 자리로 둘지, 통째로 접을지는 고급 설정이 정한다.
      칸은 언제나 그려 두고 보이는 방식만 CSS로 갈아 끼운다. 설정을 바꿔도 본문을 다시 그릴 일이 없다. */
   .av.blank{background:var(--subtle);}
+  /* 흰색 화자 색 바꾸기를 켜면, 이미지가 없는 그 화자의 단색 칸도 고른 색으로 채운다.
+     단색 모드에서만 뜻이 있으므로 그때로 좁힌다 — --speaker에는 바뀐 색이 이미 들어 있다. */
+  html[data-avblank="solid"] .turn.whitefix .av.blank{background:var(--speaker,var(--subtle));}
   /* 빈 자리로 둘 때는 높이도 놓아 준다 — 안 그러면 한 줄짜리 저널이 그림 높이만큼 부풀어
      그림 없는 캐릭터의 줄만 유독 성기게 벌어진다. 폭만 지키면 글머리는 그대로 맞는다. */
   html[data-avblank="gap"] .av.blank{background:none;box-shadow:none;height:auto;}
@@ -471,6 +486,10 @@
   /* 주사위·시스템(포함 옵션) */
   .turn.muted .body,.narr.muted .body{color:var(--faint);font-size:13px;line-height:1.5;}
   .turn.muted .av{opacity:.5;}
+  /* ‘잡담’ 탭 — 본문과 같은 말풍선이되 곁가지라 회색으로 물러앉힌다. 주사위(muted)는 한 단계 더
+     흐린 --faint에 작은 글씨지만, 잡담은 통째로 읽는 대사라 --muted에 본문 크기 그대로 둔다. 이름도
+     함께 재워(--speaker를 덮어) 곁대화임을 한눈에 알린다. 판정 색(roll-ok/ng)은 특이도가 높아 그대로 이긴다. */
+  .turn.chat .body,.turn.chat .who{color:var(--muted);}
   /* 판정 강조: 성공은 초록, 실패는 빨강 */
   html[data-roll="on"] .turn.roll-ok .body,html[data-roll="on"] .turn.roll-ok .who{color:var(--ok);}
   html[data-roll="on"] .turn.roll-ng .body,html[data-roll="on"] .turn.roll-ng .who{color:var(--ng);}
@@ -693,7 +712,7 @@
 <div class="panes app-only" id="editPanes">
 <section class="panel app-only" id="pastePanel">
   <!-- 파일을 고칠 때마다 이 날짜를 함께 바꾼다. 빌드 과정이 없는 단일 HTML이라 손으로 적어 둔다. -->
-  <div class="stamp collect-only">업데이트 2026-08-22 17:20</div>
+  <div class="stamp collect-only">업데이트 2026-08-22 18:30</div>
   <div class="alert collect-only" role="status">
     <span class="mk" aria-hidden="true">!</span>
     <div class="atxt">
@@ -708,6 +727,7 @@
         <li>발췌 기능 개선(배경 이미지 업로드·비율 선택 가능·가독성 개선)</li>
         <li>웹 폰트 삽입 기능 추가</li>
         <li>일본어 판정 로그의 한국어 치환 옵션 추가</li>
+        <li>잡담탭 함께 보기(시:분 순서로 끼워 넣기·회색 표시·캐릭터 이미지 빼기 옵션)</li>
         <li>기타 자잘한 오류와 가독성 수정·최적화</li>
       </ol>
       <p class="atail">등등을 적용했습니다.</p>
@@ -780,17 +800,26 @@
       </div>
       <div class="field"><label><input type="checkbox" id="optSysNarr"> /system 메시지를 내레이션에 포함하기 <span class="jhint">— 가운데 시스템 블록 대신 내레이션 문단으로 흘려 씁니다</span></label></div>
       <div class="field"><label><input type="checkbox" id="optMerge" checked> 같은 화자 연속 발화 합치기</label></div>
-      <div class="field"><label><input type="checkbox" id="optNoise"> 주사위·판정 로그도 포함</label></div>
+      <div class="field divide"><label><input type="checkbox" id="optNoise"> 주사위·판정 로그도 포함</label></div>
       <div class="field"><label><input type="checkbox" id="optRoll"> 주사위·판정 로그도 강조 <span class="jhint">— 성공은 초록, 실패는 빨강으로</span></label></div>
 
       <div class="field" id="rollStyleWrap">
         <label style="display:block;margin-bottom:2px">주사위·판정 로그 강조 스타일 <span class="jhint">— 하나만 고릅니다 · 아무것도 고르지 않으면 지금처럼 글자색만 바뀝니다</span></label>
-        <label><input type="checkbox" id="optRsTicket"> 판정 티켓 <span class="jhint">— 왼쪽 세로선과 큰 숫자가 들어간 작은 표</span></label>
-        <label><input type="checkbox" id="optRsTile"> 주사위 타일 <span class="jhint">— 캐릭터 이미지 자리에 주사위 눈을 놓습니다</span></label>
-        <label><input type="checkbox" id="optRsBand"> 하이라이트 밴드 <span class="jhint">— 읽는 폭 전체에 옅은 색면을 깔고 굵은 선을 세웁니다</span></label>
-        <label><input type="checkbox" id="optRsNote"> 여백 표기 <span class="jhint">— 상자 없이 얇은 세로선 하나로 조용히</span></label>
+        <div class="subopts">
+          <label><input type="checkbox" id="optRsTicket"> 판정 티켓 <span class="jhint">— 왼쪽 세로선과 큰 숫자가 들어간 작은 표</span></label>
+          <label><input type="checkbox" id="optRsTile"> 주사위 타일 <span class="jhint">— 캐릭터 이미지 자리에 주사위 눈을 놓습니다</span></label>
+          <label><input type="checkbox" id="optRsBand"> 하이라이트 밴드 <span class="jhint">— 읽는 폭 전체에 옅은 색면을 깔고 굵은 선을 세웁니다</span></label>
+          <label><input type="checkbox" id="optRsNote"> 여백 표기 <span class="jhint">— 상자 없이 얇은 세로선 하나로 조용히</span></label>
+        </div>
       </div>
-      <div class="field"><label><input type="checkbox" id="optJaKo"> 일본어 판정 로그의 한국어 치환 <span class="jhint">— 주사위 결과의 クリティカル·ファンブル·スペシャル·成功·失敗·ヒット数를 한국어로 바꿔 보여 줍니다</span></label></div>
+      <div class="field"><label><input type="checkbox" id="optJaKo"> 일본어 판정 로그의 한국어 치환 <span class="jhint">— 주사위 결과의 クリティカル·ファンブル·スペシャル·成功·失敗·ヒット数·達成値·発生를 한국어로 바꿔 보여 줍니다</span></label></div>
+      <div class="field divide">
+        <label><input type="checkbox" id="optWhiteFix"> 색상이 흰색인 캐릭터의 색상 변경 <span class="jhint">— 이름 색이 흰색(에 가까워) 라이트 모드에서 안 보이는 화자를 고른 색으로 바꿉니다 · 이미지가 없으면 단색 칸도 같은 색으로</span></label>
+        <div id="whiteFixWrap" class="hidden" style="display:flex;align-items:center;gap:9px;margin:7px 0 0 24px">
+          <input type="color" id="whiteColor" value="#333333" aria-label="흰색 화자를 바꿀 색상" style="width:40px;height:26px;padding:0;border:1px solid var(--line);background:var(--surface);cursor:pointer">
+          <span class="jhint">이 색으로 바꿔 보여 줍니다</span>
+        </div>
+      </div>
       <div class="field"><label><input type="checkbox" id="optStatus"> HP·MP·이성 등 스테이터스 변화를 시스템 로그로 포함</label></div>
 
       <div class="field"><label><input type="checkbox" id="optNoImg"> 캐릭터 이미지 빼고 내보내기 <span class="jhint">— 이미지 칸까지 접어 글만 남깁니다</span></label></div>
@@ -822,6 +851,11 @@
           <div id="infoTune" class="itune"></div>
           <div class="row"><button class="btn" type="button" id="infoReset">자동 배치로 되돌리기</button><button class="btn hidden" type="button" id="infoUndel">지운 카드 모두 되살리기</button></div>
         </details>
+      </div>
+      <div class="field jalign-wrap hidden" id="chatWrap">
+        <label style="display:block;margin-bottom:2px">잡담탭 <span class="jhint">— ‘잡담’ 탭 메시지를 시:분 순서대로 본문에 끼워 넣고 회색으로 보여 줍니다</span></label>
+        <label><input type="checkbox" id="optChat" checked> 잡담탭 함께 보기</label>
+        <label><input type="checkbox" id="optChatNoImg"> 잡담탭의 캐릭터 이미지 빼기 <span class="jhint">— 잡담 메시지를 캐릭터 이미지 없이 냅니다</span></label>
       </div>
       <div id="msg"></div>
     </details>
@@ -1310,10 +1344,19 @@
       }
     });
 
-    /* 이 스크립트는 저장한 보관본에도 그대로 실려 간다. 거기엔 배경 그림을 고를 사람도,
-       고친 값으로 다시 그려 줄 앱도 없다. 그래서 손잡이는 리더에만 단다 —
-       보관본은 예전 그대로, 글 길이에 맞춘 한 장을 그린다. */
-    const tune = !!window.__reader;
+    /* 이 스크립트는 저장한 보관본에도 그대로 실려 간다. 예전에는 손잡이(배경·비율·넣을 것)를
+       리더에만 달고 보관본은 글 길이에 맞춘 한 장만 그렸다 — 보관본엔 다시 그려 줄 앱이 없다고
+       본 것이다. 그러나 다시 그리는 일(paint·drawExcerpt·파일 읽기)은 모두 이 런타임 안에 있어
+       보관본에서도 그대로 돈다. 그래서 손잡이를 보관본에도 실어, 여는 사람도 배경을 넣고 비율을
+       고를 수 있게 한다. 손잡이를 안 건드리면 기본값(자동·배경없음·제목/화자 켬)이라, 예전과
+       글자 하나까지 같은 한 장이 그려진다(drawExcerpt에서 null과 이 기본 opt이 같은 길로 간다). */
+    const tune = true;
+    /* 손잡이가 파일 오류 등을 토스트로 알린다. 저장할 때 #toast를 떼어 내므로 보관본에서
+       되살려, 리더와 같은 알림이 뜨게 한다(없으면 toast가 조용히 지나갈 뿐 깨지지는 않는다). */
+    if(!document.getElementById('toast')){
+      const tv = document.createElement('div'); tv.id = 'toast'; tv.setAttribute('role', 'status'); tv.setAttribute('aria-live', 'polite');
+      document.body.appendChild(tv);
+    }
     const opt = { ratio:'auto', scrim:.72, title:true, speaker:true, img:null };
     let curText = '', curSpeaker = '', shotText = '', shotWho = '', imgURL = '';
     const hide = () => { btn.style.display = 'none'; };
@@ -2158,20 +2201,30 @@
     const tabs = tabsOf(list);
     if(tabs.length < 2) return list.slice();
     const main = (tabs.indexOf(mainTab) >= 0) ? mainTab : tabs[0];
-    if(opts.withInfo === false) return list.filter(m => (m.tab || '') === main);
+    /* 어느 곁가지 탭을 본문에 끼울지 먼저 고른다. ‘잡담’ 탭은 ‘잡담탭 함께 보기’가, 나머지 비메인
+       탭은 ‘정보탭 함께 보기’가 따로 관장한다 — 서로 독립으로 켜고 끈다. 메인은 언제나 남는다.
+       여기서 걸러 낸 뒤로는 시간축 계산이 예전과 똑같다: 끼우기로 고른 탭들(use)만 견주므로,
+       병합 로직은 그게 잡담인지 정보인지 가리지 않아도 된다. */
+    const keep = m => {
+      const t = m.tab || '';
+      if(t === main) return true;
+      return isChatName(t) ? (opts.withChat !== false) : (opts.withInfo !== false);
+    };
+    const use = list.filter(keep);
+    if(tabsOf(use).length < 2) return use.slice();   /* 끼울 곁가지가 하나도 안 남았다 — 메인뿐 */
     /* 수집기가 날짜까지 풀어 놨다면 추정할 것이 없다. 그대로 줄 세운다.
        분 단위라 같은 시각이 겹치므로, 그 동률에만 ‘정보 먼저’ 설정을 적용한다. */
-    if(list.every(m => typeof m.at === 'number')){
+    if(use.every(m => typeof m.at === 'number')){
       const first = opts.infoFirst !== false;
       const rank = m => ((m.tab || '') === main) === first ? 1 : 0;
-      return list.map((m, i) => [m, i])
+      return use.map((m, i) => [m, i])
         .sort((a, b) => (a[0].at - b[0].at) || (rank(a[0]) - rank(b[0])) || (a[1] - b[1]))
         .map(x => x[0]);
     }
-    let out = list.filter(m => (m.tab || '') === main);
-    tabs.forEach(t => {
+    let out = use.filter(m => (m.tab || '') === main);
+    tabsOf(use).forEach(t => {
       if(t === main) return;
-      out = mergeStream(out, list.filter(m => (m.tab || '') === t), opts.infoFirst !== false);
+      out = mergeStream(out, use.filter(m => (m.tab || '') === t), opts.infoFirst !== false);
     });
     return out;
   }
@@ -2188,7 +2241,13 @@
      그대로 선택자에 이어 붙이면 querySelector가 예외를 던지고, 그 예외가 클릭 핸들러
      밖으로 튀어 카드 옮기기가 통째로 멎는다. 따옴표 안에서 쓸 수 있게 걸러 준다. */
   const midSel = id => '[data-mid="' + String(id).replace(/["\\]/g, '\\$&') + '"]';
-  const isInfo = m => !!(m.tab && m.tab !== mainTab);
+  /* ‘잡담’이라는 이름의 탭만 콕 집어 곁대화로 다룬다(회색 말풍선). 이름이 자유로운 다른 탭까지
+     넘겨짚으면 멀쩡한 정보 카드가 회색 대사로 뒤바뀌므로, 오직 ‘잡담’만 본다 — 못 알아본 탭은
+     지금까지처럼 정보 카드다(isInfo). 목록으로 둔 것은 MAIN_TAB처럼 나중에 늘리기 쉽게 함이다. */
+  const CHAT_TAB = ['잡담'];
+  const isChatName = t => CHAT_TAB.indexOf((t || '').trim()) >= 0;
+  const isChat = m => !!(m.tab && m.tab !== mainTab && isChatName(m.tab));
+  const isInfo = m => !!(m.tab && m.tab !== mainTab && !isChatName(m.tab));
   const isAnchor = v => !!v && typeof v === 'object';
   function applyMoves(arr){
     const ids = Object.keys(moveState).filter(k => moveState[k]);
@@ -2248,18 +2307,48 @@
      성패를 가리는 정규식(ROLL_OK·ROLL_NG·ROLL_CRIT·ROLL_HITS)이 한글 낱말도 이미 보므로
      치환한 글로도 그대로 판정된다. 낱말끼리 겹치는 곳이 없어 차례는 상관없지만, 긴 것을 앞에 둔다. */
   const JAKO = [['クリティカル', '크리티컬'], ['スペシャル', '스페셜'], ['ファンブル', '펌블'],
-                ['ヒット数', '히트 수'], ['成功', '성공'], ['失敗', '실패']];
+                ['ヒット数', '히트 수'], ['達成値', '달성치'], ['発生', '발생'], ['成功', '성공'], ['失敗', '실패']];
   const jako = s => { let t = String(s == null ? '' : s); for(const p of JAKO) t = t.split(p[0]).join(p[1]); return t; };
   /* 화면에 나오는 글은 문단(paras)뿐이다. 원본을 지키려고 얕은 복사에 새 문단 배열만 갈아 끼운다. */
   const jakoMsg = m => (m.paras && m.paras.length) ? Object.assign({}, m, { paras: m.paras.map(jako) }) : m;
+  /* ── 흰색(에 가까운) 화자 색 바꾸기 (고급 설정) ──
+     이름 색이 #ffffff에 가까우면 라이트 모드 흰 바탕에서 글씨가 안 보인다. 켜면 그런 화자만
+     골라 고른 색으로 바꾼다. 원본은 그대로 두고 ‘보여 줄 배열’의 color만 갈아 끼우므로,
+     이름 색(--speaker)은 두 렌더러가 m.color를 보기에 저절로 따라오고(§5.3), 이미지가 없는
+     저널의 단색 칸은 표식(_wf)을 보고 그 색으로 채운다. 저장한 아카이브에도 그대로 실린다
+     (name 색은 인라인·클래스로 DOM에 박히고, 단색 칸 규칙은 <style>에 늘 실린다).
+     흰색 판정은 세 채널이 모두 밝을 때(near-white)로 좁힌다 — 노랑·연분홍 같은 밝은 유채색은
+     한 채널이 낮아 걸리지 않는다. 이 판정은 리더에서 저장 전에 한 번 도므로 런타임엔 없어도 된다. */
+  let _wfCtx = null;
+  function toRGB(color){
+    if(!_wfCtx){ const c = document.createElement('canvas'); c.width = c.height = 1; _wfCtx = c.getContext('2d'); }
+    _wfCtx.fillStyle = '#000'; _wfCtx.fillStyle = color || '#000';
+    const v = _wfCtx.fillStyle;   /* 이름·rgb·hsl이 무엇이 들어오든 표준 꼴로 되돌려 준다 */
+    let m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(v);
+    if(m) return [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)];
+    m = /rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/i.exec(v);
+    return m ? [+m[1], +m[2], +m[3]] : [0, 0, 0];
+  }
+  /* 같은 색이 수천 줄에 되풀이되므로 색 문자열로 한 번만 판별해 기억해 둔다. */
+  const _nwMemo = new Map();
+  const isNearWhite = color => {
+    if(!color) return false;
+    if(_nwMemo.has(color)) return _nwMemo.get(color);
+    const [r, g, b] = toRGB(color); const near = r >= 230 && g >= 230 && b >= 230;
+    _nwMemo.set(color, near); return near;
+  };
+  /* color만 갈아 끼운 얕은 복사. _wf 표식으로 단색 칸도 이 색을 쓰게 알린다. */
+  const whiteFixMsg = (m, to) => isNearWhite(m.color) ? Object.assign({}, m, { color: to, _wf: true }) : m;
   /* 방금 만든 '지운 것까지 포함한 전체'를 들고 있는다. 렌더는 composeLog 바로 뒤에 오므로
      미세조정 목록이 같은 것을 한 번 더 만들 필요가 없다 — 큰 로그에서는 병합을 두 번 도는
      비용이 그대로 렌더 시간이었다. */
   let lastAll = null;
   const composeAll = (raw, opts) => (lastAll = applyMoves(mergeTabs(raw, opts)));
   const composeLog = (raw, opts) => {
-    const list = composeAll(raw, opts).filter(m => !isGone(m));
-    return (opts && opts.jaKo) ? list.map(jakoMsg) : list;
+    let list = composeAll(raw, opts).filter(m => !isGone(m));
+    if(opts && opts.jaKo) list = list.map(jakoMsg);
+    if(opts && opts.whiteFix && opts.whiteColor) list = list.map(m => whiteFixMsg(m, opts.whiteColor));
+    return list;
   };
   /* ── 빠진 캐릭터 이미지 메우기 ──
      같은 캐릭터인데 어떤 줄에만 그림이 없을 때가 있다. 수집하는 사이에 그 줄이 다시 그려지면
@@ -2705,7 +2794,14 @@
          판정 뒤에 이어지는 말은 이름을 다시 적지 않고 한 덩어리로 읽힌다. */
       if(noise && opts.rollHighlight){
         const rb = rollBlock(m, P, opts);
-        if(rb){ book.appendChild(rb); slot(rb, m); return; }
+        if(rb){
+          /* 판정 모양으로 그려도 캐릭터 이미지 설정 목록에는 남긴다. 여기서 일찍 돌아서면
+             굴린 사람의 그림이 목록에 안 실린다 — 특히 내레이션으로 지정된 캐릭터는 대사가
+             모두 내레이션·판정 갈래로 빠져, ‘강조’를 켜는 순간 설정에서 통째로 사라졌다.
+             아래 일반 줄 갈래의 noteAvatar와 같은 취지다(안 그려질 그림도 남긴다). */
+          if(!opts.noImages && m.avatar) noteAvatar(m);
+          book.appendChild(rb); slot(rb, m); return;
+        }
       }
 
       const same = opts.merge && m.name && m.name === prevName;
@@ -2715,16 +2811,20 @@
       const center = alignOf(m.name) === 'center';
       const roll = noise ? rollTint(P.join(' ')) : '';
       const turn = document.createElement('article');
-      turn.className = 'turn' + (same && !avSwap ? ' cont' : '') + (noise ? ' muted' : '') + (center ? ' center' : '') + (roll ? ' roll-' + roll : '');
+      const chat = isChat(m);   /* ‘잡담’ 탭 줄 — 회색으로 물러앉히고, 옵션이면 캐릭터 이미지도 뺀다 */
+      turn.className = 'turn' + (same && !avSwap ? ' cont' : '') + (noise ? ' muted' : '') + (center ? ' center' : '') + (roll ? ' roll-' + roll : '') + (chat ? ' chat' : '') + (m._wf ? ' whitefix' : '');
       turn.dataset.who = m.name || (m.system ? '시스템' : '');
       if(m.color) turn.style.setProperty('--speaker', m.color);
 
-      if(!opts.noImages && m.avatar) noteAvatar(m);   /* 합쳐서 안 그려질 그림도 설정 목록에는 남긴다 */
+      /* 캐릭터 이미지를 뺄지 — 전체(noImages)이거나, ‘잡담탭의 캐릭터 이미지 빼기’가 켜진 잡담 줄이면 뺀다.
+         뺄 줄은 설정 목록(noteAvatar)에도 올리지 않는다 — 어차피 안 그려질 그림에 자리를 만들어 헷갈리지 않게. */
+      const dropAv = opts.noImages || (chat && opts.chatNoImg);
+      if(!dropAv && m.avatar) noteAvatar(m);   /* 합쳐서 안 그려질 그림도 설정 목록에는 남긴다 */
       /* 이 덩어리가 기대는 그림. 이어지는 줄은 제 그림이 없어도 첫 줄의 그림을 따라간다.
          비어 있으면 ‘이미지가 없는 저널’ — 칸을 어떻게 할지는 고급 설정이 정한다. */
       const cont = same && !avSwap;
       const slotAv = m.avatar || (same ? prevAv : '');
-      if(opts.noImages){ /* 캐릭터 이미지를 아예 그리지 않고 자리도 접는다 */ }
+      if(dropAv){ /* 캐릭터 이미지를 아예 그리지 않고 자리도 접는다 */ }
       else if(center){
         if(!cont && m.avatar) turn.appendChild(avatarBox(m));
         else if(!cont && !slotAv) turn.appendChild(blankBox(false));
@@ -2783,7 +2883,7 @@
       ? { fam:R.getAttribute('data-font-family'), url:R.getAttribute('data-font-url'), raw:($('#fontInput') ? $('#fontInput').value : '') }
       : null;
     try{
-      localStorage.setItem(KEY, JSON.stringify({ t:title, o:{merge:opts.merge, avChange:opts.avChange, hideNoise:opts.hideNoise, avatarKey:opts.avatarKey, showStatus:opts.showStatus, align:opts.align, narrators:opts.narrators, avShape:opts.avShape, avSize:opts.avSize, avZoom:opts.avZoom, avFocus:opts.avFocus, avPer:avState, avImg:avImgState, rollHighlight:opts.rollHighlight, rollStyle:opts.rollStyle, sysNarr:opts.sysNarr, jaKo:opts.jaKo, withInfo:opts.withInfo, infoCard:opts.infoCard, infoFirst:opts.infoFirst, noImages:opts.noImages, noImgSlot:opts.noImgSlot}, ft:ft, m:(rawMessages && rawMessages.length ? rawMessages : messages), mv:moveState, dl:delState, at:Date.now() }));
+      localStorage.setItem(KEY, JSON.stringify({ t:title, o:{merge:opts.merge, avChange:opts.avChange, hideNoise:opts.hideNoise, avatarKey:opts.avatarKey, showStatus:opts.showStatus, align:opts.align, narrators:opts.narrators, avShape:opts.avShape, avSize:opts.avSize, avZoom:opts.avZoom, avFocus:opts.avFocus, avPer:avState, avImg:avImgState, rollHighlight:opts.rollHighlight, rollStyle:opts.rollStyle, sysNarr:opts.sysNarr, jaKo:opts.jaKo, whiteFix:opts.whiteFix, whiteColor:opts.whiteColor, withInfo:opts.withInfo, infoCard:opts.infoCard, infoFirst:opts.infoFirst, withChat:opts.withChat, chatNoImg:opts.chatNoImg, noImages:opts.noImages, noImgSlot:opts.noImgSlot}, ft:ft, m:(rawMessages && rawMessages.length ? rawMessages : messages), mv:moveState, dl:delState, at:Date.now() }));
     }catch(e){
       /* 대개 용량 초과다. 조용히 넘기면 '자동 보관됩니다'라는 첫 화면의 약속이
          큰 세션에서만 말없이 깨지고, 사용자는 새로고침한 뒤에야 알게 된다.
@@ -2850,9 +2950,13 @@
       if(d.o) ROLL_PICKS.forEach(x => { const e = $(x[0]); if(e) e.checked = (d.o.rollStyle === x[1]); });
       if(d.o && $('#optSysNarr')) $('#optSysNarr').checked = !!d.o.sysNarr;
       if(d.o && $('#optJaKo')) $('#optJaKo').checked = !!d.o.jaKo;
+      if(d.o && $('#optWhiteFix')){ $('#optWhiteFix').checked = !!d.o.whiteFix; if($('#whiteFixWrap')) $('#whiteFixWrap').classList.toggle('hidden', !d.o.whiteFix); }
+      if(d.o && d.o.whiteColor && $('#whiteColor')) $('#whiteColor').value = d.o.whiteColor;
       if($('#optInfo')) $('#optInfo').checked = !(d.o && d.o.withInfo === false);
       if($('#optInfoCard')) $('#optInfoCard').checked = !(d.o && d.o.infoCard === false);
       if($('#optInfoFirst')) $('#optInfoFirst').checked = !(d.o && d.o.infoFirst === false);
+      if($('#optChat')) $('#optChat').checked = !(d.o && d.o.withChat === false);
+      if($('#optChatNoImg')) $('#optChatNoImg').checked = !!(d.o && d.o.chatNoImg);
       if($('#optNoImg')) $('#optNoImg').checked = !!(d.o && d.o.noImages);
       setBlank((d.o && d.o.noImgSlot) || 'gap');
       if($('#optAvChange')) $('#optAvChange').checked = !!(d.o && d.o.avChange);
@@ -3044,6 +3148,10 @@
   }
   /* -- 정보탭 배치 미세조정 (고급 설정) -- */
   function populateInfoTune(list){
+    /* 잡담탭 설정은 ‘잡담’ 탭이 실제로 있는 로그에서만 낸다. 정보탭 칸과 나란히 두되,
+       정보탭 미세조정의 이른 return들에 걸리지 않게 맨 앞에서 따로 여닫는다. */
+    const cw = $('#chatWrap');
+    if(cw) cw.classList.toggle('hidden', !(rawMessages && tabsOf(rawMessages).some(isChatName)));
     const wrap = $('#infoWrap'), box = $('#infoTune'), cnt = $('#infoCount');
     if(!wrap || !box) return;
     /* 설정을 띄울지는 '정보탭이 들어 있는 로그인가'로 정한다.
@@ -3521,7 +3629,7 @@
     if(a === 'reset'){ moveState = {}; recompose(); toast('정보 카드를 자동 배치로 되돌렸습니다'); }
     else if(a === 'undel'){ delState = {}; recompose(); toast('지운 정보 카드를 모두 되살렸습니다'); }
   });
-  ['#optInfo', '#optInfoCard', '#optInfoFirst'].forEach(sel => {
+  ['#optInfo', '#optInfoCard', '#optInfoFirst', '#optChat', '#optChatNoImg'].forEach(sel => {
     const el = $(sel); if(el) el.addEventListener('change', recompose);
   });
 
@@ -3582,9 +3690,11 @@
   const rollPick = () => { const f = ROLL_PICKS.filter(x => chk(x[0], false))[0]; return f ? f[1] : ''; };
   const currentOpts = () => ({ avatarKey: 'avatar', merge: $('#optMerge').checked, avChange: chk('#optAvChange', false),
     withInfo: chk('#optInfo', true), infoCard: chk('#optInfoCard', true), infoFirst: chk('#optInfoFirst', true),
+    withChat: chk('#optChat', true), chatNoImg: chk('#optChatNoImg', false),
     noImages: chk('#optNoImg', false), noImgSlot: blankPick(), hideNoise: !$('#optNoise').checked, showStatus: $('#optStatus') ? $('#optStatus').checked : false, align: alignState, narrators: parseNarr($('#narrNames') ? $('#narrNames').value : 'GM'), title: '',
     avShape: avShapeNow(), avSize: parseInt(($('#avSize') ? $('#avSize').value : 55), 10) || 55,
-    avFocus: avFocusNow(), avZoom: parseInt(($('#avZoom') ? $('#avZoom').value : 100), 10) || 100, avPer: avState, avImg: avImgState, rollHighlight: !!($('#optRoll') && $('#optRoll').checked), rollStyle: rollPick(), sysNarr: !!($('#optSysNarr') && $('#optSysNarr').checked), jaKo: chk('#optJaKo', false) });
+    avFocus: avFocusNow(), avZoom: parseInt(($('#avZoom') ? $('#avZoom').value : 100), 10) || 100, avPer: avState, avImg: avImgState, rollHighlight: !!($('#optRoll') && $('#optRoll').checked), rollStyle: rollPick(), sysNarr: !!($('#optSysNarr') && $('#optSysNarr').checked), jaKo: chk('#optJaKo', false),
+    whiteFix: chk('#optWhiteFix', false), whiteColor: ($('#whiteColor') ? $('#whiteColor').value : '#333333') });
 
   /* 캐릭터 이미지·판정 설정은 ‘변환’을 기다리지 않고 곰바로 반영된다 */
   document.querySelectorAll('[data-av-shape]').forEach(b => b.addEventListener('click', () => {
@@ -3645,6 +3755,12 @@
   syncRollEnabled();
   /* 한국어 치환은 보여 줄 글을 갈아 끼우므로 본문을 다시 그린다. 원본은 그대로다. */
   $('#optJaKo') && $('#optJaKo').addEventListener('change', () => { if(rawMessages) recompose(); else persistOpts(); });
+  /* 흰색 화자 색 바꾸기: 체크하면 색상 피커가 뜨고, 켜거나 색을 정하면 다시 그린다(원본은 그대로).
+     색은 커밋될 때(change)만 본다 — 피커를 끄는 동안 input이 쏟아지면 큰 로그가 매번 다시 그려진다. */
+  const syncWhiteFix = () => { const w = $('#whiteFixWrap'); if(w) w.classList.toggle('hidden', !chk('#optWhiteFix', false)); };
+  $('#optWhiteFix') && $('#optWhiteFix').addEventListener('change', () => { syncWhiteFix(); if(rawMessages) recompose(); else persistOpts(); });
+  $('#whiteColor') && $('#whiteColor').addEventListener('change', () => { if(chk('#optWhiteFix', false)){ if(rawMessages) recompose(); else persistOpts(); } });
+  syncWhiteFix();
   /* 합치기를 끄면 어차피 매번 캐릭터 이미지가 나오므로, 이 설정은 잠가 둔다 */
   function syncAvChangeEnabled(){
     const a = $('#optAvChange'); if(!a) return;
@@ -4009,17 +4125,27 @@
     /* 본명조를 골랐을 때 읽는 글의 행간. 화면의 calc(var(--lh) + .26)과 같은 값이다. */
     const MLH = X.serif ? (parseFloat(LH) + .26).toFixed(2) : LH;
     const AVG = noImg ? 0 : Math.round(X.av + X.gap);   /* 캐릭터 이미지를 빼면 들여쓰기도 함께 접는다 */
-    /* 테마를 타는 색 한 칸 */
-    const C = k => 'var(--ccf-' + k + ',light-dark(' + X.light[k] + ',' + X.dark[k] + '))';
     const withBg = !!cfg.withBg;
+    /* 테마를 타는 색 한 칸. 배경을 넣을 때만 OS 다크모드를 따라간다.
+       배경을 빼면 이 블록은 게시판 스킨의 바탕 위에 그대로 얹힌다. 그런데 그 바탕은 OS가
+       어둡든 밝든 대개 스킨이 정하는데, light-dark()와 @media prefers-color-scheme는 스킨이
+       아니라 OS를 본다. 그래서 OS만 어두우면(스킨은 밝은데) 밝은 게시판 위에 다크 테마의 옅은
+       글자가 얹혀 연회색으로 안 보였고, 내레이션 배경도 옅은 글자색을 6% 섞은 것이라 밝은 바탕
+       위에서 사라졌다. 배경을 뺀 판에서는 OS를 따라가지 않고 밝은 값으로 두되, 게시판이 다크를
+       ‘명시’하면(html.dark 등 DARK_SEL) 그때만 어둡게 간다 — 스킨을 따라가는 것은 맞고,
+       OS만 보고 어두워지는 것이 틀렸다. */
+    const C = k => 'var(--ccf-' + k + ',' + (withBg ? 'light-dark(' + X.light[k] + ',' + X.dark[k] + ')' : X.light[k]) + ')';
     const keys = Object.keys(THEME_VARS).filter(k => withBg || BG_KEYS.indexOf(k) === -1);
     const narrBg = withBg ? C('narr') : NARR_TINT;
     const avBg  = withBg ? 'background:' + C('narr') + ';' : '';
     const wrapBg = withBg ? ';background:' + C('paper') : '';
     const varList = o => keys.map(k => '--ccf-' + k + ':' + o[k]).join(';');
     const scoped = (sels, o) => sels.map(s => s + ' .ccf-post').join(',') + '{' + varList(o) + '}';
+    /* OS 다크모드 오버라이드는 배경을 넣을 때만 싣는다(위 주석). 스킨을 명시하는
+       DARK_SEL/LIGHT_SEL은 배경 유무와 무관하게 늘 실어, 게시판의 다크·라이트 표식은 따라간다. */
+    const mediaDark = withBg ? '@media (prefers-color-scheme:dark){.ccf-post{' + varList(X.dark) + '}}' : '';
     const styleTag = '<style>' + X.fontEmbed + '.ccf-post,.ccf-post *{box-sizing:border-box}.ccf-post{' + varList(X.light) + '}'
-      + '@media (prefers-color-scheme:dark){.ccf-post{' + varList(X.dark) + '}}'
+      + mediaDark
       + scoped(DARK_SEL, X.dark) + scoped(LIGHT_SEL, X.light)
       + '.ccf-post>*:first-child{margin-top:0;padding-top:0}.ccf-post img{max-width:100%;height:auto}</style>';
 
@@ -4038,11 +4164,13 @@
     /* 이미지가 없는 저널의 이미지 칸 — 화면과 같은 세 갈래를 인라인 스타일로 옮긴다 */
     const bmode = blankMode(opts);
     const spacerHTML = '<div style="width:' + X.av + 'px;flex:0 0 ' + X.av + 'px;"></div>';
-    const blankHTML = first => {
+    /* tint이 오면(흰색 화자 색 바꾸기가 걸린 줄) 단색 칸을 그 색으로 채운다. 화면의
+       html[data-avblank="solid"] .turn.whitefix .av.blank 규칙과 짝이다(§5.3). */
+    const blankHTML = (first, tint) => {
       if(bmode === 'hide') return '';
       if(bmode === 'solid' && first)
         return '<div style="width:' + X.av + 'px;height:' + X.av + 'px;flex:0 0 ' + X.av + 'px;overflow:hidden;border-radius:' + X.avr
-          + ';box-shadow:0 0 0 1px ' + C('line') + ';background:' + BLANK_TINT + ';"></div>';
+          + ';box-shadow:0 0 0 1px ' + C('line') + ';background:' + (tint ? esc(tint) : BLANK_TINT) + ';"></div>';
       return spacerHTML;
     };
     /* 시스템 노트 — 무엇을 실을지는 sysSpec()이, 치수는 :root의 --sys-* 한 벌(X.sys)이 정한다.
@@ -4239,8 +4367,12 @@
       const center = alignOf(m.name) === 'center';
       const roll = noise ? rollTint(P.join(' ')) : '';
       const rollC = (opts.rollHighlight && roll) ? (roll === 'ok' ? C('ok') : C('ng')) : '';
-      const bodyC = rollC || (noise ? C('faint') : C('ink2'));
-      const nameC = rollC || m.color || C('ink');
+      /* 잡담 줄은 통째로 회색(--muted)으로 물러앉힌다 — 화면의 .turn.chat 규칙을 인라인으로 옮긴 것.
+         판정 색(rollC)은 화면에서도 특이도로 이겨 그대로 두므로, 여기서도 rollC를 앞에 둔다. */
+      const chat = isChat(m);
+      const dropAvatar = noImg || (chat && opts.chatNoImg);
+      const bodyC = rollC || (chat ? C('muted') : (noise ? C('faint') : C('ink2')));
+      const nameC = rollC || (chat ? C('muted') : (m.color || C('ink')));
       const bFs = (noise && !opts.rollHighlight) ? 13 : FS;
       /* 일반 메시지만 본명조에서 행간을 벌린다 — 화면의 규칙을 그대로 옮긴다 */
       const bLh = !noise ? MLH : (opts.rollHighlight ? LH : '1.5');
@@ -4252,13 +4384,13 @@
 
       if(center){
         const mid = inner => '<div style="display:flex;justify-content:center;margin-bottom:8px;">' + inner + '</div>';
-        const avc = noImg || cont ? ''
+        const avc = dropAvatar || cont ? ''
           : m.avatar ? mid(avHTML(m.avatar, noise, m.name))
-          : (!slotAv && bmode === 'solid') ? mid(blankHTML(true)) : '';
+          : (!slotAv && bmode === 'solid') ? mid(blankHTML(true, m._wf ? m.color : '')) : '';
         parts.push('<div style="text-align:center;padding:' + pad + ' 0;">' + avc + head + body + '</div>');
       } else {
-        const av = noImg ? ''
-          : !slotAv ? blankHTML(!cont)
+        const av = dropAvatar ? ''
+          : !slotAv ? blankHTML(!cont, m._wf ? m.color : '')
           : cont ? spacerHTML
           : avHTML(m.avatar, noise, m.name);
         parts.push('<div style="display:flex;align-items:flex-start;gap:' + X.gap + 'px;padding:' + pad + ' 0;">'
@@ -4278,8 +4410,12 @@
     /* 바깥 칸의 글자색·배경은 옛 방식(밝은 테마 색)을 먼저 적고 새 방식을 뒤에 적는다.
        옛 브라우저는 앞의 것만 알아듣고, 새 브라우저는 뒤의 것으로 덮어쓴다. */
     const fallbackBg = withBg ? ';background:' + X.light.paper : '';
-    return styleTag + '<div class="ccf-post" style="max-width:' + X.wrap + 'px;margin:0 auto;box-sizing:border-box;padding:18px clamp(16px,5vw,28px) 34px;color-scheme:light dark'
-      + fallbackBg + wrapBg
+    /* color-scheme:light dark는 light-dark()를 켜는 스위치다. 배경을 뺀 판에서는 light-dark()를
+       쓰지 않으므로(위 C 참고) 걸지 않는다 — 걸어 두면 폼 컨트롤·스크롤바가 OS 다크를 따라가
+       밝은 게시판과 어긋난다. */
+    const colorScheme = withBg ? ';color-scheme:light dark' : '';
+    return styleTag + '<div class="ccf-post" style="max-width:' + X.wrap + 'px;margin:0 auto;box-sizing:border-box;padding:18px clamp(16px,5vw,28px) 34px'
+      + colorScheme + fallbackBg + wrapBg
       + ';color:' + X.light.ink + ';color:' + C('ink')
       + ';font-family:' + X.font + ';font-size:' + FS + 'px;line-height:' + LH
       + ';letter-spacing:-.01em;word-break:keep-all;overflow-wrap:break-word;">' + header + parts.join('') + '</div>';
