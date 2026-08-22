@@ -3805,7 +3805,9 @@
     $('#output').classList.add('hidden');
     refreshChip();
     $('#pastePanel').classList.remove('hidden');
-    if($('#charPanel')) $('#charPanel').classList.remove('hidden');
+    /* 편집과 달리 첫 화면에는 캐릭터 이미지 설정이 없다. 편집이 그 패널을 펴는 것을
+       그대로 베끼는 바람에 첫 페이지에도 딸려 나왔다 — 여기서는 도로 접는다. */
+    if($('#charPanel')) $('#charPanel').classList.add('hidden');
     $('#saveBtn').classList.add('hidden'); $('#exportBtn').classList.add('hidden'); $('#editBtn').classList.add('hidden');
     $('#homeBtn').classList.add('hidden');
     $('#findWidget').classList.add('hidden');
