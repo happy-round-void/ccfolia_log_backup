@@ -557,9 +557,23 @@
   .excerpt-btn:after{content:"";position:absolute;left:50%;top:100%;transform:translateX(-50%);border:6px solid transparent;border-top-color:var(--accent);}
   .ex-overlay{position:fixed;inset:0;background:rgba(10,11,14,.55);display:none;align-items:center;justify-content:center;z-index:80;padding:20px;}
   .ex-overlay.open{display:flex;}
-  .ex-card{background:var(--surface);border:1px solid var(--line);border-radius:0;padding:14px;max-width:min(92vw,560px);box-shadow:0 24px 70px rgba(0,0,0,.4);}
-  .ex-card img{max-width:100%;border-radius:0;display:block;}
-  .ex-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;}
+  .ex-card{background:var(--surface);border:1px solid var(--line);border-radius:0;padding:14px;width:min(92vw,560px);
+    max-height:92vh;overflow:auto;box-shadow:0 24px 70px rgba(0,0,0,.4);}
+  .ex-card img{max-width:100%;max-height:52vh;border-radius:0;display:block;margin:0 auto;}
+  .ex-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px;}
+  /* 발췌 손잡이 — 리더에만 달린다. 저장한 보관본에는 #app이 없어 아예 만들어지지 않는다 */
+  .ex-opts{margin-top:13px;padding-top:12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:9px;}
+  .ex-opts .exrow{display:flex;align-items:center;gap:9px;flex-wrap:wrap;min-width:0;}
+  .ex-opts .exrow.off{opacity:.42;}
+  .ex-opts .exlab{flex:0 0 60px;font-size:12.5px;font-weight:600;color:var(--muted);letter-spacing:.01em;}
+  .ex-opts .seg button{font-size:12px;padding:6px 10px;}
+  .ex-opts .btn{font-size:12px;padding:6px 10px;}
+  .ex-opts input[type=range]{flex:1 1 120px;min-width:90px;max-width:220px;accent-color:var(--ink);height:18px;margin:0;}
+  .ex-opts .exval{flex:0 0 auto;font-family:var(--mono);font-size:12px;color:var(--muted);min-width:40px;text-align:right;}
+  .ex-opts .exname{flex:1 1 90px;min-width:0;font-size:12px;color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .ex-opts .exchk{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:var(--ink-2);}
+  .ex-opts .exchk input{accent-color:var(--ink);margin:0;}
+  .ex-opts .exnote{margin:0;font-size:12px;line-height:1.5;color:var(--muted);}
 
   /* ── 게시판용 HTML 추출 모달 ── */
   .export-ov{position:fixed;inset:0;background:rgba(10,11,14,.55);display:none;align-items:center;justify-content:center;z-index:85;padding:20px;}
@@ -638,7 +652,7 @@
 <div class="panes app-only" id="editPanes">
 <section class="panel app-only" id="pastePanel">
   <!-- 파일을 고칠 때마다 이 날짜를 함께 바꾼다. 빌드 과정이 없는 단일 HTML이라 손으로 적어 둔다. -->
-  <div class="stamp collect-only">업데이트 2026-08-22 13:07</div>
+  <div class="stamp collect-only">업데이트 2026-08-22 14:04</div>
   <div class="alert collect-only" role="status">
     <span class="mk" aria-hidden="true">!</span>
     <div class="atxt">
@@ -1111,6 +1125,9 @@
   }
 
   /* ── 발췌 이미지 ── */
+  /* 자동은 글 길이만큼 세로가 자란다. 나머지 셋은 칸이 정해져 있어 글이 그 안에 맞춰진다. */
+  const EX_RATIOS = { auto:null, square:[1080,1080], portrait:[1080,1350], landscape:[1600,900] };
+
   function setupExcerpt(){
     const book = $('#book'); if(!book) return;
     let btn = document.getElementById('exBtn');
@@ -1121,8 +1138,94 @@
       ov.innerHTML = '<div class="ex-card"><img id="exImg" alt="발췌 이미지"><div class="ex-actions"><button class="btn" id="exClose">닫기</button><button class="btn" id="exCopy">클립보드 복사</button><button class="btn btn-primary" id="exSave">PNG 저장</button></div></div>';
       document.body.appendChild(ov);
     }
-    let curText = '', curSpeaker = '';
+
+    /* 이 스크립트는 저장한 보관본에도 그대로 실려 간다. 거기엔 배경 그림을 고를 사람도,
+       고친 값으로 다시 그려 줄 앱도 없다. 그래서 손잡이는 리더에만 단다 —
+       보관본은 예전 그대로, 글 길이에 맞춘 한 장을 그린다. */
+    const tune = !!window.__reader;
+    const opt = { ratio:'auto', scrim:.72, title:true, speaker:true, img:null };
+    let curText = '', curSpeaker = '', shotText = '', shotWho = '', imgURL = '';
     const hide = () => { btn.style.display = 'none'; };
+
+    let noteEl = null;
+    const paint = () => {
+      const cv = drawExcerpt(shotText, shotWho, tune ? opt : null);
+      ov.querySelector('#exImg').src = cv.toDataURL('image/png');
+      ov._cv = cv;
+      if(noteEl) noteEl.classList.toggle('hidden', !cv._clipped);
+    };
+
+    if(tune){
+      const box = document.createElement('div');
+      box.className = 'ex-opts app-only';
+      box.innerHTML =
+          '<div class="exrow"><span class="exlab">비율</span>'
+        +   '<span class="seg" id="exRatio" role="group" aria-label="발췌 이미지 비율">'
+        +     '<button type="button" data-r="auto" aria-pressed="true">자동</button>'
+        +     '<button type="button" data-r="square" aria-pressed="false">정사각형</button>'
+        +     '<button type="button" data-r="portrait" aria-pressed="false">세로로 길게</button>'
+        +     '<button type="button" data-r="landscape" aria-pressed="false">가로로 길게</button>'
+        +   '</span></div>'
+        + '<div class="exrow"><span class="exlab">배경 그림</span>'
+        +   '<button type="button" class="btn" id="exPick">고르기</button>'
+        +   '<button type="button" class="btn" id="exDropPic" disabled>지우기</button>'
+        +   '<span class="exname" id="exName">없음</span>'
+        +   '<input type="file" id="exFile" accept="image/*" class="hidden"></div>'
+        + '<div class="exrow off" id="exScrimRow"><span class="exlab">막 진하기</span>'
+        +   '<input type="range" id="exScrim" min="0" max="100" step="1" value="72" disabled aria-label="배경 그림 위에 덮는 막의 진하기" aria-describedby="exScrimVal">'
+        +   '<span class="exval" id="exScrimVal">72%</span></div>'
+        + '<div class="exrow"><span class="exlab">넣을 것</span>'
+        +   '<label class="exchk"><input type="checkbox" id="exTitle" checked>세션 제목</label>'
+        +   '<label class="exchk"><input type="checkbox" id="exWho" checked>화자 이름</label></div>'
+        + '<p class="exnote hidden" id="exNote">고른 비율에 다 담기지 않아 뒷부분을 줄였습니다.</p>';
+      const card = ov.querySelector('.ex-card');
+      card.insertBefore(box, card.querySelector('.ex-actions'));
+      noteEl = box.querySelector('#exNote');
+
+      const fileEl  = box.querySelector('#exFile'),    nameEl   = box.querySelector('#exName');
+      const dropBtn = box.querySelector('#exDropPic'), scrimRow = box.querySelector('#exScrimRow');
+      const scrimEl = box.querySelector('#exScrim'),   scrimVal = box.querySelector('#exScrimVal');
+
+      /* 다 읽은 그림은 주소가 죽어도 멀쩡히 그려진다. 그러니 새 그림을 들일 때 앞엣것의
+         주소를 거둔다 — 남겨 두면 고를 때마다 쓰지도 않을 주소가 쌓인다. */
+      const dropPic = () => { if(imgURL){ URL.revokeObjectURL(imgURL); imgURL = ''; } opt.img = null; };
+      /* 막은 덮을 그림이 있어야 뜻이 있다. 그림이 없으면 슬라이더를 잠가 둔다 */
+      const picState = () => {
+        const on = !!opt.img;
+        dropBtn.disabled = !on; scrimEl.disabled = !on;
+        scrimRow.classList.toggle('off', !on);
+      };
+
+      box.querySelector('#exRatio').addEventListener('click', e => {
+        const b = e.target.closest('button[data-r]'); if(!b) return;
+        opt.ratio = b.dataset.r;
+        box.querySelectorAll('#exRatio button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+        paint();
+      });
+      box.querySelector('#exPick').addEventListener('click', () => fileEl.click());
+      dropBtn.addEventListener('click', () => { dropPic(); nameEl.textContent = '없음'; picState(); paint(); });
+      fileEl.addEventListener('change', () => {
+        const f = fileEl.files && fileEl.files[0];
+        fileEl.value = '';                      /* 같은 파일을 다시 골라도 change가 오게 비워 둔다 */
+        if(!f) return;
+        if(!/^image\//i.test(f.type || '')){ toast('그림 파일만 넣을 수 있습니다'); return; }
+        const url = URL.createObjectURL(f), im = new Image();
+        im.onload = () => {
+          dropPic(); opt.img = im; imgURL = url;
+          nameEl.textContent = f.name.length > 24 ? f.name.slice(0, 23) + '…' : f.name;
+          picState(); paint();
+        };
+        im.onerror = () => { URL.revokeObjectURL(url); toast('그림을 읽지 못했습니다'); };
+        im.src = url;
+      });
+      scrimEl.addEventListener('input', () => {
+        opt.scrim = (+scrimEl.value || 0) / 100;
+        scrimVal.textContent = scrimEl.value + '%';
+        paint();
+      });
+      box.querySelector('#exTitle').addEventListener('change', e => { opt.title   = e.target.checked; paint(); });
+      box.querySelector('#exWho')  .addEventListener('change', e => { opt.speaker = e.target.checked; paint(); });
+    }
 
     document.addEventListener('selectionchange', () => {
       const sel = document.getSelection();
@@ -1147,10 +1250,10 @@
     btn.addEventListener('click', async () => {
       try{ await (document.fonts && document.fonts.ready); }catch(e){}
       const long = curText.length > MAX_EXCERPT;
-      const text = long ? curText.slice(0, MAX_EXCERPT).replace(/\s+$/, '') + '…' : curText;
-      const cv = drawExcerpt(text, curSpeaker);
-      ov.querySelector('#exImg').src = cv.toDataURL('image/png');
-      ov._cv = cv; ov.classList.add('open'); hide();
+      shotText = long ? curText.slice(0, MAX_EXCERPT).replace(/\s+$/, '') + '…' : curText;
+      shotWho  = curSpeaker;
+      paint();
+      ov.classList.add('open'); hide();
       if(long) toast('고른 글이 길어 앞 ' + MAX_EXCERPT + '자만 담았습니다');
     });
     ov.addEventListener('click', e => {
@@ -1181,42 +1284,145 @@
     if(t.classList.contains('narr')) return t.dataset.who || 'GM';
     return t.dataset.who || '내레이션';
   }
+  /* 낱말 한가운데가 잘리지 않도록 로마자·숫자 덩어리는 하나로 묶어 둔다. 한글·일본어는
+     글자마다 끊어도 자연스러우니 낱개 그대로다. 덩어리 하나가 한 줄보다 길면
+     (긴 주소 같은 것) 그때만 어쩔 수 없이 글자에서 끊는다. */
+  const EX_WORD = /[A-Za-z0-9'’@#$%&_.:\/\\-]/;
+  function exAtoms(para){
+    const out = []; let buf = '';
+    for(const ch of Array.from(para)){
+      if(EX_WORD.test(ch)) buf += ch;
+      else { if(buf){ out.push(buf); buf = ''; } out.push(ch); }
+    }
+    if(buf) out.push(buf);
+    return out;
+  }
   function wrapText(ctx, text, maxW){
     const lines = [];
     text.split('\n').forEach(para => {
       let line = '';
-      for(const ch of para){ const test = line + ch; if(ctx.measureText(test).width > maxW && line){ lines.push(line); line = ch; } else line = test; }
-      lines.push(line);
+      const push = () => { lines.push(line.replace(/\s+$/, '')); line = ''; };
+      for(const atom of exAtoms(para)){
+        if(line && ctx.measureText(line + atom).width > maxW){
+          push();
+          if(/^\s+$/.test(atom)) continue;      /* 줄이 바뀐 자리의 빈칸은 삼킨다 */
+        }
+        if(ctx.measureText(atom).width > maxW){
+          for(const ch of Array.from(atom)){
+            if(line && ctx.measureText(line + ch).width > maxW) push();
+            line += ch;
+          }
+        } else line += atom;
+      }
+      lines.push(line.replace(/\s+$/, ''));
     });
     return lines;
   }
+  /* 마지막 줄을 칸에 맞게 잘라 말줄임을 붙인다. 서로게이트 짝이 갈라지지 않게 코드포인트로 센다 */
+  function exClip(ctx, t, maxW){
+    const cs = Array.from((t || '').replace(/\s+$/, ''));
+    while(cs.length && ctx.measureText(cs.join('') + '…').width > maxW) cs.pop();
+    return cs.join('') + '…';
+  }
   function css(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
-  function drawExcerpt(text, speaker){
+
+  /* 치수는 폭 1080짜리 한 장을 기준으로 지어 두고 비율마다 함께 늘리고 줄인다.
+     칸이 정해진 비율에서는 글이 넘치거나 헐렁할 수 있으니, 칸에 들어가는 가장 큰 크기를
+     찾아 앉히고 그래도 남으면 담을 수 있는 줄까지만 담은 뒤 그 사실을 창에 적어 알린다. */
+  function drawExcerpt(text, speaker, o){
+    o = o || {};
+    const box = EX_RATIOS[o.ratio] || null;
+    const showTitle = o.title !== false, showWho = o.speaker !== false;
     const bg = css('--surface') || '#fff', ink = css('--ink') || '#17181B', muted = css('--muted') || '#6B7280';
     const line = css('--line') || '#E4E4E7', accent = css('--ink') || '#18181B';
     const dark = (document.documentElement.getAttribute('data-theme') === 'dark');
     const title = (document.getElementById('docTitle') ? document.getElementById('docTitle').textContent : '클릭하여 세션 제목을 입력해 주세요.').trim() || '클릭하여 세션 제목을 입력해 주세요.';
     const fam = '"Pretendard Variable",Pretendard,sans-serif';
-    const serif = fam;
 
-    const scale = 2, W = 1080, pad = 92, maxW = W - pad * 2;
-    const qs = text.length > 170 ? 38 : text.length > 90 ? 44 : 52;
-    const lh = Math.round(qs * 1.5);
+    /* 잣대가 둘이다. 여백과 줄 사이는 **짧은 변**을 따르고, 글씨는 **폭**을 따른다.
+       하나로 묶으면 가로로 긴 칸에서 반드시 한쪽이 어그러진다 — 폭에 맞추면 여백이
+       부풀어 세로가 모자라고, 짧은 변에 맞추면 글씨만 좁쌀만 하게 남는다. */
+    const scale = 2, W = box ? box[0] : 1080;
+    const kt = W / 1080, kp = (box ? Math.min(box[0], box[1]) : 1080) / 1080;
+    const pad = Math.round(92 * kp), maxW = W - pad * 2;
+    const barW = Math.round(40 * kt), barH = Math.max(2, Math.round(3 * kt));
+    const tFs = Math.round(18 * kt), sFs = Math.round(22 * kt), tGap = Math.round(20 * kp);
+    /* 머리(막대·제목)와 발치(화자)가 차지하는 높이. 끄면 그만큼 본문 자리가 넓어진다.
+       막대는 제목과 한 덩이다 — 제목만 끄고 막대를 남기면 아무 데도 안 붙은 짧은 선 하나가
+       모서리에 떠 있게 된다. 둘 다 끈 사람은 글만 있는 한 장을 바랐을 것이다. */
+    const headH = showTitle ? barH + tGap + tFs : 0;
+    const gapT = showTitle ? Math.round(40 * kp) : 0, gapB = showWho ? Math.round(46 * kp) : 0;
+    const bandTop = pad + headH + gapT, tail = gapB + (showWho ? sFs : 0) + pad;
+
     const m = document.createElement('canvas').getContext('2d');
-    m.font = '500 ' + qs + 'px ' + fam;
-    const lines = wrapText(m, text, maxW);
-    const eyeY = pad + 8, quoteTop = eyeY + 44, quoteH = lines.length * lh, footTop = quoteTop + quoteH + 44, H = footTop + 40 + pad;
-
-    const cv = document.createElement('canvas'); cv.width = W * scale; cv.height = H * scale;
+    const lay = z => { m.font = '500 ' + z + 'px ' + fam; return wrapText(m, text, maxW); };
+    let qFs, lines, lh, H, clipped = false;
+    if(box){
+      H = box[1];
+      const band = H - tail - bandTop;
+      /* 칸이 정해졌으니 글 길이로 크기를 어림잡을 이유가 없다. 큰 쪽에서 내려오며
+         칸에 들어가는 가장 큰 크기를 고른다 — 짧은 글은 큼직하게, 긴 글은 작게 앉는다.
+         맨 위를 한 줄에 열두 자쯤으로 잡아 두는 것은, 짧은 글 두 마디가 칸을 가득 메우는
+         꼴을 막기 위해서다. 위아래로 다 못 담으면 아래에서 담을 수 있는 줄까지만 담는다. */
+      const top = Math.max(24, Math.round(maxW / 12)), bot = Math.max(16, Math.round(20 * kt));
+      for(qFs = top; ; qFs -= 2){
+        lines = lay(qFs); lh = Math.round(qFs * 1.66);
+        if(lines.length * lh <= band || qFs <= bot) break;
+      }
+      const room = Math.max(1, Math.floor(band / lh));
+      if(lines.length > room){
+        lines = lines.slice(0, room);
+        /* 문단 사이의 빈 줄에서 잘리면 말줄임표만 홀로 한 줄을 차지한다. 글이 있는 줄까지
+           물러난 뒤 거기에 붙인다 — 말줄임은 잘린 문장 끝에 붙어야 뜻이 산다. */
+        while(lines.length > 1 && !lines[lines.length - 1].trim()) lines.pop();
+        lines[lines.length - 1] = exClip(m, lines[lines.length - 1], maxW);
+        clipped = true;
+      }
+    } else {
+      /* 세로가 자라는 '자동'에서만 글 길이로 크기를 정한다. 예전보다 한 단계씩 작다 —
+         한 줄에 더 담기고 줄 사이가 넓어져 눈이 덜 밀린다. */
+      qFs = text.length > 260 ? 30 : text.length > 170 ? 34 : text.length > 90 ? 38 : 44;
+      lines = lay(qFs); lh = Math.round(qFs * 1.66);
+      H = bandTop + lines.length * lh + tail;
+    }
+    const quoteY = bandTop + Math.max(0, ((H - tail - bandTop) - lines.length * lh) / 2);
+    const cv = document.createElement('canvas'); cv.width = Math.round(W * scale); cv.height = Math.round(H * scale);
     const ctx = cv.getContext('2d'); ctx.scale(scale, scale);
-    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
-    ctx.strokeStyle = line; ctx.lineWidth = 1; ctx.strokeRect(.5, .5, W - 1, H - 1);
-    ctx.fillStyle = accent; ctx.fillRect(pad, pad - 20, 40, 3);
     ctx.textBaseline = 'alphabetic';
-    ctx.fillStyle = muted; ctx.font = '700 19px ' + fam; ctx.fillText(title, pad, eyeY + 10);
-    ctx.fillStyle = ink; ctx.font = '500 ' + qs + 'px ' + fam;
-    lines.forEach((ln, i) => ctx.fillText(ln, pad, quoteTop + i * lh + qs * 0.8));
-    ctx.fillStyle = accent; ctx.font = '700 26px ' + fam; ctx.fillText('— ' + (speaker || '내레이션'), pad, footTop + 22);
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+
+    const a = Math.min(1, Math.max(0, o.scrim == null ? .72 : o.scrim));
+    if(o.img){
+      /* 짧은 변을 칸에 맞춘 뒤 넘치는 쪽을 반씩 잘라 낸다 — CSS의 object-fit:cover와 같은 셈 */
+      const iw = o.img.naturalWidth || o.img.width, ih = o.img.naturalHeight || o.img.height;
+      if(iw && ih){
+        const z = Math.max(W / iw, H / ih);
+        ctx.drawImage(o.img, (W - iw * z) / 2, (H - ih * z) / 2, iw * z, ih * z);
+        /* 종이색을 반투명으로 한 겹 덮어 글을 띄운다. 얼마나 덮을지는 사람이 정한다 */
+        if(a > 0){ ctx.globalAlpha = a; ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
+      }
+    }
+    ctx.strokeStyle = line; ctx.lineWidth = 1; ctx.strokeRect(.5, .5, W - 1, H - 1);
+
+    /* 막을 얕게 두면 사진 무늬가 글자 사이로 비친다. 획 뒤에 옅은 빛을 한 겹 깔아
+       바탕이 무엇이든 글자가 끊겨 보이지 않게 한다. 막이 짙으면 어차피 티가 안 나므로 끈다. */
+    const halo = !!o.img && a < .88;
+    ctx.shadowColor = halo ? (dark ? 'rgba(0,0,0,.62)' : 'rgba(255,255,255,.72)') : 'transparent';
+    ctx.shadowBlur = halo ? Math.round(12 * kt) : 0;
+
+    if(showTitle){
+      ctx.fillStyle = accent; ctx.fillRect(pad, pad, barW, barH);
+      ctx.fillStyle = muted; ctx.font = '700 ' + tFs + 'px ' + fam;
+      ctx.fillText(title, pad, pad + barH + tGap + tFs * .8);
+    }
+    ctx.fillStyle = ink; ctx.font = '500 ' + qFs + 'px ' + fam;
+    lines.forEach((ln, i) => ctx.fillText(ln, pad, quoteY + i * lh + qFs * .8));
+    if(showWho){
+      ctx.fillStyle = accent; ctx.font = '700 ' + sFs + 'px ' + fam;
+      ctx.fillText('— ' + (speaker || '내레이션'), pad, H - pad - sFs * .2);
+    }
+    ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
+    cv._clipped = clipped;
     return cv;
   }
 
@@ -1229,6 +1435,11 @@
 <script id="app">
 (function(){
   "use strict";
+  /* 이 한 줄이 '지금 리더인가'의 답이다. 저장할 때 #app 스크립트가 통째로 빠지므로
+     보관본에서는 영영 undefined다. 런타임에 실려 가는 발췌 창이 이걸 보고
+     편집용 손잡이를 달지 말지 정한다 — 보관본에는 고를 사람도 다시 그릴 앱도 없다. */
+  window.__reader = true;
+
   const $ = s => document.querySelector(s);
   const clean = t => (t||'').replace(/\u00a0/g,' ').replace(/[ \t]+/g,' ').trim();
   const toast = m => window.__toast ? window.__toast(m) : 0;
